@@ -517,19 +517,21 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		synchronized (this.startupShutdownMonitor) {
 			StartupStep contextRefresh = this.applicationStartup.start("spring.context.refresh");
 
-			//一些准备工作：  观察者模式
-			//1.设置Spring启动的时间
-			//2.设置标志位
-			//3.获取当前环境对象以及环境对象内的属性值
-			//4.设置监听器以及需要发布的一些事件的集合
+			//容器刷新前的一些准备工作：  观察者模式
+			//1.设置Spring容器启动的时间
+			//2.设置标志位：活跃状态为true，关闭状态为false
+			//3.获取当前环境Environment对象，并加载当前系统的属性值到Environment对象中
+			//4.设置监听器以及需要发布的一些事件的集合对象（默认为空的集合）
 			// Prepare this context for refreshing.
 			prepareRefresh();
 
 			// Tell the subclass to refresh the internal bean factory.
-			//创建/获得 Bean工厂
+			//创建容器对象（DefaultListableBeanFactory）
+			//加载xml配置文件的属性值到到当前工厂中，最重要的就是BeanDefinition
 			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
 
 			// Prepare the bean factory for use in this context.
+			//初始化Bean工厂
 			prepareBeanFactory(beanFactory);
 
 			try {
