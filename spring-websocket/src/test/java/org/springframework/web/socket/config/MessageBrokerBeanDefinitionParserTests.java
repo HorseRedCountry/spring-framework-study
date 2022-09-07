@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,7 +91,6 @@ import org.springframework.web.testfixture.servlet.MockServletContext;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.assertj.core.api.InstanceOfAssertFactories.BOOLEAN;
 
 /**
  * Test fixture for {@link MessageBrokerBeanDefinitionParser}.
@@ -129,7 +128,7 @@ public class MessageBrokerBeanDefinitionParserTests {
 
 		WebSocketSession session = new TestWebSocketSession("id");
 		wsHttpRequestHandler.getWebSocketHandler().afterConnectionEstablished(session);
-		assertThat(session.getAttributes().get("decorated")).asInstanceOf(BOOLEAN).isTrue();
+		assertThat(session.getAttributes().get("decorated")).isEqualTo(true);
 
 		WebSocketHandler wsHandler = wsHttpRequestHandler.getWebSocketHandler();
 		assertThat(wsHandler).isInstanceOf(ExceptionWebSocketHandlerDecorator.class);
@@ -182,8 +181,8 @@ public class MessageBrokerBeanDefinitionParserTests {
 		interceptors = defaultSockJsService.getHandshakeInterceptors();
 		assertThat(interceptors).extracting("class").containsExactly(FooTestInterceptor.class,
 				BarTestInterceptor.class, OriginHandshakeInterceptor.class);
-		assertThat(defaultSockJsService.getAllowedOrigins()).containsExactly("https://mydomain3.com", "https://mydomain4.com");
-		assertThat(defaultSockJsService.getAllowedOriginPatterns()).containsExactly("https://*.mydomain.com");
+		assertThat(defaultSockJsService.getAllowedOrigins().contains("https://mydomain3.com")).isTrue();
+		assertThat(defaultSockJsService.getAllowedOrigins().contains("https://mydomain4.com")).isTrue();
 
 		SimpUserRegistry userRegistry = this.appContext.getBean(SimpUserRegistry.class);
 		assertThat(userRegistry).isNotNull();

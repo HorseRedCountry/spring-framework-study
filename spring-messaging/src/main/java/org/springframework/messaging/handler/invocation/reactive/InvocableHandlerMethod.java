@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.handler.HandlerMethod;
 import org.springframework.messaging.handler.invocation.MethodArgumentResolutionException;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.ReflectionUtils;
 
 /**
  * Extension of {@link HandlerMethod} that invokes the underlying method with
@@ -77,7 +78,7 @@ public class InvocableHandlerMethod extends HandlerMethod {
 
 
 	/**
-	 * Configure the argument resolvers to use for resolving method
+	 * Configure the argument resolvers to use to use for resolving method
 	 * argument values against a {@code ServerWebExchange}.
 	 */
 	public void setArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
@@ -129,7 +130,9 @@ public class InvocableHandlerMethod extends HandlerMethod {
 			boolean isSuspendingFunction = false;
 			try {
 				Method method = getBridgedMethod();
-				if (KotlinDetector.isSuspendingFunction(method)) {
+				ReflectionUtils.makeAccessible(method);
+				if (KotlinDetector.isKotlinReflectPresent() && KotlinDetector.isKotlinType(method.getDeclaringClass())
+						&& CoroutinesUtils.isSuspendingFunction(method)) {
 					isSuspendingFunction = true;
 					value = CoroutinesUtils.invokeSuspendingFunction(method, getBean(), args);
 				}
@@ -205,17 +208,15 @@ public class InvocableHandlerMethod extends HandlerMethod {
 			if (reactiveAdapter.isNoValue()) {
 				return true;
 			}
-		}
-		Type parameterType = returnType.getGenericParameterType();
-		if (parameterType instanceof ParameterizedType) {
-			ParameterizedType type = (ParameterizedType) parameterType;
-			if (type.getActualTypeArguments().length == 1) {
-				return Void.class.equals(type.getActualTypeArguments()[0]);
+			Type parameterType = returnType.getGenericParameterType();
+			if (parameterType instanceof ParameterizedType) {
+				ParameterizedType type = (ParameterizedType) parameterType;
+				if (type.getActualTypeArguments().length == 1) {
+					return Void.class.equals(type.getActualTypeArguments()[0]);
+				}
 			}
 		}
-		Method method = returnType.getMethod();
-		return method != null && KotlinDetector.isSuspendingFunction(method) &&
-				Void.TYPE.equals(returnType.getParameterType());
+		return false;
 	}
 
 }

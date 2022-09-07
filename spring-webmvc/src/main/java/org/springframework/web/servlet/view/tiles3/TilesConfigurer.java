@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 
 package org.springframework.web.servlet.view.tiles3;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 
 import javax.el.ArrayELResolver;
@@ -88,17 +88,17 @@ import org.springframework.web.context.ServletContextAware;
  * <p>A typical TilesConfigurer bean definition looks as follows:
  *
  * <pre class="code">
- * &lt;bean id="tilesConfigurer" class="org.springframework.web.servlet.view.tiles3.TilesConfigurer"&gt;
- *   &lt;property name="definitions"&gt;
- *     &lt;list&gt;
- *       &lt;value&gt;/WEB-INF/defs/general.xml&lt;/value&gt;
- *       &lt;value&gt;/WEB-INF/defs/widgets.xml&lt;/value&gt;
- *       &lt;value&gt;/WEB-INF/defs/administrator.xml&lt;/value&gt;
- *       &lt;value&gt;/WEB-INF/defs/customer.xml&lt;/value&gt;
- *       &lt;value&gt;/WEB-INF/defs/templates.xml&lt;/value&gt;
- *     &lt;/list&gt;
- *   &lt;/property&gt;
- * &lt;/bean&gt;
+ * &lt;bean id="tilesConfigurer" class="org.springframework.web.servlet.view.tiles3.TilesConfigurer">
+ *   &lt;property name="definitions">
+ *     &lt;list>
+ *       &lt;value>/WEB-INF/defs/general.xml&lt;/value>
+ *       &lt;value>/WEB-INF/defs/widgets.xml&lt;/value>
+ *       &lt;value>/WEB-INF/defs/administrator.xml&lt;/value>
+ *       &lt;value>/WEB-INF/defs/customer.xml&lt;/value>
+ *       &lt;value>/WEB-INF/defs/templates.xml&lt;/value>
+ *     &lt;/list>
+ *   &lt;/property>
+ * &lt;/bean>
  * </pre>
  *
  * The values in the list are the actual Tiles XML files containing the definitions.
@@ -108,14 +108,14 @@ import org.springframework.web.context.ServletContextAware;
  * definitions is used to indicate locale information, for example:
  *
  * <pre class="code">
- * &lt;bean id="tilesConfigurer" class="org.springframework.web.servlet.view.tiles3.TilesConfigurer"&gt;
- *   &lt;property name="definitions"&gt;
- *     &lt;list&gt;
- *       &lt;value&gt;/WEB-INF/defs/tiles.xml&lt;/value&gt;
- *       &lt;value&gt;/WEB-INF/defs/tiles_fr_FR.xml&lt;/value&gt;
- *     &lt;/list&gt;
- *   &lt;/property&gt;
- * &lt;/bean&gt;
+ * &lt;bean id="tilesConfigurer" class="org.springframework.web.servlet.view.tiles3.TilesConfigurer">
+ *   &lt;property name="definitions">
+ *     &lt;list>
+ *       &lt;value>/WEB-INF/defs/tiles.xml&lt;/value>
+ *       &lt;value>/WEB-INF/defs/tiles_fr_FR.xml&lt;/value>
+ *     &lt;/list>
+ *   &lt;/property>
+ * &lt;/bean>
  * </pre>
  *
  * @author mick semb wever
@@ -311,7 +311,7 @@ public class TilesConfigurer implements ServletContextAware, InitializingBean, D
 		@Override
 		protected List<ApplicationResource> getSources(ApplicationContext applicationContext) {
 			if (definitions != null) {
-				List<ApplicationResource> result = new ArrayList<>();
+				List<ApplicationResource> result = new LinkedList<>();
 				for (String definition : definitions) {
 					Collection<ApplicationResource> resources = applicationContext.getResources(definition);
 					if (resources != null) {

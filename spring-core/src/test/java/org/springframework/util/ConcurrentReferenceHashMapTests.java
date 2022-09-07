@@ -51,7 +51,7 @@ import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
  */
 class ConcurrentReferenceHashMapTests {
 
-	private static final Comparator<? super String> NULL_SAFE_STRING_SORT = new NullSafeComparator<>(
+	private static final Comparator<? super String> NULL_SAFE_STRING_SORT = new NullSafeComparator<String>(
 			new ComparableComparator<String>(), true);
 
 	private TestWeakConcurrentCache<Integer, String> map = new TestWeakConcurrentCache<>();

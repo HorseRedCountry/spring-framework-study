@@ -182,9 +182,12 @@ public class JavaMailSenderTests {
 
 		final List<Message> messages = new ArrayList<>();
 
-		MimeMessagePreparator preparator = mimeMessage -> {
-			mimeMessage.setRecipient(Message.RecipientType.TO, new InternetAddress("you@mail.org"));
-			messages.add(mimeMessage);
+		MimeMessagePreparator preparator = new MimeMessagePreparator() {
+			@Override
+			public void prepare(MimeMessage mimeMessage) throws MessagingException {
+				mimeMessage.setRecipient(Message.RecipientType.TO, new InternetAddress("you@mail.org"));
+				messages.add(mimeMessage);
+			}
 		};
 		sender.send(preparator);
 
@@ -205,13 +208,19 @@ public class JavaMailSenderTests {
 
 		final List<Message> messages = new ArrayList<>();
 
-		MimeMessagePreparator preparator1 = mimeMessage -> {
-			mimeMessage.setRecipient(Message.RecipientType.TO, new InternetAddress("he@mail.org"));
-			messages.add(mimeMessage);
+		MimeMessagePreparator preparator1 = new MimeMessagePreparator() {
+			@Override
+			public void prepare(MimeMessage mimeMessage) throws MessagingException {
+				mimeMessage.setRecipient(Message.RecipientType.TO, new InternetAddress("he@mail.org"));
+				messages.add(mimeMessage);
+			}
 		};
-		MimeMessagePreparator preparator2 = mimeMessage -> {
-			mimeMessage.setRecipient(Message.RecipientType.TO, new InternetAddress("she@mail.org"));
-			messages.add(mimeMessage);
+		MimeMessagePreparator preparator2 = new MimeMessagePreparator() {
+			@Override
+			public void prepare(MimeMessage mimeMessage) throws MessagingException {
+				mimeMessage.setRecipient(Message.RecipientType.TO, new InternetAddress("she@mail.org"));
+				messages.add(mimeMessage);
+			}
 		};
 		sender.send(preparator1, preparator2);
 
@@ -314,7 +323,12 @@ public class JavaMailSenderTests {
 	@Test
 	public void javaMailSenderWithParseExceptionOnMimeMessagePreparator() {
 		MockJavaMailSender sender = new MockJavaMailSender();
-		MimeMessagePreparator preparator = mimeMessage -> mimeMessage.setFrom(new InternetAddress(""));
+		MimeMessagePreparator preparator = new MimeMessagePreparator() {
+			@Override
+			public void prepare(MimeMessage mimeMessage) throws MessagingException {
+				mimeMessage.setFrom(new InternetAddress(""));
+			}
+		};
 		try {
 			sender.send(preparator);
 		}

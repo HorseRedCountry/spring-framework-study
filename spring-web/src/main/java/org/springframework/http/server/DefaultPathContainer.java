@@ -165,10 +165,10 @@ final class DefaultPathContainer implements PathContainer {
 			int index = input.indexOf('=');
 			if (index != -1) {
 				String name = input.substring(0, index);
-				name = StringUtils.uriDecode(name, charset);
-				if (StringUtils.hasText(name)) {
-					String value = input.substring(index + 1);
-					for (String v : StringUtils.commaDelimitedListToStringArray(value)) {
+				String value = input.substring(index + 1);
+				for (String v : StringUtils.commaDelimitedListToStringArray(value)) {
+					name = StringUtils.uriDecode(name, charset);
+					if (StringUtils.hasText(name)) {
 						output.add(name, StringUtils.uriDecode(v, charset));
 					}
 				}
@@ -234,6 +234,8 @@ final class DefaultPathContainer implements PathContainer {
 
 		private final String valueToMatch;
 
+		private final char[] valueToMatchAsChars;
+
 		private final MultiValueMap<String, String> parameters;
 
 		/**
@@ -262,6 +264,7 @@ final class DefaultPathContainer implements PathContainer {
 		private DefaultPathSegment(String value, String valueToMatch, MultiValueMap<String, String> params) {
 			this.value = value;
 			this.valueToMatch = valueToMatch;
+			this.valueToMatchAsChars = valueToMatch.toCharArray();
 			this.parameters = params;
 		}
 
@@ -278,7 +281,7 @@ final class DefaultPathContainer implements PathContainer {
 
 		@Override
 		public char[] valueToMatchAsChars() {
-			return this.valueToMatch.toCharArray();
+			return this.valueToMatchAsChars;
 		}
 
 		@Override

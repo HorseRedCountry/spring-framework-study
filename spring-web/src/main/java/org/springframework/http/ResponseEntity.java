@@ -114,22 +114,17 @@ public class ResponseEntity<T> extends HttpEntity<T> {
 	 * @param status the status code
 	 */
 	public ResponseEntity(@Nullable T body, @Nullable MultiValueMap<String, String> headers, HttpStatus status) {
-		this(body, headers, (Object) status);
+		super(body, headers);
+		Assert.notNull(status, "HttpStatus must not be null");
+		this.status = status;
 	}
 
 	/**
-	 * Create a {@code ResponseEntity} with a body, headers, and a raw status code.
+	 * Create a {@code ResponseEntity} with the given body, headers, and status code.
+	 * Just used behind the nested builder API.
 	 * @param body the entity body
 	 * @param headers the entity headers
-	 * @param rawStatus the status code value
-	 * @since 5.3.2
-	 */
-	public ResponseEntity(@Nullable T body, @Nullable MultiValueMap<String, String> headers, int rawStatus) {
-		this(body, headers, (Object) rawStatus);
-	}
-
-	/**
-	 * Private constructor.
+	 * @param status the status code (as {@code HttpStatus} or as {@code Integer} value)
 	 */
 	private ResponseEntity(@Nullable T body, @Nullable MultiValueMap<String, String> headers, Object status) {
 		super(body, headers);
@@ -186,7 +181,7 @@ public class ResponseEntity<T> extends HttpEntity<T> {
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder("<");
-		builder.append(this.status);
+		builder.append(this.status.toString());
 		if (this.status instanceof HttpStatus) {
 			builder.append(' ');
 			builder.append(((HttpStatus) this.status).getReasonPhrase());
@@ -315,16 +310,6 @@ public class ResponseEntity<T> extends HttpEntity<T> {
 	 */
 	public static BodyBuilder unprocessableEntity() {
 		return status(HttpStatus.UNPROCESSABLE_ENTITY);
-	}
-
-	/**
-	 * Create a builder with an
-	 * {@linkplain HttpStatus#INTERNAL_SERVER_ERROR INTERNAL_SERVER_ERROR} status.
-	 * @return the created builder
-	 * @since 5.3.8
-	 */
-	public static BodyBuilder internalServerError() {
-		return status(HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 
 

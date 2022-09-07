@@ -183,7 +183,7 @@ public interface RSocketStrategies {
 		Builder routeMatcher(@Nullable RouteMatcher routeMatcher);
 
 		/**
-		 * Configure the registry for reactive type support. This can be used
+		 * Configure the registry for reactive type support. This can be used to
 		 * to adapt to, and/or determine the semantics of a given
 		 * {@link org.reactivestreams.Publisher Publisher}.
 		 * <p>By default this {@link ReactiveAdapterRegistry#getSharedInstance()}.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -198,20 +198,6 @@ public class MimeType implements Comparable<MimeType>, Serializable {
 	}
 
 	/**
-	 * Copy-constructor that copies the type, subtype and parameters of the given {@code MimeType},
-	 * skipping checks performed in other constructors.
-	 * @param other the other MimeType
-	 * @since 5.3
-	 */
-	protected MimeType(MimeType other) {
-		this.type = other.type;
-		this.subtype = other.subtype;
-		this.parameters = other.parameters;
-		this.resolvedCharset = other.resolvedCharset;
-		this.toStringValue = other.toStringValue;
-	}
-
-	/**
 	 * Checks the given token string for illegal characters, as defined in RFC 2616,
 	 * section 2.2.
 	 * @throws IllegalArgumentException in case of illegal characters
@@ -292,19 +278,6 @@ public class MimeType implements Comparable<MimeType>, Serializable {
 	 */
 	public String getSubtype() {
 		return this.subtype;
-	}
-
-	/**
-	 * Return the subtype suffix as defined in RFC 6839.
-	 * @since 5.3
-	 */
-	@Nullable
-	public String getSubtypeSuffix() {
-		int suffixIndex = this.subtype.lastIndexOf('+');
-		if (suffixIndex != -1 && this.subtype.length() > suffixIndex) {
-			return this.subtype.substring(suffixIndex + 1);
-		}
-		return null;
 	}
 
 	/**
@@ -399,17 +372,22 @@ public class MimeType implements Comparable<MimeType>, Serializable {
 			if (getSubtype().equals(other.getSubtype())) {
 				return true;
 			}
+			// Wildcard with suffix? e.g. application/*+xml
 			if (isWildcardSubtype() || other.isWildcardSubtype()) {
-				String thisSuffix = getSubtypeSuffix();
-				String otherSuffix = other.getSubtypeSuffix();
-				if (getSubtype().equals(WILDCARD_TYPE) || other.getSubtype().equals(WILDCARD_TYPE)) {
+				int thisPlusIdx = getSubtype().lastIndexOf('+');
+				int otherPlusIdx = other.getSubtype().lastIndexOf('+');
+				if (thisPlusIdx == -1 && otherPlusIdx == -1) {
 					return true;
 				}
-				else if (isWildcardSubtype() && thisSuffix != null) {
-					return (thisSuffix.equals(other.getSubtype()) || thisSuffix.equals(otherSuffix));
-				}
-				else if (other.isWildcardSubtype() && otherSuffix != null) {
-					return (this.getSubtype().equals(otherSuffix) || otherSuffix.equals(thisSuffix));
+				else if (thisPlusIdx != -1 && otherPlusIdx != -1) {
+					String thisSubtypeNoSuffix = getSubtype().substring(0, thisPlusIdx);
+					String otherSubtypeNoSuffix = other.getSubtype().substring(0, otherPlusIdx);
+					String thisSubtypeSuffix = getSubtype().substring(thisPlusIdx + 1);
+					String otherSubtypeSuffix = other.getSubtype().substring(otherPlusIdx + 1);
+					if (thisSubtypeSuffix.equals(otherSubtypeSuffix) &&
+							(WILDCARD_TYPE.equals(thisSubtypeNoSuffix) || WILDCARD_TYPE.equals(otherSubtypeNoSuffix))) {
+						return true;
+					}
 				}
 			}
 		}

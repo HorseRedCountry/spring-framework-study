@@ -57,10 +57,9 @@ public abstract class TransactionSynchronizationUtils {
 	/**
 	 * Unwrap the given resource handle if necessary; otherwise return
 	 * the given handle as-is.
-	 * @since 5.3.4
 	 * @see InfrastructureProxy#getWrappedObject()
 	 */
-	public static Object unwrapResourceIfNecessary(Object resource) {
+	static Object unwrapResourceIfNecessary(Object resource) {
 		Assert.notNull(resource, "Resource must not be null");
 		Object resourceRef = resource;
 		// unwrap infrastructure proxy
@@ -108,7 +107,7 @@ public abstract class TransactionSynchronizationUtils {
 				synchronization.beforeCompletion();
 			}
 			catch (Throwable ex) {
-				logger.debug("TransactionSynchronization.beforeCompletion threw exception", ex);
+				logger.error("TransactionSynchronization.beforeCompletion threw exception", ex);
 			}
 		}
 	}
@@ -172,7 +171,7 @@ public abstract class TransactionSynchronizationUtils {
 					synchronization.afterCompletion(completionStatus);
 				}
 				catch (Throwable ex) {
-					logger.debug("TransactionSynchronization.afterCompletion threw exception", ex);
+					logger.error("TransactionSynchronization.afterCompletion threw exception", ex);
 				}
 			}
 		}

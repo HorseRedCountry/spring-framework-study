@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,9 @@
 
 package org.springframework.web.reactive.result.view.freemarker;
 
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -33,6 +32,7 @@ import reactor.core.publisher.Mono;
 import org.springframework.beans.testfixture.beans.TestBean;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.MediaType;
 import org.springframework.ui.ExtendedModelMap;
 import org.springframework.ui.ModelMap;
@@ -45,7 +45,6 @@ import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.testfixture.http.server.reactive.MockServerHttpRequest;
 import org.springframework.web.testfixture.server.MockServerWebExchange;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singletonMap;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -67,17 +66,12 @@ public class FreeMarkerMacroTests {
 
 	private Configuration freeMarkerConfig;
 
-	private Path templateLoaderPath;
-
-
 	@BeforeEach
 	public void setUp() throws Exception {
-		this.templateLoaderPath = Files.createTempDirectory("webflux-").toAbsolutePath();
-
 		this.applicationContext.refresh();
 
 		FreeMarkerConfigurer configurer = new FreeMarkerConfigurer();
-		configurer.setTemplateLoaderPaths("classpath:/", "file://" + this.templateLoaderPath);
+		configurer.setTemplateLoaderPaths("classpath:/", "file://" + System.getProperty("java.io.tmpdir"));
 		this.freeMarkerConfig = configurer.createConfiguration();
 	}
 
@@ -339,8 +333,13 @@ public class FreeMarkerMacroTests {
 		return getOutput();
 	}
 
-	private static String fetchMacro(String name) throws Exception {
-		for (String macro : loadMacros()) {
+	private String fetchMacro(String name) throws Exception {
+		ClassPathResource resource = new ClassPathResource(TEMPLATE_FILE, getClass());
+		assertThat(resource.exists()).isTrue();
+		String all = FileCopyUtils.copyToString(new InputStreamReader(resource.getInputStream()));
+		all = all.replace("\r\n", "\n");
+		String[] macros = StringUtils.delimitedListToStringArray(all, "\n\n");
+		for (String macro : macros) {
 			if (macro.startsWith(name)) {
 				return macro.substring(macro.indexOf("\n")).trim();
 			}
@@ -348,17 +347,9 @@ public class FreeMarkerMacroTests {
 		return null;
 	}
 
-	private static String[] loadMacros() throws IOException {
-		ClassPathResource resource = new ClassPathResource(TEMPLATE_FILE, FreeMarkerMacroTests.class);
-		assertThat(resource.exists()).isTrue();
-		String all = FileCopyUtils.copyToString(new InputStreamReader(resource.getInputStream()));
-		all = all.replace("\r\n", "\n");
-		return StringUtils.delimitedListToStringArray(all, "\n\n");
-	}
-
 	private void storeTemplateInTempDir(String macro) throws IOException {
-		Files.write(this.templateLoaderPath.resolve("tmp.ftl"),
-				("<#import \"spring.ftl\" as spring />\n" + macro).getBytes(UTF_8));
+		FileSystemResource resource = new FileSystemResource(System.getProperty("java.io.tmpdir") + "/tmp.ftl");
+		FileCopyUtils.copy("<#import \"spring.ftl\" as spring />\n" + macro, new FileWriter(resource.getPath()));
 	}
 
 	private List<String> getOutput() {

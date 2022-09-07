@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import org.springframework.core.codec.CodecException;
 import org.springframework.core.codec.Decoder;
 import org.springframework.core.codec.StringDecoder;
 import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferFactory;
 import org.springframework.core.io.buffer.DataBufferLimitException;
 import org.springframework.core.io.buffer.DefaultDataBufferFactory;
 import org.springframework.http.MediaType;
@@ -42,12 +43,13 @@ import org.springframework.lang.Nullable;
  *
  * @author Sebastien Deleuze
  * @author Rossen Stoyanchev
- * @author Juergen Hoeller
  * @since 5.0
  */
 public class ServerSentEventHttpMessageReader implements HttpMessageReader<Object> {
 
 	private static final ResolvableType STRING_TYPE = ResolvableType.forClass(String.class);
+
+	private static final DataBufferFactory bufferFactory = new DefaultDataBufferFactory();
 
 
 	@Nullable
@@ -141,23 +143,16 @@ public class ServerSentEventHttpMessageReader implements HttpMessageReader<Objec
 	private Object buildEvent(List<String> lines, ResolvableType valueType, boolean shouldWrap,
 			Map<String, Object> hints) {
 
-		ServerSentEvent.Builder<Object> sseBuilder = (shouldWrap ? ServerSentEvent.builder() : null);
+		ServerSentEvent.Builder<Object> sseBuilder = shouldWrap ? ServerSentEvent.builder() : null;
 		StringBuilder data = null;
 		StringBuilder comment = null;
 
 		for (String line : lines) {
 			if (line.startsWith("data:")) {
-				int length = line.length();
-				if (length > 5) {
-					int index = (line.charAt(5) != ' ' ? 5 : 6);
-					if (length > index) {
-						data = (data != null ? data : new StringBuilder());
-						data.append(line, index, line.length());
-						data.append('\n');
-					}
-				}
+				data = (data != null ? data : new StringBuilder());
+				data.append(line.substring(5).trim()).append("\n");
 			}
-			else if (shouldWrap) {
+			if (shouldWrap) {
 				if (line.startsWith("id:")) {
 					sseBuilder.id(line.substring(3).trim());
 				}
@@ -169,7 +164,7 @@ public class ServerSentEventHttpMessageReader implements HttpMessageReader<Objec
 				}
 				else if (line.startsWith(":")) {
 					comment = (comment != null ? comment : new StringBuilder());
-					comment.append(line.substring(1).trim()).append('\n');
+					comment.append(line.substring(1).trim()).append("\n");
 				}
 			}
 		}
@@ -199,7 +194,7 @@ public class ServerSentEventHttpMessageReader implements HttpMessageReader<Objec
 			throw new CodecException("No SSE decoder configured and the data is not String.");
 		}
 		byte[] bytes = data.toString().getBytes(StandardCharsets.UTF_8);
-		DataBuffer buffer = DefaultDataBufferFactory.sharedInstance.wrap(bytes);  // wrapping only, no allocation
+		DataBuffer buffer = bufferFactory.wrap(bytes);  // wrapping only, no allocation
 		return this.decoder.decode(buffer, dataType, MediaType.TEXT_EVENT_STREAM, hints);
 	}
 

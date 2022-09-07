@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,11 +24,12 @@ import java.util.function.Function;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.reactive.client.ContentChunk;
 import org.eclipse.jetty.reactive.client.ReactiveRequest;
+import org.eclipse.jetty.reactive.client.internal.PublisherContentProvider;
 import org.eclipse.jetty.util.Callback;
 import org.reactivestreams.Publisher;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.MonoSink;
 
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferFactory;
@@ -51,14 +52,10 @@ class JettyClientHttpRequest extends AbstractClientHttpRequest {
 
 	private final DataBufferFactory bufferFactory;
 
-	private final ReactiveRequest.Builder builder;
-
-
 
 	public JettyClientHttpRequest(Request jettyRequest, DataBufferFactory bufferFactory) {
 		this.jettyRequest = jettyRequest;
 		this.bufferFactory = bufferFactory;
-		this.builder = ReactiveRequest.newBuilder(this.jettyRequest).abortOnCancel(true);
 	}
 
 
@@ -74,7 +71,7 @@ class JettyClientHttpRequest extends AbstractClientHttpRequest {
 
 	@Override
 	public Mono<Void> setComplete() {
-		return doCommit();
+		return doCommit(this::completes);
 	}
 
 	@Override
@@ -83,28 +80,23 @@ class JettyClientHttpRequest extends AbstractClientHttpRequest {
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
-	public <T> T getNativeRequest() {
-		return (T) this.jettyRequest;
-	}
-
-	@Override
 	public Mono<Void> writeWith(Publisher<? extends DataBuffer> body) {
-		return Mono.<Void>create(sink -> {
-			ReactiveRequest.Content content = Flux.from(body)
-					.map(buffer -> toContentChunk(buffer, sink))
-					.as(chunks -> ReactiveRequest.Content.fromPublisher(chunks, getContentType()));
-			this.builder.content(content);
-			sink.success();
-		})
-				.then(doCommit());
+		ReactiveRequest.Content content = Flux.from(body)
+				.map(this::toContentChunk)
+				.as(chunks -> ReactiveRequest.Content.fromPublisher(chunks, getContentType()));
+		this.jettyRequest.content(new PublisherContentProvider(content));
+		return doCommit(this::completes);
 	}
 
 	@Override
 	public Mono<Void> writeAndFlushWith(Publisher<? extends Publisher<? extends DataBuffer>> body) {
-		return writeWith(Flux.from(body)
+		ReactiveRequest.Content content = Flux.from(body)
 				.flatMap(Function.identity())
-				.doOnDiscard(PooledDataBuffer.class, DataBufferUtils::release));
+				.doOnDiscard(PooledDataBuffer.class, DataBufferUtils::release)
+				.map(this::toContentChunk)
+				.as(chunks -> ReactiveRequest.Content.fromPublisher(chunks, getContentType()));
+		this.jettyRequest.content(new PublisherContentProvider(content));
+		return doCommit(this::completes);
 	}
 
 	private String getContentType() {
@@ -112,19 +104,24 @@ class JettyClientHttpRequest extends AbstractClientHttpRequest {
 		return contentType != null ? contentType.toString() : MediaType.APPLICATION_OCTET_STREAM_VALUE;
 	}
 
-	private ContentChunk toContentChunk(DataBuffer buffer, MonoSink<Void> sink) {
+	private Mono<Void> completes() {
+		return Mono.empty();
+	}
+
+	private ContentChunk toContentChunk(DataBuffer buffer) {
 		return new ContentChunk(buffer.asByteBuffer(), new Callback() {
 			@Override
 			public void succeeded() {
 				DataBufferUtils.release(buffer);
 			}
 			@Override
-			public void failed(Throwable t) {
+			public void failed(Throwable x) {
 				DataBufferUtils.release(buffer);
-				sink.error(t);
+				throw Exceptions.propagate(x);
 			}
 		});
 	}
+
 
 	@Override
 	protected void applyCookies() {
@@ -140,15 +137,6 @@ class JettyClientHttpRequest extends AbstractClientHttpRequest {
 		if (!headers.containsKey(HttpHeaders.ACCEPT)) {
 			this.jettyRequest.header(HttpHeaders.ACCEPT, "*/*");
 		}
-	}
-
-	@Override
-	protected HttpHeaders initReadOnlyHeaders() {
-		return HttpHeaders.readOnlyHttpHeaders(new JettyHeadersAdapter(this.jettyRequest.getHeaders()));
-	}
-
-	public ReactiveRequest toReactiveRequest() {
-		return this.builder.build();
 	}
 
 }

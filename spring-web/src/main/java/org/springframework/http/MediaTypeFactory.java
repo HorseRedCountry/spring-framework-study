@@ -114,12 +114,10 @@ public final class MediaTypeFactory {
 	 * @return the corresponding media types, or an empty list if none found
 	 */
 	public static List<MediaType> getMediaTypes(@Nullable String filename) {
-		List<MediaType> mediaTypes = null;
-		String ext = StringUtils.getFilenameExtension(filename);
-		if (ext != null) {
-			mediaTypes = fileExtensionToMediaTypes.get(ext.toLowerCase(Locale.ENGLISH));
-		}
-		return (mediaTypes != null ? mediaTypes : Collections.emptyList());
+		return Optional.ofNullable(StringUtils.getFilenameExtension(filename))
+				.map(s -> s.toLowerCase(Locale.ENGLISH))
+				.map(fileExtensionToMediaTypes::get)
+				.orElse(Collections.emptyList());
 	}
 
 }

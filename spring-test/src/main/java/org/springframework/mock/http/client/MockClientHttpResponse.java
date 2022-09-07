@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import org.springframework.util.Assert;
  */
 public class MockClientHttpResponse extends MockHttpInputMessage implements ClientHttpResponse {
 
-	private final int statusCode;
+	private final HttpStatus status;
 
 
 	/**
@@ -41,17 +41,7 @@ public class MockClientHttpResponse extends MockHttpInputMessage implements Clie
 	public MockClientHttpResponse(byte[] body, HttpStatus statusCode) {
 		super(body);
 		Assert.notNull(statusCode, "HttpStatus is required");
-		this.statusCode = statusCode.value();
-	}
-
-	/**
-	 * Variant of {@link #MockClientHttpResponse(byte[], HttpStatus)} with a
-	 * custom HTTP status code.
-	 * @since 5.3.17
-	 */
-	public MockClientHttpResponse(byte[] body, int statusCode) {
-		super(body);
-		this.statusCode = statusCode;
+		this.status = statusCode;
 	}
 
 	/**
@@ -60,34 +50,23 @@ public class MockClientHttpResponse extends MockHttpInputMessage implements Clie
 	public MockClientHttpResponse(InputStream body, HttpStatus statusCode) {
 		super(body);
 		Assert.notNull(statusCode, "HttpStatus is required");
-		this.statusCode = statusCode.value();
-	}
-
-	/**
-	 * Variant of {@link #MockClientHttpResponse(InputStream, HttpStatus)} with a
-	 * custom HTTP status code.
-	 * @since 5.3.17
-	 */
-	public MockClientHttpResponse(InputStream body, int statusCode) {
-		super(body);
-		this.statusCode = statusCode;
+		this.status = statusCode;
 	}
 
 
 	@Override
-	public HttpStatus getStatusCode() {
-		return HttpStatus.valueOf(this.statusCode);
+	public HttpStatus getStatusCode() throws IOException {
+		return this.status;
 	}
 
 	@Override
-	public int getRawStatusCode() {
-		return this.statusCode;
+	public int getRawStatusCode() throws IOException {
+		return this.status.value();
 	}
 
 	@Override
-	public String getStatusText() {
-		HttpStatus status = HttpStatus.resolve(this.statusCode);
-		return (status != null ? status.getReasonPhrase() : "");
+	public String getStatusText() throws IOException {
+		return this.status.getReasonPhrase();
 	}
 
 	@Override

@@ -173,7 +173,7 @@ public class MimeMessageHelper {
 
 	private FileTypeMap fileTypeMap;
 
-	private boolean encodeFilenames = false;
+	private boolean encodeFilenames = true;
 
 	private boolean validateAddresses = false;
 
@@ -490,11 +490,9 @@ public class MimeMessageHelper {
 	/**
 	 * Set whether to encode attachment filenames passed to this helper's
 	 * {@code #addAttachment} methods.
-	 * <p>The default is {@code false} for standard MIME behavior; turn this to
-	 * {@code true} for compatibility with older email clients. On a related note,
+	 * <p>The default is {@code true} for compatibility with older email clients;
+	 * turn this to {@code false} for standard MIME behavior. On a related note,
 	 * check out JavaMail's {@code mail.mime.encodefilename} system property.
-	 * <p><b>NOTE:</b> The default changed to {@code false} in 5.3, in favor of
-	 * JavaMail's standard {@code mail.mime.encodefilename} system property.
 	 * @since 5.2.9
 	 * @see #addAttachment(String, DataSource)
 	 * @see MimeBodyPart#setFileName(String)
@@ -896,7 +894,7 @@ public class MimeMessageHelper {
 	 * <p><b>NOTE:</b> Invoke {@code addInline} <i>after</i> {@link #setText};
 	 * else, mail readers might not be able to resolve inline references correctly.
 	 * @param contentId the content ID to use. Will end up as "Content-ID" header
-	 * in the body part, surrounded by angle brackets: e.g. "myId" &rarr; "&lt;myId&gt;".
+	 * in the body part, surrounded by angle brackets: e.g. "myId" -> "&lt;myId&gt;".
 	 * Can be referenced in HTML source via src="cid:myId" expressions.
 	 * @param dataSource the {@code javax.activation.DataSource} to take
 	 * the content from, determining the InputStream and the content type
@@ -923,7 +921,7 @@ public class MimeMessageHelper {
 	 * <p><b>NOTE:</b> Invoke {@code addInline} <i>after</i> {@link #setText};
 	 * else, mail readers might not be able to resolve inline references correctly.
 	 * @param contentId the content ID to use. Will end up as "Content-ID" header
-	 * in the body part, surrounded by angle brackets: e.g. "myId" &rarr; "&lt;myId&gt;".
+	 * in the body part, surrounded by angle brackets: e.g. "myId" -> "&lt;myId&gt;".
 	 * Can be referenced in HTML source via src="cid:myId" expressions.
 	 * @param file the File resource to take the content from
 	 * @throws MessagingException in case of errors
@@ -950,7 +948,7 @@ public class MimeMessageHelper {
 	 * <p><b>NOTE:</b> Invoke {@code addInline} <i>after</i> {@link #setText};
 	 * else, mail readers might not be able to resolve inline references correctly.
 	 * @param contentId the content ID to use. Will end up as "Content-ID" header
-	 * in the body part, surrounded by angle brackets: e.g. "myId" &rarr; "&lt;myId&gt;".
+	 * in the body part, surrounded by angle brackets: e.g. "myId" -> "&lt;myId&gt;".
 	 * Can be referenced in HTML source via src="cid:myId" expressions.
 	 * @param resource the resource to take the content from
 	 * @throws MessagingException in case of errors
@@ -976,7 +974,7 @@ public class MimeMessageHelper {
 	 * <p><b>NOTE:</b> Invoke {@code addInline} <i>after</i> {@code setText};
 	 * else, mail readers might not be able to resolve inline references correctly.
 	 * @param contentId the content ID to use. Will end up as "Content-ID" header
-	 * in the body part, surrounded by angle brackets: e.g. "myId" &rarr; "&lt;myId&gt;".
+	 * in the body part, surrounded by angle brackets: e.g. "myId" -> "&lt;myId&gt;".
 	 * Can be referenced in HTML source via src="cid:myId" expressions.
 	 * @param inputStreamSource the resource to take the content from
 	 * @param contentType the content type to use for the element

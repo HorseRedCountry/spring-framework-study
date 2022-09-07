@@ -36,7 +36,7 @@ import org.springframework.web.multipart.MultipartFile;
  *
  * <p><strong>WARNING</strong>: Data binding can lead to security issues by exposing
  * parts of the object graph that are not meant to be accessed or modified by
- * external clients. Therefore, the design and use of data binding should be considered
+ * external clients. Therefore the design and use of data binding should be considered
  * carefully with regard to security. For more details, please refer to the dedicated
  * sections on data binding for
  * <a href="https://docs.spring.io/spring-framework/docs/current/reference/html/web.html#mvc-ann-initbinder-model-design">Spring Web MVC</a> and
@@ -48,7 +48,7 @@ import org.springframework.web.multipart.MultipartFile;
  * the form, but did not generate a request parameter because it was empty.
  * A field marker allows to detect that state and reset the corresponding
  * bean property accordingly. Default values, for parameters that are otherwise
- * not present, can specify a value for the field other than empty.
+ * not present, can specify a value for the field other then empty.
  *
  * @author Juergen Hoeller
  * @author Scott Andrews
@@ -203,7 +203,6 @@ public class WebDataBinder extends DataBinder {
 	protected void doBind(MutablePropertyValues mpvs) {
 		checkFieldDefaults(mpvs);
 		checkFieldMarkers(mpvs);
-		adaptEmptyArrayIndices(mpvs);
 		super.doBind(mpvs);
 	}
 
@@ -255,27 +254,6 @@ public class WebDataBinder extends DataBinder {
 					}
 					mpvs.removePropertyValue(pv);
 				}
-			}
-		}
-	}
-
-	/**
-	 * Check for property values with names that end on {@code "[]"}. This is
-	 * used by some clients for array syntax without an explicit index value.
-	 * If such values are found, drop the brackets to adapt to the expected way
-	 * of expressing the same for data binding purposes.
-	 * @param mpvs the property values to be bound (can be modified)
-	 * @since 5.3
-	 */
-	protected void adaptEmptyArrayIndices(MutablePropertyValues mpvs) {
-		for (PropertyValue pv : mpvs.getPropertyValues()) {
-			String name = pv.getName();
-			if (name.endsWith("[]")) {
-				String field = name.substring(0, name.length() - 2);
-				if (getPropertyAccessor().isWritableProperty(field) && !mpvs.contains(field)) {
-					mpvs.add(field, pv.getValue());
-				}
-				mpvs.removePropertyValue(pv);
 			}
 		}
 	}

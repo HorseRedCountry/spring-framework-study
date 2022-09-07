@@ -181,16 +181,8 @@ public abstract class AbstractHandlerExceptionResolver implements HandlerExcepti
 				}
 			}
 		}
-		return !hasHandlerMappings();
-	}
-
-	/**
-	 * Whether there are any handler mappings registered via
-	 * {@link #setMappedHandlers(Set)} or {@link #setMappedHandlerClasses(Class[])}.
-	 * @since 5.3
-	 */
-	protected boolean hasHandlerMappings() {
-		return (this.mappedHandlers != null || this.mappedHandlerClasses != null);
+		// Else only apply if there are no explicit handler mappings.
+		return (this.mappedHandlers == null && this.mappedHandlerClasses == null);
 	}
 
 	/**

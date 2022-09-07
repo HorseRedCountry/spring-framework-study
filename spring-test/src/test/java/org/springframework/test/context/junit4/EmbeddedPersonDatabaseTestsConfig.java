@@ -25,7 +25,7 @@ import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.transaction.PlatformTransactionManager;
 
 /**
- * Shared configuration for tests that need an embedded database preloaded
+ * Shared configuration for tests that need an embedded database pre-loaded
  * with the schema for the 'person' table.
  *
  * @author Sam Brannen

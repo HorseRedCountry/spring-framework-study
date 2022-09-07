@@ -46,11 +46,6 @@ import org.springframework.util.Assert;
  * with the {@code @Repository} annotation, along with defining this post-processor
  * as a bean in the application context.
  *
- * <p>As of 5.3, {@code PersistenceExceptionTranslator} beans will be sorted according
- * to Spring's dependency ordering rules: see {@link org.springframework.core.Ordered}
- * and {@link org.springframework.core.annotation.Order}. Note that such beans will
- * get retrieved from any scope, not just singleton scope, as of this 5.3 revision.
- *
  * @author Rod Johnson
  * @author Juergen Hoeller
  * @since 2.0

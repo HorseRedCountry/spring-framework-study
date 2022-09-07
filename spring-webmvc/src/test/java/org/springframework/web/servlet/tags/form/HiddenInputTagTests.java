@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 /**
  * @author Rob Harrop
  */
-class HiddenInputTagTests extends AbstractFormTagTests {
+public class HiddenInputTagTests extends AbstractFormTagTests {
 
 	private HiddenInputTag tag;
 
@@ -49,7 +49,7 @@ class HiddenInputTagTests extends AbstractFormTagTests {
 	}
 
 	@Test
-	void render() throws Exception {
+	public void render() throws Exception {
 		this.tag.setPath("name");
 		int result = this.tag.doStartTag();
 		assertThat(result).isEqualTo(Tag.SKIP_BODY);
@@ -65,7 +65,7 @@ class HiddenInputTagTests extends AbstractFormTagTests {
 	}
 
 	@Test
-	void withCustomBinder() throws Exception {
+	public void withCustomBinder() throws Exception {
 		this.tag.setPath("myFloat");
 
 		BeanPropertyBindingResult errors = new BeanPropertyBindingResult(this.bean, COMMAND_NAME);
@@ -84,14 +84,14 @@ class HiddenInputTagTests extends AbstractFormTagTests {
 	}
 
 	@Test
-	void dynamicTypeAttribute() throws JspException {
+	public void dynamicTypeAttribute() throws JspException {
 		assertThatIllegalArgumentException().isThrownBy(() ->
 				this.tag.setDynamicAttribute(null, "type", "email"))
 			.withMessage("Attribute type=\"email\" is not allowed");
 	}
 
 	@Test
-	void disabledTrue() throws Exception {
+	public void disabledTrue() throws Exception {
 		this.tag.setDisabled(true);
 
 		this.tag.doStartTag();
@@ -107,7 +107,7 @@ class HiddenInputTagTests extends AbstractFormTagTests {
 	// SPR-8661
 
 	@Test
-	void disabledFalse() throws Exception {
+	public void disabledFalse() throws Exception {
 		this.tag.setDisabled(false);
 
 		this.tag.doStartTag();
@@ -132,7 +132,7 @@ class HiddenInputTagTests extends AbstractFormTagTests {
 	protected TestBean createTestBean() {
 		this.bean = new TestBean();
 		bean.setName("Sally Greenwood");
-		bean.setMyFloat(Float.valueOf("12.34"));
+		bean.setMyFloat(new Float("12.34"));
 		return bean;
 	}
 

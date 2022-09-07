@@ -22,7 +22,9 @@ import java.io.StringReader;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -428,9 +430,9 @@ public class SelectTagTests extends AbstractFormTagTests {
 		this.tag.setPath("myFloat");
 
 		Float[] array = new Float[] {
-				Float.valueOf("12.30"), Float.valueOf("12.32"), Float.valueOf("12.34"), Float.valueOf("12.36"),
-				Float.valueOf("12.38"), Float.valueOf("12.40"), Float.valueOf("12.42"), Float.valueOf("12.44"),
-				Float.valueOf("12.46"), Float.valueOf("12.48")
+				new Float("12.30"), new Float("12.32"), new Float("12.34"), new Float("12.36"),
+				new Float("12.38"), new Float("12.40"), new Float("12.42"), new Float("12.44"),
+				new Float("12.46"), new Float("12.48")
 		};
 
 		this.tag.setItems(array);
@@ -598,7 +600,7 @@ public class SelectTagTests extends AbstractFormTagTests {
 		this.bean.setSomeList(list);
 
 		BeanPropertyBindingResult errors = new BeanPropertyBindingResult(this.bean, COMMAND_NAME);
-		errors.getPropertyAccessor().registerCustomEditor(List.class, new CustomCollectionEditor(ArrayList.class) {
+		errors.getPropertyAccessor().registerCustomEditor(List.class, new CustomCollectionEditor(LinkedList.class) {
 			@Override
 			public String getAsText() {
 				return getValue().toString();
@@ -948,7 +950,12 @@ public class SelectTagTests extends AbstractFormTagTests {
 	}
 
 	private Map getCountryToLocaleMap() {
-		Map map = new TreeMap((o1, o2) -> ((Country)o1).getName().compareTo(((Country)o2).getName()));
+		Map map = new TreeMap(new Comparator() {
+			@Override
+			public int compare(Object o1, Object o2) {
+				return ((Country)o1).getName().compareTo(((Country)o2).getName());
+			}
+		});
 		map.put(Country.COUNTRY_AT, LOCALE_AT);
 		map.put(Country.COUNTRY_NL, LOCALE_NL);
 		map.put(Country.COUNTRY_US, Locale.US);
@@ -1004,7 +1011,7 @@ public class SelectTagTests extends AbstractFormTagTests {
 		this.bean.setName("Rob");
 		this.bean.setCountry("UK");
 		this.bean.setSex("M");
-		this.bean.setMyFloat(Float.valueOf("12.34"));
+		this.bean.setMyFloat(new Float("12.34"));
 		this.bean.setSomeIntegerArray(new Integer[]{12, 34});
 		return this.bean;
 	}

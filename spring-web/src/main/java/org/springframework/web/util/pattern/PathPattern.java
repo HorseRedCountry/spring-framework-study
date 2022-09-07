@@ -47,12 +47,9 @@ import org.springframework.util.StringUtils;
  * and captures it as a variable named "spring"</li>
  * </ul>
  *
- * <p><strong>Note:</strong> In contrast to
- * {@link org.springframework.util.AntPathMatcher}, {@code **} is supported only
- * at the end of a pattern. For example {@code /pages/{**}} is valid but
- * {@code /pages/{**}/details} is not. The same applies also to the capturing
- * variant <code>{*spring}</code>. The aim is to eliminate ambiguity when
- * comparing patterns for specificity.
+ * Notable behavior difference with {@code AntPathMatcher}:<br>
+ * {@code **} and its capturing variant <code>{*spring}</code> cannot be used in the middle of a pattern
+ * string, only at the end: {@code /pages/{**}} is valid, but {@code /pages/{**}/details} is not.
  *
  * <h3>Examples</h3>
  * <ul>
@@ -64,10 +61,10 @@ import org.springframework.util.StringUtils;
  * underneath the {@code /resources/} path, including {@code /resources/image.png}
  * and {@code /resources/css/spring.css}</li>
  * <li><code>/resources/{&#42;path}</code> &mdash; matches all files
- * underneath the {@code /resources/}, as well as {@code /resources}, and captures
- * their relative path in a variable named "path"; {@code /resources/image.png}
- * will match with "path" &rarr; "/image.png", and {@code /resources/css/spring.css}
- * will match with "path" &rarr; "/css/spring.css"</li>
+ * underneath the {@code /resources/} path and captures their relative path in
+ * a variable named "path"; {@code /resources/image.png} will match with
+ * "path" &rarr; "/image.png", and {@code /resources/css/spring.css} will match
+ * with "path" &rarr; "/css/spring.css"</li>
  * <li><code>/resources/{filename:\\w+}.dat</code> will match {@code /resources/spring.dat}
  * and assign the value {@code "spring"} to the {@code filename} variable</li>
  * </ul>
@@ -113,7 +110,7 @@ public class PathPattern implements Comparable<PathPattern> {
 	/** If this pattern has no trailing slash, allow candidates to include one and still match successfully. */
 	private final boolean matchOptionalTrailingSeparator;
 
-	/** Will this match candidates in a case-sensitive way? (case sensitivity  at parse time). */
+	/** Will this match candidates in a case sensitive way? (case sensitivity  at parse time). */
 	private final boolean caseSensitive;
 
 	/** First path element in the parsed chain of path elements for this pattern. */
@@ -167,7 +164,8 @@ public class PathPattern implements Comparable<PathPattern> {
 			if (elem instanceof CaptureTheRestPathElement || elem instanceof WildcardTheRestPathElement) {
 				this.catchAll = true;
 			}
-			if (elem instanceof SeparatorPathElement && elem.next instanceof WildcardPathElement && elem.next.next == null) {
+			if (elem instanceof SeparatorPathElement && elem.next != null &&
+					elem.next instanceof WildcardPathElement && elem.next.next == null) {
 				this.endsWithSeparatorWildcard = true;
 			}
 			elem = elem.next;
@@ -189,7 +187,7 @@ public class PathPattern implements Comparable<PathPattern> {
 	 * @since 5.2
 	 */
 	public boolean hasPatternSyntax() {
-		return (this.score > 0 || this.catchAll || this.patternString.indexOf('?') != -1);
+		return (this.score > 0 || this.patternString.indexOf('?') != -1);
 	}
 
 	/**
@@ -249,7 +247,7 @@ public class PathPattern implements Comparable<PathPattern> {
 	@Nullable
 	public PathRemainingMatchInfo matchStartOfPath(PathContainer pathContainer) {
 		if (this.head == null) {
-			return new PathRemainingMatchInfo(EMPTY_PATH, pathContainer);
+			return new PathRemainingMatchInfo(pathContainer);
 		}
 		else if (!hasLength(pathContainer)) {
 			return null;
@@ -262,17 +260,15 @@ public class PathPattern implements Comparable<PathPattern> {
 			return null;
 		}
 		else {
-			PathContainer pathMatched;
-			PathContainer pathRemaining;
+			PathRemainingMatchInfo info;
 			if (matchingContext.remainingPathIndex == pathContainer.elements().size()) {
-				pathMatched = pathContainer;
-				pathRemaining = EMPTY_PATH;
+				info = new PathRemainingMatchInfo(EMPTY_PATH, matchingContext.getPathMatchResult());
 			}
 			else {
-				pathMatched = pathContainer.subPath(0, matchingContext.remainingPathIndex);
-				pathRemaining = pathContainer.subPath(matchingContext.remainingPathIndex);
+				info = new PathRemainingMatchInfo(pathContainer.subPath(matchingContext.remainingPathIndex),
+						matchingContext.getPathMatchResult());
 			}
-			return new PathRemainingMatchInfo(pathMatched, pathRemaining, matchingContext.getPathMatchResult());
+			return info;
 		}
 	}
 
@@ -594,30 +590,18 @@ public class PathPattern implements Comparable<PathPattern> {
 	 */
 	public static class PathRemainingMatchInfo {
 
-		private final PathContainer pathMatched;
-
 		private final PathContainer pathRemaining;
 
 		private final PathMatchInfo pathMatchInfo;
 
 
-		PathRemainingMatchInfo(PathContainer pathMatched, PathContainer pathRemaining) {
-			this(pathMatched, pathRemaining, PathMatchInfo.EMPTY);
+		PathRemainingMatchInfo(PathContainer pathRemaining) {
+			this(pathRemaining, PathMatchInfo.EMPTY);
 		}
 
-		PathRemainingMatchInfo(PathContainer pathMatched, PathContainer pathRemaining,
-				PathMatchInfo pathMatchInfo) {
+		PathRemainingMatchInfo(PathContainer pathRemaining, PathMatchInfo pathMatchInfo) {
 			this.pathRemaining = pathRemaining;
-			this.pathMatched = pathMatched;
 			this.pathMatchInfo = pathMatchInfo;
-		}
-
-		/**
-		 * Return the part of a path that was matched by a pattern.
-		 * @since 5.3
-		 */
-		public PathContainer getPathMatched() {
-			return this.pathMatched;
 		}
 
 		/**

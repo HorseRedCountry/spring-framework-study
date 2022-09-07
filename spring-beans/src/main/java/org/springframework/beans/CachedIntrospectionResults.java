@@ -20,12 +20,9 @@ import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.security.ProtectionDomain;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -283,8 +280,6 @@ public final class CachedIntrospectionResults {
 			}
 			this.propertyDescriptors = new LinkedHashMap<>();
 
-			Set<String> readMethodNames = new HashSet<>();
-
 			// This call is slow so we do it once.
 			PropertyDescriptor[] pds = this.beanInfo.getPropertyDescriptors();
 			for (PropertyDescriptor pd : pds) {
@@ -309,24 +304,15 @@ public final class CachedIntrospectionResults {
 				}
 				pd = buildGenericTypeAwarePropertyDescriptor(beanClass, pd);
 				this.propertyDescriptors.put(pd.getName(), pd);
-				Method readMethod = pd.getReadMethod();
-				if (readMethod != null) {
-					readMethodNames.add(readMethod.getName());
-				}
 			}
 
 			// Explicitly check implemented interfaces for setter/getter methods as well,
 			// in particular for Java 8 default methods...
 			Class<?> currClass = beanClass;
 			while (currClass != null && currClass != Object.class) {
-				introspectInterfaces(beanClass, currClass, readMethodNames);
+				introspectInterfaces(beanClass, currClass);
 				currClass = currClass.getSuperclass();
 			}
-
-			// Check for record-style accessors without prefix: e.g. "lastName()"
-			// - accessor method directly referring to instance field of same name
-			// - same convention for component accessors of Java 15 record classes
-			introspectPlainAccessors(beanClass, readMethodNames);
 
 			this.typeDescriptorCache = new ConcurrentReferenceHashMap<>();
 		}
@@ -335,9 +321,7 @@ public final class CachedIntrospectionResults {
 		}
 	}
 
-	private void introspectInterfaces(Class<?> beanClass, Class<?> currClass, Set<String> readMethodNames)
-			throws IntrospectionException {
-
+	private void introspectInterfaces(Class<?> beanClass, Class<?> currClass) throws IntrospectionException {
 		for (Class<?> ifc : currClass.getInterfaces()) {
 			if (!ClassUtils.isJavaLanguageInterface(ifc)) {
 				for (PropertyDescriptor pd : getBeanInfo(ifc).getPropertyDescriptors()) {
@@ -352,44 +336,10 @@ public final class CachedIntrospectionResults {
 							continue;
 						}
 						this.propertyDescriptors.put(pd.getName(), pd);
-						Method readMethod = pd.getReadMethod();
-						if (readMethod != null) {
-							readMethodNames.add(readMethod.getName());
-						}
 					}
 				}
-				introspectInterfaces(ifc, ifc, readMethodNames);
+				introspectInterfaces(ifc, ifc);
 			}
-		}
-	}
-
-	private void introspectPlainAccessors(Class<?> beanClass, Set<String> readMethodNames)
-			throws IntrospectionException {
-
-		for (Method method : beanClass.getMethods()) {
-			if (!this.propertyDescriptors.containsKey(method.getName()) &&
-					!readMethodNames.contains(method.getName()) && isPlainAccessor(method)) {
-				this.propertyDescriptors.put(method.getName(),
-						new GenericTypeAwarePropertyDescriptor(beanClass, method.getName(), method, null, null));
-				readMethodNames.add(method.getName());
-			}
-		}
-	}
-
-	private boolean isPlainAccessor(Method method) {
-		if (Modifier.isStatic(method.getModifiers()) ||
-				method.getDeclaringClass() == Object.class || method.getDeclaringClass() == Class.class ||
-				method.getParameterCount() > 0 || method.getReturnType() == void.class ||
-				isInvalidReadOnlyPropertyType(method.getReturnType())) {
-			return false;
-		}
-		try {
-			// Accessor method referring to instance field of same name?
-			method.getDeclaringClass().getDeclaredField(method.getName());
-			return true;
-		}
-		catch (Exception ex) {
-			return false;
 		}
 	}
 

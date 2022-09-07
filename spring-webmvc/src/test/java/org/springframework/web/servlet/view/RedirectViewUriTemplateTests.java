@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import org.springframework.web.testfixture.servlet.MockHttpServletResponse;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
-class RedirectViewUriTemplateTests {
+public class RedirectViewUriTemplateTests {
 
 	private MockHttpServletRequest request;
 
@@ -48,7 +48,7 @@ class RedirectViewUriTemplateTests {
 	}
 
 	@Test
-	void uriTemplate() throws Exception {
+	public void uriTemplate() throws Exception {
 		Map<String, Object> model = new HashMap<>();
 		model.put("foo", "bar");
 
@@ -60,7 +60,7 @@ class RedirectViewUriTemplateTests {
 	}
 
 	@Test
-	void uriTemplateEncode() throws Exception {
+	public void uriTemplateEncode() throws Exception {
 		Map<String, Object> model = new HashMap<>();
 		model.put("foo", "bar/bar baz");
 
@@ -72,7 +72,7 @@ class RedirectViewUriTemplateTests {
 	}
 
 	@Test
-	void uriTemplateAndArrayQueryParam() throws Exception {
+	public void uriTemplateAndArrayQueryParam() throws Exception {
 		Map<String, Object> model = new HashMap<>();
 		model.put("foo", "bar");
 		model.put("fooArr", new String[] { "baz", "bazz" });
@@ -84,9 +84,9 @@ class RedirectViewUriTemplateTests {
 	}
 
 	@Test
-	void uriTemplateWithObjectConversion() throws Exception {
+	public void uriTemplateWithObjectConversion() throws Exception {
 		Map<String, Object> model = new HashMap<>();
-		model.put("foo", 611L);
+		model.put("foo", new Long(611));
 
 		RedirectView redirectView = new RedirectView("/foo/{foo}");
 		redirectView.renderMergedOutputModel(model, this.request, this.response);
@@ -95,7 +95,7 @@ class RedirectViewUriTemplateTests {
 	}
 
 	@Test
-	void uriTemplateReuseCurrentRequestVars() throws Exception {
+	public void uriTemplateReuseCurrentRequestVars() throws Exception {
 		Map<String, Object> model = new HashMap<>();
 		model.put("key1", "value1");
 		model.put("name", "value2");
@@ -115,25 +115,25 @@ class RedirectViewUriTemplateTests {
 	}
 
 	@Test
-	void uriTemplateNullValue() throws Exception {
+	public void uriTemplateNullValue() throws Exception {
 		assertThatIllegalArgumentException().isThrownBy(() ->
 				new RedirectView("/{foo}").renderMergedOutputModel(new ModelMap(), this.request, this.response));
 	}
 
 	@Test
-	void emptyRedirectString() throws Exception {
+	public void emptyRedirectString() throws Exception {
 		Map<String, Object> model = new HashMap<>();
 
 		RedirectView redirectView = new RedirectView("");
 		redirectView.renderMergedOutputModel(model, this.request, this.response);
 
-		assertThat(this.response.getRedirectedUrl()).isEmpty();
+		assertThat(this.response.getRedirectedUrl()).isEqualTo("");
 	}
 
 	// SPR-9016
 
 	@Test
-	void dontApplyUriVariables() throws Exception {
+	public void dontApplyUriVariables() throws Exception {
 		String url = "/test#{'one','abc'}";
 		RedirectView redirectView = new RedirectView(url, true);
 		redirectView.setExpandUriTemplateVariables(false);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package org.springframework.scheduling.config;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.FutureTask;
 
@@ -56,9 +57,14 @@ public class ExecutorBeanDefinitionParserTests {
 		assertThat(getMaxPoolSize(executor)).isEqualTo(Integer.MAX_VALUE);
 		assertThat(getQueueCapacity(executor)).isEqualTo(Integer.MAX_VALUE);
 		assertThat(getKeepAliveSeconds(executor)).isEqualTo(60);
-		assertThat(getAllowCoreThreadTimeOut(executor)).isFalse();
+		assertThat(getAllowCoreThreadTimeOut(executor)).isEqualTo(false);
 
-		FutureTask<String> task = new FutureTask<>(() -> "foo");
+		FutureTask<String> task = new FutureTask<>(new Callable<String>() {
+			@Override
+			public String call() throws Exception {
+				return "foo";
+			}
+		});
 		executor.execute(task);
 		assertThat(task.get()).isEqualTo("foo");
 	}
@@ -90,7 +96,7 @@ public class ExecutorBeanDefinitionParserTests {
 		assertThat(getCorePoolSize(executor)).isEqualTo(9);
 		assertThat(getMaxPoolSize(executor)).isEqualTo(9);
 		assertThat(getKeepAliveSeconds(executor)).isEqualTo(37);
-		assertThat(getAllowCoreThreadTimeOut(executor)).isTrue();
+		assertThat(getAllowCoreThreadTimeOut(executor)).isEqualTo(true);
 		assertThat(getQueueCapacity(executor)).isEqualTo(Integer.MAX_VALUE);
 	}
 
@@ -100,7 +106,7 @@ public class ExecutorBeanDefinitionParserTests {
 		assertThat(getCorePoolSize(executor)).isEqualTo(123);
 		assertThat(getMaxPoolSize(executor)).isEqualTo(123);
 		assertThat(getKeepAliveSeconds(executor)).isEqualTo(60);
-		assertThat(getAllowCoreThreadTimeOut(executor)).isFalse();
+		assertThat(getAllowCoreThreadTimeOut(executor)).isEqualTo(false);
 		assertThat(getQueueCapacity(executor)).isEqualTo(Integer.MAX_VALUE);
 	}
 
@@ -109,7 +115,7 @@ public class ExecutorBeanDefinitionParserTests {
 		Object executor = this.context.getBean("propertyPlaceholderWithRange");
 		assertThat(getCorePoolSize(executor)).isEqualTo(5);
 		assertThat(getMaxPoolSize(executor)).isEqualTo(25);
-		assertThat(getAllowCoreThreadTimeOut(executor)).isFalse();
+		assertThat(getAllowCoreThreadTimeOut(executor)).isEqualTo(false);
 		assertThat(getQueueCapacity(executor)).isEqualTo(10);
 	}
 
@@ -118,7 +124,7 @@ public class ExecutorBeanDefinitionParserTests {
 		Object executor = this.context.getBean("propertyPlaceholderWithRangeAndCoreThreadTimeout");
 		assertThat(getCorePoolSize(executor)).isEqualTo(99);
 		assertThat(getMaxPoolSize(executor)).isEqualTo(99);
-		assertThat(getAllowCoreThreadTimeOut(executor)).isTrue();
+		assertThat(getAllowCoreThreadTimeOut(executor)).isEqualTo(true);
 	}
 
 	@Test

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import java.util.Map;
 import org.springframework.lang.Nullable;
 
 /**
- * Enumeration of HTTP request methods. Intended for use
+ * Java 5 enumeration of HTTP request methods. Intended for use
  * with {@link org.springframework.http.client.ClientHttpRequest}
  * and {@link org.springframework.web.client.RestTemplate}.
  *
@@ -57,13 +57,14 @@ public enum HttpMethod {
 
 
 	/**
-	 * Determine whether this {@code HttpMethod} matches the given method value.
-	 * @param method the HTTP method as a String
+	 * Determine whether this {@code HttpMethod} matches the given
+	 * method value.
+	 * @param method the method value as a String
 	 * @return {@code true} if it matches, {@code false} otherwise
 	 * @since 4.2.4
 	 */
 	public boolean matches(String method) {
-		return name().equals(method);
+		return (this == resolve(method));
 	}
 
 }

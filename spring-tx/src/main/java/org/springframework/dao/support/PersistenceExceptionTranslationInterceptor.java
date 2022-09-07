@@ -16,12 +16,15 @@
 
 package org.springframework.dao.support;
 
+import java.util.Map;
+
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
+import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.lang.Nullable;
@@ -99,7 +102,7 @@ public class PersistenceExceptionTranslationInterceptor
 	 * raw exception when declared, i.e. when the originating method signature's exception
 	 * declarations allow for the raw exception to be thrown ("false").
 	 * <p>Default is "false". Switch this flag to "true" in order to always translate
-	 * applicable exceptions, independent of the originating method signature.
+	 * applicable exceptions, independent from the originating method signature.
 	 * <p>Note that the originating method does not have to declare the specific exception.
 	 * Any base class will do as well, even {@code throws Exception}: As long as the
 	 * originating method does explicitly declare compatible exceptions, the raw exception
@@ -131,7 +134,6 @@ public class PersistenceExceptionTranslationInterceptor
 
 
 	@Override
-	@Nullable
 	public Object invoke(MethodInvocation mi) throws Throwable {
 		try {
 			return mi.proceed();
@@ -163,8 +165,12 @@ public class PersistenceExceptionTranslationInterceptor
 	 */
 	protected PersistenceExceptionTranslator detectPersistenceExceptionTranslators(ListableBeanFactory bf) {
 		// Find all translators, being careful not to activate FactoryBeans.
+		Map<String, PersistenceExceptionTranslator> pets = BeanFactoryUtils.beansOfTypeIncludingAncestors(
+				bf, PersistenceExceptionTranslator.class, false, false);
 		ChainedPersistenceExceptionTranslator cpet = new ChainedPersistenceExceptionTranslator();
-		bf.getBeanProvider(PersistenceExceptionTranslator.class, false).orderedStream().forEach(cpet::addDelegate);
+		for (PersistenceExceptionTranslator pet : pets.values()) {
+			cpet.addDelegate(pet);
+		}
 		return cpet;
 	}
 

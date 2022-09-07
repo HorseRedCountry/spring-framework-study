@@ -33,12 +33,12 @@ is a sub-interface of `BeanFactory`. It adds:
 * Application-layer specific contexts such as the `WebApplicationContext`
 for use in web applications.
 
-In short, the `BeanFactory` provides the configuration framework and basic functionality,
-and the `ApplicationContext` adds more enterprise-specific functionality. The
-`ApplicationContext` is a complete superset of the `BeanFactory` and is used exclusively
-in this chapter in descriptions of Spring's IoC container. For more information on using
-the `BeanFactory` instead of the `ApplicationContext,` see the section covering the
-<<beans-beanfactory, `BeanFactory` API>>.
+In short, the `BeanFactory` provides the configuration framework and basic
+functionality, and the `ApplicationContext` adds more enterprise-specific functionality.
+The `ApplicationContext` is a complete superset of the `BeanFactory` and is used
+exclusively in this chapter in descriptions of Spring's IoC container. For more
+information on using the `BeanFactory` instead of the `ApplicationContext,` see
+<<beans-beanfactory>>.
 
 In Spring, the objects that form the backbone of your application and that are managed
 by the Spring IoC container are called beans. A bean is an object that is
@@ -503,11 +503,11 @@ The following table describes these properties:
 In addition to bean definitions that contain information on how to create a specific
 bean, the `ApplicationContext` implementations also permit the registration of existing
 objects that are created outside the container (by users). This is done by accessing the
-ApplicationContext's `BeanFactory` through the `getBeanFactory()` method, which returns
-the `DefaultListableBeanFactory` implementation. `DefaultListableBeanFactory` supports
-this registration through the `registerSingleton(..)` and `registerBeanDefinition(..)`
-methods. However, typical applications work solely with beans defined through regular
-bean definition metadata.
+ApplicationContext's BeanFactory through the `getBeanFactory()` method, which returns the
+BeanFactory `DefaultListableBeanFactory` implementation. `DefaultListableBeanFactory`
+supports this registration through the `registerSingleton(..)` and
+`registerBeanDefinition(..)` methods. However, typical applications work solely with beans
+defined through regular bean definition metadata.
 
 [NOTE]
 ====
@@ -693,11 +693,10 @@ able to call this method (with optional arguments, as described later) and retur
 object, which subsequently is treated as if it had been created through a constructor.
 One use for such a bean definition is to call `static` factories in legacy code.
 
-The following bean definition specifies that the bean will be created by calling a
+The following bean definition specifies that the bean be created by calling a
 factory method. The definition does not specify the type (class) of the returned object,
-but rather the class containing the factory method. In this example, the
-`createInstance()` method must be a `static` method. The following example shows how to
-specify a factory method:
+only the class containing the factory method. In this example, the `createInstance()`
+method must be a static method. The following example shows how to specify a factory method:
 
 [source,xml,indent=0,subs="verbatim,quotes"]
 ----
@@ -726,7 +725,6 @@ The following example shows a class that would work with the preceding bean defi
 	class ClientService private constructor() {
 		companion object {
 			private val clientService = ClientService()
-			@JvmStatic
 			fun createInstance() = clientService
 		}
 	}
@@ -1368,7 +1366,7 @@ The following example shows the corresponding `ExampleBean` class:
 		}
 	}
 ----
-[source,kotlin,indent=0,subs="verbatim,quotes",role="secondary"]
+[source,java,indent=0,subs="verbatim,quotes",role="secondary"]
 .Kotlin
 ----
 class ExampleBean(
@@ -1427,7 +1425,6 @@ The following example shows the corresponding `ExampleBean` class:
 			// a static factory method; the arguments to this method can be
 			// considered the dependencies of the bean that is returned,
 			// regardless of how those arguments are actually used.
-			@JvmStatic
 			fun createInstance(anotherBean: AnotherBean, yetAnotherBean: YetAnotherBean, i: Int): ExampleBean {
 				val eb = ExampleBean (...)
 				// some other operations...
@@ -1791,7 +1788,7 @@ a parent collection definition is redundant and does not result in the desired m
 [[beans-collection-elements-strongly-typed]]
 ===== Strongly-typed collection
 
-Thanks to Java's support for generic types, you can use strongly typed collections.
+With the introduction of generic types in Java 5, you can use strongly typed collections.
 That is, it is possible to declare a `Collection` type such that it can only contain
 (for example) `String` elements. If you use Spring to dependency-inject a
 strongly-typed `Collection` into a bean, you can take advantage of Spring's
@@ -2972,8 +2969,6 @@ When using annotation-driven components or Java configuration, you can use the
 ----
 
 
-
-
 [[beans-factory-scopes-application]]
 ==== Application Scope
 
@@ -3014,17 +3009,6 @@ following example shows how to do so:
 		// ...
 	}
 ----
-
-
-
-
-[[beans-factory-scopes-websocket]]
-==== WebSocket Scope
-
-WebSocket scope is associated with the lifecycle of a WebSocket session and applies to
-STOMP over WebSocket applications, see
-<<web.adoc#websocket-stomp-websocket-scope,WebSocket scope>> for more details.
-
 
 
 
@@ -3982,6 +3966,11 @@ dependency type. The following table summarizes the most important `Aware` inter
 | Name of the declaring bean.
 | <<beans-factory-aware>>
 
+| `BootstrapContextAware`
+| Resource adapter `BootstrapContext` the container runs in. Typically available only in
+  JCA-aware `ApplicationContext` instances.
+| <<integration.adoc#cci, JCA CCI>>
+
 | `LoadTimeWeaverAware`
 | Defined weaver for processing class definition at load time.
 | <<aop-aj-ltw>>
@@ -4689,7 +4678,7 @@ example:
 ----
 	class SimpleMovieLister {
 
-		@set:Required
+		@Required
 		lateinit var movieFinder: MovieFinder
 
 		// ...
@@ -4786,7 +4775,7 @@ as the following example shows:
 ----
 	class SimpleMovieLister {
 
-		@set:Autowired
+		@Autowired
 		lateinit var movieFinder: MovieFinder
 
 		// ...
@@ -5937,7 +5926,7 @@ named `movieFinder` injected into its setter method:
 ----
 	class SimpleMovieLister {
 
-		@set:Resource
+		@Resource
 		private lateinit var movieFinder: MovieFinder
 
 	}
@@ -6614,7 +6603,7 @@ and using "`stub`" repositories instead:
 .Kotlin
 ----
 	@Configuration
-	@ComponentScan(basePackages = ["org.example"],
+	@ComponentScan(basePackages = "org.example",
 			includeFilters = [Filter(type = FilterType.REGEX, pattern = [".*Stub.*Repository"])],
 			excludeFilters = [Filter(Repository::class)])
 	class AppConfig {
@@ -7303,11 +7292,11 @@ preceding example:
 	class SimpleMovieLister {
 
 		@Inject
-		lateinit var movieFinder: Provider<MovieFinder>
+		lateinit var movieFinder: MovieFinder
 
 
 		fun listMovies() {
-			movieFinder.get().findMovies(...)
+			movieFinder.findMovies(...)
 			// ...
 		}
 	}
@@ -7493,7 +7482,7 @@ exact same way as when you use Spring annotations, as the following example show
 	}
 ----
 
-NOTE: In contrast to `@Component`, the JSR-330 `@Named` and the JSR-250 `@ManagedBean`
+NOTE: In contrast to `@Component`, the JSR-330 `@Named` and the JSR-250 `ManagedBean`
 annotations are not composable. You should use Spring's stereotype model for building
 custom component annotations.
 
@@ -7903,10 +7892,6 @@ init-param):
 	</web-app>
 ----
 
-NOTE: For programmatic use cases, a `GenericWebApplicationContext` can be used as an
-alternative to `AnnotationConfigWebApplicationContext`. See the
-{api-spring-framework}/web/context/support/GenericWebApplicationContext.html[`GenericWebApplicationContext`]
-javadoc for details.
 
 
 [[beans-java-bean-annotation]]
@@ -7971,26 +7956,6 @@ following text image shows:
 [literal,subs="verbatim,quotes"]
 ----
 transferService -> com.acme.TransferServiceImpl
-----
-
-You can also use default methods to define beans. This allows composition of bean
-configurations by implementing interfaces with bean definitions on default methods.
-
-[source,java,indent=0,subs="verbatim,quotes",role="primary"]
-.Java
-----
-	public interface BaseConfig {
-
-		@Bean
-		default TransferServiceImpl transferService() {
-			return new TransferServiceImpl();
-		}
-	}
-
-	@Configuration
-	public class AppConfig implements BaseConfig {
-
-	}
 ----
 
 You can also declare your `@Bean` method with an interface (or base class)
@@ -9654,7 +9619,7 @@ of creating a custom composed annotation. The following example defines a custom
 [source,kotlin,indent=0,subs="verbatim,quotes",role="secondary"]
 .Kotlin
 ----
-	@Target(AnnotationTarget.CLASS)
+	@Target(AnnotationTarget.TYPE)
 	@Retention(AnnotationRetention.RUNTIME)
 	@Profile("production")
 	annotation class Production
@@ -9982,9 +9947,9 @@ is configured with two PropertySource objects -- one representing the set of JVM
 
 NOTE: These default property sources are present for `StandardEnvironment`, for use in standalone
 applications. {api-spring-framework}/web/context/support/StandardServletEnvironment.html[`StandardServletEnvironment`]
-is populated with additional default property sources including servlet config, servlet
-context parameters, and a {api-spring-framework}/jndi/JndiPropertySource.html[`JndiPropertySource`]
-if JNDI is available.
+is populated with additional default property sources including servlet config and servlet
+context parameters. It can optionally enable a {api-spring-framework}/jndi/JndiPropertySource.html[`JndiPropertySource`].
+See the javadoc for details.
 
 Concretely, when you use the `StandardEnvironment`, the call to `env.containsProperty("my-property")`
 returns true if a `my-property` system property or `my-property` environment variable is present at
@@ -10642,7 +10607,7 @@ shows such a class:
 ----
 	class BlockedListNotifier : ApplicationListener<BlockedListEvent> {
 
-		lateinit var notificationAddress: String
+		lateinit var notificationAddres: String
 
 		override fun onApplicationEvent(event: BlockedListEvent) {
 			// notify appropriate parties via notificationAddress...
@@ -11007,76 +10972,6 @@ regardless of the actual context type.
 
 
 
-[[context-functionality-startup]]
-=== Application Startup Tracking
-
-The `ApplicationContext` manages the lifecycle of Spring applications and provides a rich
-programming model around components. As a result, complex applications can have equally
-complex component graphs and startup phases.
-
-Tracking the application startup steps with specific metrics can help understand where
-time is being spent during the startup phase, but it can also be used as a way to better
-understand the context lifecycle as a whole.
-
-The `AbstractApplicationContext` (and its subclasses) is instrumented with an
-`ApplicationStartup`, which collects `StartupStep` data about various startup phases:
-
-* application context lifecycle (base packages scanning, config classes management)
-* beans lifecycle (instantiation, smart initialization, post processing)
-* application events processing
-
-Here is an example of instrumentation in the `AnnotationConfigApplicationContext`:
-
-[source,java,indent=0,subs="verbatim,quotes",role="primary"]
-.Java
-----
-	// create a startup step and start recording
-	StartupStep scanPackages = this.getApplicationStartup().start("spring.context.base-packages.scan");
-	// add tagging information to the current step
-	scanPackages.tag("packages", () -> Arrays.toString(basePackages));
-	// perform the actual phase we're instrumenting
-	this.scanner.scan(basePackages);
-	// end the current step
-	scanPackages.end();
-----
-[source,kotlin,indent=0,subs="verbatim,quotes",role="secondary"]
-.Kotlin
-----
-	// create a startup step and start recording
-	val scanPackages = this.getApplicationStartup().start("spring.context.base-packages.scan")
-	// add tagging information to the current step
-	scanPackages.tag("packages", () -> Arrays.toString(basePackages))
-	// perform the actual phase we're instrumenting
-	this.scanner.scan(basePackages)
-	// end the current step
-	scanPackages.end()
-----
-
-The application context is already instrumented with multiple steps.
-Once recorded, these startup steps can be collected, displayed and analyzed with specific tools.
-For a complete list of existing startup steps, you can check out the
-<<application-startup-steps, dedicated appendix section>>.
-
-The default `ApplicationStartup` implementation is a no-op variant, for minimal overhead.
-This means no metrics will be collected during application startup by default.
-Spring Framework ships with an implementation for tracking startup steps with Java Flight Recorder:
-`FlightRecorderApplicationStartup`. To use this variant, you must configure an instance of it
-to the `ApplicationContext` as soon as it's been created.
-
-Developers can also use the `ApplicationStartup` infrastructure if they're providing their own
-`AbstractApplicationContext` subclass, or if they wish to collect more precise data.
-
-WARNING: `ApplicationStartup` is meant to be only used during application startup and for
-the core container; this is by no means a replacement for Java profilers or
-metrics libraries like https://micrometer.io[Micrometer].
-
-To start collecting custom `StartupStep`, components can either get the `ApplicationStartup`
-instance from the application context directly, make their component implement `ApplicationStartupAware`,
-or ask for the `ApplicationStartup` type on any injection point.
-
-NOTE: Developers should not use the `"spring.*"` namespace when creating custom startup steps.
-This namespace is reserved for internal Spring usage and is subject to change.
-
 [[context-create]]
 === Convenient ApplicationContext Instantiation for Web Applications
 
@@ -11158,7 +11053,7 @@ by other application modules on the same machine.
 
 
 [[beans-beanfactory]]
-== The `BeanFactory` API
+== The `BeanFactory`
 
 The `BeanFactory` API provides the underlying basis for Spring's IoC functionality.
 Its specific contracts are mostly used in integration with other parts of Spring and

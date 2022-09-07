@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import org.springframework.context.i18n.LocaleContext;
 import org.springframework.core.ResolvableType;
 import org.springframework.core.codec.Hints;
 import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferFactory;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.core.io.buffer.DefaultDataBufferFactory;
 import org.springframework.http.HttpCookie;
@@ -75,9 +76,6 @@ class DefaultServerRequestBuilder implements ServerRequest.Builder {
 
 	private URI uri;
 
-	@Nullable
-	private String contextPath;
-
 	private final HttpHeaders headers = new HttpHeaders();
 
 	private final MultiValueMap<String, HttpCookie> cookies = new LinkedMultiValueMap<>();
@@ -93,7 +91,6 @@ class DefaultServerRequestBuilder implements ServerRequest.Builder {
 		this.exchange = other.exchange();
 		this.methodName = other.methodName();
 		this.uri = other.uri();
-		this.contextPath = other.requestPath().contextPath().value();
 		this.headers.addAll(other.headers().asHttpHeaders());
 		this.cookies.addAll(other.cookies());
 		this.attributes.putAll(other.attributes());
@@ -111,12 +108,6 @@ class DefaultServerRequestBuilder implements ServerRequest.Builder {
 	public ServerRequest.Builder uri(URI uri) {
 		Assert.notNull(uri, "URI must not be null");
 		this.uri = uri;
-		return this;
-	}
-
-	@Override
-	public ServerRequest.Builder contextPath(@Nullable String contextPath) {
-		this.contextPath = contextPath;
 		return this;
 	}
 
@@ -160,10 +151,11 @@ class DefaultServerRequestBuilder implements ServerRequest.Builder {
 	public ServerRequest.Builder body(String body) {
 		Assert.notNull(body, "Body must not be null");
 		releaseBody();
+		DataBufferFactory dataBufferFactory = new DefaultDataBufferFactory();
 		this.body = Flux.just(body).
 				map(s -> {
 					byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
-					return DefaultDataBufferFactory.sharedInstance.wrap(bytes);
+					return dataBufferFactory.wrap(bytes);
 				});
 		return this;
 	}
@@ -187,7 +179,7 @@ class DefaultServerRequestBuilder implements ServerRequest.Builder {
 	@Override
 	public ServerRequest build() {
 		ServerHttpRequest serverHttpRequest = new BuiltServerHttpRequest(this.exchange.getRequest().getId(),
-				this.methodName, this.uri, this.contextPath, this.headers, this.cookies, this.body);
+				this.methodName, this.uri, this.headers, this.cookies, this.body);
 		ServerWebExchange exchange = new DelegatingServerWebExchange(
 				serverHttpRequest, this.attributes, this.exchange, this.messageReaders);
 		return new DefaultServerRequest(exchange, this.messageReaders);
@@ -214,13 +206,13 @@ class DefaultServerRequestBuilder implements ServerRequest.Builder {
 
 		private final Flux<DataBuffer> body;
 
-		public BuiltServerHttpRequest(String id, String method, URI uri, @Nullable String contextPath,
-				HttpHeaders headers, MultiValueMap<String, HttpCookie> cookies, Flux<DataBuffer> body) {
+		public BuiltServerHttpRequest(String id, String method, URI uri, HttpHeaders headers,
+				MultiValueMap<String, HttpCookie> cookies, Flux<DataBuffer> body) {
 
 			this.id = id;
 			this.method = method;
 			this.uri = uri;
-			this.path = RequestPath.parse(uri, contextPath);
+			this.path = RequestPath.parse(uri, null);
 			this.headers = HttpHeaders.readOnlyHttpHeaders(headers);
 			this.cookies = unmodifiableCopy(cookies);
 			this.queryParams = parseQueryParams(uri);

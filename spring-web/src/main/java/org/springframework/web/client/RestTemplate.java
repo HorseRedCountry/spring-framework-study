@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package org.springframework.web.client;
 
 import java.io.IOException;
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.ArrayList;
@@ -29,7 +28,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.core.SpringProperties;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -51,7 +49,6 @@ import org.springframework.http.converter.feed.AtomFeedHttpMessageConverter;
 import org.springframework.http.converter.feed.RssChannelHttpMessageConverter;
 import org.springframework.http.converter.json.GsonHttpMessageConverter;
 import org.springframework.http.converter.json.JsonbHttpMessageConverter;
-import org.springframework.http.converter.json.KotlinSerializationJsonHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.http.converter.smile.MappingJackson2SmileHttpMessageConverter;
 import org.springframework.http.converter.support.AllEncompassingFormHttpMessageConverter;
@@ -84,7 +81,6 @@ import org.springframework.web.util.UriTemplateHandler;
  * @author Roy Clarkson
  * @author Juergen Hoeller
  * @author Sam Brannen
- * @author Sebastien Deleuze
  * @since 3.0
  * @see HttpMessageConverter
  * @see RequestCallback
@@ -92,13 +88,6 @@ import org.springframework.web.util.UriTemplateHandler;
  * @see ResponseErrorHandler
  */
 public class RestTemplate extends InterceptingHttpAccessor implements RestOperations {
-
-	/**
-	 * Boolean flag controlled by a {@code spring.xml.ignore} system property that instructs Spring to
-	 * ignore XML, i.e. to not initialize the XML-related infrastructure.
-	 * <p>The default is "false".
-	 */
-	private static final boolean shouldIgnoreXml = SpringProperties.getFlag("spring.xml.ignore");
 
 	private static final boolean romePresent;
 
@@ -116,8 +105,6 @@ public class RestTemplate extends InterceptingHttpAccessor implements RestOperat
 
 	private static final boolean jsonbPresent;
 
-	private static final boolean kotlinSerializationJsonPresent;
-
 	static {
 		ClassLoader classLoader = RestTemplate.class.getClassLoader();
 		romePresent = ClassUtils.isPresent("com.rometools.rome.feed.WireFeed", classLoader);
@@ -129,7 +116,6 @@ public class RestTemplate extends InterceptingHttpAccessor implements RestOperat
 		jackson2CborPresent = ClassUtils.isPresent("com.fasterxml.jackson.dataformat.cbor.CBORFactory", classLoader);
 		gsonPresent = ClassUtils.isPresent("com.google.gson.Gson", classLoader);
 		jsonbPresent = ClassUtils.isPresent("javax.json.bind.Jsonb", classLoader);
-		kotlinSerializationJsonPresent = ClassUtils.isPresent("kotlinx.serialization.json.Json", classLoader);
 	}
 
 
@@ -150,13 +136,11 @@ public class RestTemplate extends InterceptingHttpAccessor implements RestOperat
 		this.messageConverters.add(new ByteArrayHttpMessageConverter());
 		this.messageConverters.add(new StringHttpMessageConverter());
 		this.messageConverters.add(new ResourceHttpMessageConverter(false));
-		if (!shouldIgnoreXml) {
-			try {
-				this.messageConverters.add(new SourceHttpMessageConverter<>());
-			}
-			catch (Error err) {
-				// Ignore when no TransformerFactory implementation is available
-			}
+		try {
+			this.messageConverters.add(new SourceHttpMessageConverter<>());
+		}
+		catch (Error err) {
+			// Ignore when no TransformerFactory implementation is available
 		}
 		this.messageConverters.add(new AllEncompassingFormHttpMessageConverter());
 
@@ -165,13 +149,11 @@ public class RestTemplate extends InterceptingHttpAccessor implements RestOperat
 			this.messageConverters.add(new RssChannelHttpMessageConverter());
 		}
 
-		if (!shouldIgnoreXml) {
-			if (jackson2XmlPresent) {
-				this.messageConverters.add(new MappingJackson2XmlHttpMessageConverter());
-			}
-			else if (jaxb2Present) {
-				this.messageConverters.add(new Jaxb2RootElementHttpMessageConverter());
-			}
+		if (jackson2XmlPresent) {
+			this.messageConverters.add(new MappingJackson2XmlHttpMessageConverter());
+		}
+		else if (jaxb2Present) {
+			this.messageConverters.add(new Jaxb2RootElementHttpMessageConverter());
 		}
 
 		if (jackson2Present) {
@@ -182,9 +164,6 @@ public class RestTemplate extends InterceptingHttpAccessor implements RestOperat
 		}
 		else if (jsonbPresent) {
 			this.messageConverters.add(new JsonbHttpMessageConverter());
-		}
-		else if (kotlinSerializationJsonPresent) {
-			this.messageConverters.add(new KotlinSerializationJsonHttpMessageConverter());
 		}
 
 		if (jackson2SmilePresent) {
@@ -652,40 +631,22 @@ public class RestTemplate extends InterceptingHttpAccessor implements RestOperat
 	}
 
 	@Override
-	public <T> ResponseEntity<T> exchange(RequestEntity<?> entity, Class<T> responseType)
+	public <T> ResponseEntity<T> exchange(RequestEntity<?> requestEntity, Class<T> responseType)
 			throws RestClientException {
 
-		RequestCallback requestCallback = httpEntityCallback(entity, responseType);
+		RequestCallback requestCallback = httpEntityCallback(requestEntity, responseType);
 		ResponseExtractor<ResponseEntity<T>> responseExtractor = responseEntityExtractor(responseType);
-		return nonNull(doExecute(resolveUrl(entity), entity.getMethod(), requestCallback, responseExtractor));
+		return nonNull(doExecute(requestEntity.getUrl(), requestEntity.getMethod(), requestCallback, responseExtractor));
 	}
 
 	@Override
-	public <T> ResponseEntity<T> exchange(RequestEntity<?> entity, ParameterizedTypeReference<T> responseType)
+	public <T> ResponseEntity<T> exchange(RequestEntity<?> requestEntity, ParameterizedTypeReference<T> responseType)
 			throws RestClientException {
 
 		Type type = responseType.getType();
-		RequestCallback requestCallback = httpEntityCallback(entity, type);
+		RequestCallback requestCallback = httpEntityCallback(requestEntity, type);
 		ResponseExtractor<ResponseEntity<T>> responseExtractor = responseEntityExtractor(type);
-		return nonNull(doExecute(resolveUrl(entity), entity.getMethod(), requestCallback, responseExtractor));
-	}
-
-	private URI resolveUrl(RequestEntity<?> entity) {
-		if (entity instanceof RequestEntity.UriTemplateRequestEntity) {
-			RequestEntity.UriTemplateRequestEntity<?> ext = (RequestEntity.UriTemplateRequestEntity<?>) entity;
-			if (ext.getVars() != null) {
-				return this.uriTemplateHandler.expand(ext.getUriTemplate(), ext.getVars());
-			}
-			else if (ext.getVarsMap() != null) {
-				return this.uriTemplateHandler.expand(ext.getUriTemplate(), ext.getVarsMap());
-			}
-			else {
-				throw new IllegalStateException("No variables specified for URI template: " + ext.getUriTemplate());
-			}
-		}
-		else {
-			return entity.getUrl();
-		}
+		return nonNull(doExecute(requestEntity.getUrl(), requestEntity.getMethod(), requestCallback, responseExtractor));
 	}
 
 
@@ -886,7 +847,7 @@ public class RestTemplate extends InterceptingHttpAccessor implements RestOperat
 			if (this.responseType != null) {
 				List<MediaType> allSupportedMediaTypes = getMessageConverters().stream()
 						.filter(converter -> canReadResponse(this.responseType, converter))
-						.flatMap((HttpMessageConverter<?> converter) -> getSupportedMediaTypes(this.responseType, converter))
+						.flatMap(this::getSupportedMediaTypes)
 						.distinct()
 						.sorted(MediaType.SPECIFICITY_COMPARATOR)
 						.collect(Collectors.toList());
@@ -909,10 +870,8 @@ public class RestTemplate extends InterceptingHttpAccessor implements RestOperat
 			return false;
 		}
 
-		private Stream<MediaType> getSupportedMediaTypes(Type type, HttpMessageConverter<?> converter) {
-			Type rawType = (type instanceof ParameterizedType ? ((ParameterizedType) type).getRawType() : type);
-			Class<?> clazz = (rawType instanceof Class ? (Class<?>) rawType : null);
-			return (clazz != null ? converter.getSupportedMediaTypes(clazz) : converter.getSupportedMediaTypes())
+		private Stream<MediaType> getSupportedMediaTypes(HttpMessageConverter<?> messageConverter) {
+			return messageConverter.getSupportedMediaTypes()
 					.stream()
 					.map(mediaType -> {
 						if (mediaType.getCharset() != null) {

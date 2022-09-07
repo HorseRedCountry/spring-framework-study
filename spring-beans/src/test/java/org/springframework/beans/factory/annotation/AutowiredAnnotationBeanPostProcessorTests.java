@@ -22,14 +22,15 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -1326,7 +1327,7 @@ public class AutowiredAnnotationBeanPostProcessorTests {
 
 		ObjectFactoryFieldInjectionBean bean = (ObjectFactoryFieldInjectionBean) bf.getBean("annotatedBean");
 		assertThat(bean.getTestBean()).isSameAs(bf.getBean("testBean"));
-		bean = SerializationTestUtils.serializeAndDeserialize(bean);
+		bean = (ObjectFactoryFieldInjectionBean) SerializationTestUtils.serializeAndDeserialize(bean);
 		assertThat(bean.getTestBean()).isSameAs(bf.getBean("testBean"));
 	}
 
@@ -2900,7 +2901,7 @@ public class AutowiredAnnotationBeanPostProcessorTests {
 
 
 	@SuppressWarnings("serial")
-	public static class SelfInjectionCollectionBean extends ArrayList<SelfInjectionCollectionBean> {
+	public static class SelfInjectionCollectionBean extends LinkedList<SelfInjectionCollectionBean> {
 
 		@Autowired
 		public SelfInjectionCollectionBean reference;
@@ -3024,7 +3025,7 @@ public class AutowiredAnnotationBeanPostProcessorTests {
 		}
 
 		public List<TestBean> iterateTestBeans() {
-			List<TestBean> resolved = new ArrayList<>();
+			List<TestBean> resolved = new LinkedList<>();
 			for (TestBean tb : this.testBeanProvider) {
 				resolved.add(tb);
 			}
@@ -3032,7 +3033,7 @@ public class AutowiredAnnotationBeanPostProcessorTests {
 		}
 
 		public List<TestBean> forEachTestBeans() {
-			List<TestBean> resolved = new ArrayList<>();
+			List<TestBean> resolved = new LinkedList<>();
 			this.testBeanProvider.forEach(resolved::add);
 			return resolved;
 		}
@@ -3659,8 +3660,11 @@ public class AutowiredAnnotationBeanPostProcessorTests {
 		@SuppressWarnings("unchecked")
 		public <T> T createMock(Class<T> toMock) {
 			return (T) Proxy.newProxyInstance(AutowiredAnnotationBeanPostProcessorTests.class.getClassLoader(), new Class<?>[] {toMock},
-					(InvocationHandler) (proxy, method, args) -> {
-						throw new UnsupportedOperationException("mocked!");
+					new InvocationHandler() {
+						@Override
+						public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+							throw new UnsupportedOperationException("mocked!");
+						}
 					});
 		}
 	}

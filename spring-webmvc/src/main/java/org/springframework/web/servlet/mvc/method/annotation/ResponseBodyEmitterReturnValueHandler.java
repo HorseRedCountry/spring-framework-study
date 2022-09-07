@@ -17,6 +17,7 @@
 package org.springframework.web.servlet.mvc.method.annotation;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,11 +31,11 @@ import org.springframework.core.ReactiveAdapterRegistry;
 import org.springframework.core.ResolvableType;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
-import org.springframework.http.server.DelegatingServerHttpResponse;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.lang.Nullable;
@@ -48,7 +49,7 @@ import org.springframework.web.method.support.HandlerMethodReturnValueHandler;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
 /**
- * Handler for return values of type {@link ResponseBodyEmitter} and subclasses
+ * Handler for return values of type {@link ResponseBodyEmitter} and sub-classes
  * such as {@link SseEmitter} including the same types wrapped with
  * {@link ResponseEntity}.
  *
@@ -59,6 +60,8 @@ import org.springframework.web.method.support.ModelAndViewContainer;
  * @since 4.2
  */
 public class ResponseBodyEmitterReturnValueHandler implements HandlerMethodReturnValueHandler {
+
+	private final List<HttpMessageConverter<?>> messageConverters;
 
 	private final List<HttpMessageConverter<?>> sseMessageConverters;
 
@@ -73,6 +76,7 @@ public class ResponseBodyEmitterReturnValueHandler implements HandlerMethodRetur
 	 */
 	public ResponseBodyEmitterReturnValueHandler(List<HttpMessageConverter<?>> messageConverters) {
 		Assert.notEmpty(messageConverters, "HttpMessageConverter List must not be empty");
+		this.messageConverters = messageConverters;
 		this.sseMessageConverters = initSseConverters(messageConverters);
 		this.reactiveHandler = new ReactiveTypeHandler();
 	}
@@ -89,6 +93,7 @@ public class ResponseBodyEmitterReturnValueHandler implements HandlerMethodRetur
 			ReactiveAdapterRegistry registry, TaskExecutor executor, ContentNegotiationManager manager) {
 
 		Assert.notEmpty(messageConverters, "HttpMessageConverter List must not be empty");
+		this.messageConverters = messageConverters;
 		this.sseMessageConverters = initSseConverters(messageConverters);
 		this.reactiveHandler = new ReactiveTypeHandler(registry, executor, manager);
 	}
@@ -254,13 +259,20 @@ public class ResponseBodyEmitterReturnValueHandler implements HandlerMethodRetur
 	 * Wrap to silently ignore header changes HttpMessageConverter's that would
 	 * otherwise cause HttpHeaders to raise exceptions.
 	 */
-	private static class StreamingServletServerHttpResponse extends DelegatingServerHttpResponse {
+	private static class StreamingServletServerHttpResponse implements ServerHttpResponse {
+
+		private final ServerHttpResponse delegate;
 
 		private final HttpHeaders mutableHeaders = new HttpHeaders();
 
 		public StreamingServletServerHttpResponse(ServerHttpResponse delegate) {
-			super(delegate);
+			this.delegate = delegate;
 			this.mutableHeaders.putAll(delegate.getHeaders());
+		}
+
+		@Override
+		public void setStatusCode(HttpStatus status) {
+			this.delegate.setStatusCode(status);
 		}
 
 		@Override
@@ -268,6 +280,20 @@ public class ResponseBodyEmitterReturnValueHandler implements HandlerMethodRetur
 			return this.mutableHeaders;
 		}
 
+		@Override
+		public OutputStream getBody() throws IOException {
+			return this.delegate.getBody();
+		}
+
+		@Override
+		public void flush() throws IOException {
+			this.delegate.flush();
+		}
+
+		@Override
+		public void close() {
+			this.delegate.close();
+		}
 	}
 
 }

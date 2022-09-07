@@ -17,6 +17,7 @@
 package org.springframework.web.context.request.async;
 
 import java.util.concurrent.Callable;
+import java.util.function.Consumer;
 
 import javax.servlet.AsyncEvent;
 
@@ -95,7 +96,12 @@ public class WebAsyncManagerErrorTests {
 
 		StubCallable callable = new StubCallable();
 		WebAsyncTask<Object> webAsyncTask = new WebAsyncTask<>(callable);
-		webAsyncTask.onError(() -> 7);
+		webAsyncTask.onError(new Callable<Object>() {
+			@Override
+			public Object call() throws Exception {
+				return 7;
+			}
+		});
 
 		this.asyncManager.startCallableProcessing(webAsyncTask);
 
@@ -196,7 +202,12 @@ public class WebAsyncManagerErrorTests {
 	public void startDeferredResultProcessingErrorAndResumeThroughCallback() throws Exception {
 
 		final DeferredResult<Throwable> deferredResult = new DeferredResult<>();
-		deferredResult.onError(t -> deferredResult.setResult(t));
+		deferredResult.onError(new Consumer<Throwable>() {
+			@Override
+			public void accept(Throwable t) {
+				deferredResult.setResult(t);
+			}
+		});
 
 		this.asyncManager.startDeferredResultProcessing(deferredResult);
 

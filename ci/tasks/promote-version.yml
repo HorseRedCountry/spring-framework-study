@@ -1,10 +1,5 @@
 ---
 platform: linux
-image_resource:
-  type: registry-image
-  source:
-    repository: springio/concourse-release-scripts
-    tag: '0.3.4'
 inputs:
 - name: git-repo
 - name: artifactory-repo
@@ -18,6 +13,6 @@ params:
   SONATYPE_USER:
   SONATYPE_PASSWORD:
   SONATYPE_URL:
-  SONATYPE_STAGING_PROFILE:
+  SONATYPE_STAGING_PROFILE_ID:
 run:
   path: git-repo/ci/scripts/promote-version.sh

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,54 +36,6 @@ import static org.assertj.core.api.Assertions.entry;
  * @author Sam Brannen
  */
 public abstract class AbstractMethodMetadataTests {
-
-	@Test
-	public void verifyEquals() throws Exception {
-		MethodMetadata withMethod1 = getTagged(WithMethod.class);
-		MethodMetadata withMethod2 = getTagged(WithMethod.class);
-		MethodMetadata withMethodWithTwoArguments1 = getTagged(WithMethodWithTwoArguments.class);
-		MethodMetadata withMethodWithTwoArguments2 = getTagged(WithMethodWithTwoArguments.class);
-
-		assertThat(withMethod1.equals(null)).isFalse();
-
-		assertThat(withMethod1.equals(withMethod1)).isTrue();
-		assertThat(withMethod2.equals(withMethod2)).isTrue();
-		assertThat(withMethod1.equals(withMethod2)).isTrue();
-		assertThat(withMethod2.equals(withMethod1)).isTrue();
-
-		assertThat(withMethodWithTwoArguments1.equals(withMethodWithTwoArguments1)).isTrue();
-		assertThat(withMethodWithTwoArguments2.equals(withMethodWithTwoArguments2)).isTrue();
-		assertThat(withMethodWithTwoArguments1.equals(withMethodWithTwoArguments2)).isTrue();
-		assertThat(withMethodWithTwoArguments2.equals(withMethodWithTwoArguments1)).isTrue();
-
-		assertThat(withMethod1.equals(withMethodWithTwoArguments1)).isFalse();
-		assertThat(withMethodWithTwoArguments1.equals(withMethod1)).isFalse();
-	}
-
-	@Test
-	public void verifyHashCode() throws Exception {
-		MethodMetadata withMethod1 = getTagged(WithMethod.class);
-		MethodMetadata withMethod2 = getTagged(WithMethod.class);
-		MethodMetadata withMethodWithTwoArguments1 = getTagged(WithMethodWithTwoArguments.class);
-		MethodMetadata withMethodWithTwoArguments2 = getTagged(WithMethodWithTwoArguments.class);
-
-		assertThat(withMethod1).hasSameHashCodeAs(withMethod2);
-		assertThat(withMethodWithTwoArguments1).hasSameHashCodeAs(withMethodWithTwoArguments2);
-
-		assertThat(withMethod1).doesNotHaveSameHashCodeAs(withMethodWithTwoArguments1);
-	}
-
-	@Test
-	public void verifyToString() throws Exception {
-		assertThat(getTagged(WithMethod.class).toString())
-			.endsWith(WithMethod.class.getName() + ".test()");
-
-		assertThat(getTagged(WithMethodWithOneArgument.class).toString())
-			.endsWith(WithMethodWithOneArgument.class.getName() + ".test(java.lang.String)");
-
-		assertThat(getTagged(WithMethodWithTwoArguments.class).toString())
-			.endsWith(WithMethodWithTwoArguments.class.getName() + ".test(java.lang.String,java.lang.Integer)");
-	}
 
 	@Test
 	public void getMethodNameReturnsMethodName() {
@@ -181,8 +133,9 @@ public abstract class AbstractMethodMetadataTests {
 
 	@Test
 	public void getAllAnnotationAttributesReturnsAllAttributes() {
-		MultiValueMap<String, Object> attributes = getTagged(WithMetaAnnotationAttributes.class)
-				.getAllAnnotationAttributes(AnnotationAttributes.class.getName());
+		MultiValueMap<String, Object> attributes = getTagged(
+				WithMetaAnnotationAttributes.class).getAllAnnotationAttributes(
+						AnnotationAttributes.class.getName());
 		assertThat(attributes).containsOnlyKeys("name", "size");
 		assertThat(attributes.get("name")).containsExactlyInAnyOrder("m1", "m2");
 		assertThat(attributes.get("size")).containsExactlyInAnyOrder(1, 2);
@@ -205,31 +158,14 @@ public abstract class AbstractMethodMetadataTests {
 	protected abstract AnnotationMetadata get(Class<?> source);
 
 	@Retention(RetentionPolicy.RUNTIME)
-	@interface Tag {
+	public static @interface Tag {
+
 	}
 
 	public static class WithMethod {
 
 		@Tag
 		public String test() {
-			return "";
-		}
-
-	}
-
-	public static class WithMethodWithOneArgument {
-
-		@Tag
-		public String test(String text) {
-			return "";
-		}
-
-	}
-
-	public static class WithMethodWithTwoArguments {
-
-		@Tag
-		public String test(String text, Integer num) {
 			return "";
 		}
 
@@ -286,13 +222,14 @@ public abstract class AbstractMethodMetadataTests {
 	}
 
 	@Retention(RetentionPolicy.RUNTIME)
-	// Must be public. See AnnotationAttributesReadingVisitor.recursivelyCollectMetaAnnotations().
-	public @interface DirectAnnotation {
+	public static @interface DirectAnnotation {
+
 	}
 
 	@DirectAnnotation
 	@Retention(RetentionPolicy.RUNTIME)
-	@interface MetaAnnotation {
+	public static @interface MetaAnnotation {
+
 	}
 
 	public static abstract class WithAnnotationAttributes {
@@ -314,17 +251,18 @@ public abstract class AbstractMethodMetadataTests {
 
 	@Retention(RetentionPolicy.RUNTIME)
 	@AnnotationAttributes(name = "m1", size = 1)
-	@interface MetaAnnotationAttributes1 {
+	public static @interface MetaAnnotationAttributes1 {
+
 	}
 
 	@Retention(RetentionPolicy.RUNTIME)
 	@AnnotationAttributes(name = "m2", size = 2)
-	@interface MetaAnnotationAttributes2 {
+	public static @interface MetaAnnotationAttributes2 {
+
 	}
 
 	@Retention(RetentionPolicy.RUNTIME)
-	// Must be public. See AnnotationAttributesReadingVisitor.recursivelyCollectMetaAnnotations().
-	public @interface AnnotationAttributes {
+	public static @interface AnnotationAttributes {
 
 		String name();
 

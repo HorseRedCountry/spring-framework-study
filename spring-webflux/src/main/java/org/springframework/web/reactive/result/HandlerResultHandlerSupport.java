@@ -88,7 +88,7 @@ public abstract class HandlerResultHandlerSupport implements Ordered {
 	/**
 	 * Set the order for this result handler relative to others.
 	 * <p>By default set to {@link Ordered#LOWEST_PRECEDENCE}, however see
-	 * Javadoc of subclasses which may change this default.
+	 * Javadoc of sub-classes which may change this default.
 	 * @param order the order
 	 */
 	public void setOrder(int order) {
@@ -158,7 +158,7 @@ public abstract class HandlerResultHandlerSupport implements Ordered {
 		if (selected != null) {
 			selected = selected.removeQualityValue();
 			if (logger.isDebugEnabled()) {
-				logger.debug(exchange.getLogPrefix() + "Using '" + selected + "' given " + acceptableTypes +
+				logger.debug("Using '" + selected + "' given " + acceptableTypes +
 						" and supported " + producibleTypes);
 			}
 		}

@@ -97,7 +97,12 @@ public class WebAsyncManagerTimeoutTests {
 
 		StubCallable callable = new StubCallable();
 		WebAsyncTask<Object> webAsyncTask = new WebAsyncTask<>(callable);
-		webAsyncTask.onTimeout(() -> 7);
+		webAsyncTask.onTimeout(new Callable<Object>() {
+			@Override
+			public Object call() throws Exception {
+				return 7;
+			}
+		});
 
 		this.asyncManager.startCallableProcessing(webAsyncTask);
 

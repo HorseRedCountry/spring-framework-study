@@ -32,7 +32,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.function.Consumer;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -115,9 +114,6 @@ public abstract class AbstractEntityManagerFactoryBean implements
 
 	@Nullable
 	private JpaVendorAdapter jpaVendorAdapter;
-
-	@Nullable
-	private Consumer<EntityManager> entityManagerInitializer;
 
 	@Nullable
 	private AsyncTaskExecutor bootstrapExecutor;
@@ -218,10 +214,10 @@ public abstract class AbstractEntityManagerFactoryBean implements
 	}
 
 	/**
-	 * Allow {@code Map} access to the JPA properties to be passed to the persistence
+	 * Allow Map access to the JPA properties to be passed to the persistence
 	 * provider, with the option to add or override specific entries.
 	 * <p>Useful for specifying entries directly, for example via
-	 * {@code jpaPropertyMap[myKey]}.
+	 * "jpaPropertyMap[myKey]".
 	 */
 	public Map<String, Object> getJpaPropertyMap() {
 		return this.jpaPropertyMap;
@@ -292,20 +288,6 @@ public abstract class AbstractEntityManagerFactoryBean implements
 	@Nullable
 	public JpaVendorAdapter getJpaVendorAdapter() {
 		return this.jpaVendorAdapter;
-	}
-
-	/**
-	 * Specify a callback for customizing every {@code EntityManager} created
-	 * by the exposed {@code EntityManagerFactory}.
-	 * <p>This is an alternative to a {@code JpaVendorAdapter}-level
-	 * {@code postProcessEntityManager} implementation, enabling convenient
-	 * customizations for application purposes, e.g. setting Hibernate filters.
-	 * @since 5.3
-	 * @see JpaVendorAdapter#postProcessEntityManager
-	 * @see JpaTransactionManager#setEntityManagerInitializer
-	 */
-	public void setEntityManagerInitializer(Consumer<EntityManager> entityManagerInitializer) {
-		this.entityManagerInitializer = entityManagerInitializer;
 	}
 
 	/**
@@ -493,7 +475,6 @@ public abstract class AbstractEntityManagerFactoryBean implements
 			EntityManager rawEntityManager = (args.length > 1 ?
 					getNativeEntityManagerFactory().createEntityManager((Map<?, ?>) args[1]) :
 					getNativeEntityManagerFactory().createEntityManager());
-			postProcessEntityManager(rawEntityManager);
 			return ExtendedEntityManagerCreator.createApplicationManagedEntityManager(rawEntityManager, this, true);
 		}
 
@@ -520,7 +501,6 @@ public abstract class AbstractEntityManagerFactoryBean implements
 		if (retVal instanceof EntityManager) {
 			// Any other createEntityManager variant - expecting non-synchronized semantics
 			EntityManager rawEntityManager = (EntityManager) retVal;
-			postProcessEntityManager(rawEntityManager);
 			retVal = ExtendedEntityManagerCreator.createApplicationManagedEntityManager(rawEntityManager, this, false);
 		}
 		return retVal;
@@ -575,36 +555,6 @@ public abstract class AbstractEntityManagerFactoryBean implements
 				throw new IllegalStateException("Failed to asynchronously initialize native EntityManagerFactory: " +
 						ex.getMessage(), cause);
 			}
-		}
-	}
-
-	@Override
-	public EntityManager createNativeEntityManager(@Nullable Map<?, ?> properties) {
-		EntityManager rawEntityManager = (!CollectionUtils.isEmpty(properties) ?
-				getNativeEntityManagerFactory().createEntityManager(properties) :
-				getNativeEntityManagerFactory().createEntityManager());
-		postProcessEntityManager(rawEntityManager);
-		return rawEntityManager;
-	}
-
-	/**
-	 * Optional callback for post-processing the native EntityManager
-	 * before active use.
-	 * <p>The default implementation delegates to
-	 * {@link JpaVendorAdapter#postProcessEntityManager}, if available.
-	 * @param rawEntityManager the EntityManager to post-process
-	 * @since 5.3
-	 * @see #createNativeEntityManager
-	 * @see JpaVendorAdapter#postProcessEntityManager
-	 */
-	protected void postProcessEntityManager(EntityManager rawEntityManager) {
-		JpaVendorAdapter jpaVendorAdapter = getJpaVendorAdapter();
-		if (jpaVendorAdapter != null) {
-			jpaVendorAdapter.postProcessEntityManager(rawEntityManager);
-		}
-		Consumer<EntityManager> customizer = this.entityManagerInitializer;
-		if (customizer != null) {
-			customizer.accept(rawEntityManager);
 		}
 	}
 
@@ -711,14 +661,16 @@ public abstract class AbstractEntityManagerFactoryBean implements
 
 		@Override
 		public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-			switch (method.getName()) {
-				case "equals":
+			try {
+				if (method.getName().equals("equals")) {
 					// Only consider equal when proxies are identical.
 					return (proxy == args[0]);
-				case "hashCode":
+				}
+				else if (method.getName().equals("hashCode")) {
 					// Use hashCode of EntityManagerFactory proxy.
 					return System.identityHashCode(proxy);
-				case "unwrap":
+				}
+				else if (method.getName().equals("unwrap")) {
 					// Handle JPA 2.1 unwrap method - could be a proxy match.
 					Class<?> targetClass = (Class<?>) args[0];
 					if (targetClass == null) {
@@ -727,10 +679,7 @@ public abstract class AbstractEntityManagerFactoryBean implements
 					else if (targetClass.isInstance(proxy)) {
 						return proxy;
 					}
-					break;
-			}
-
-			try {
+				}
 				return this.entityManagerFactoryBean.invokeProxyMethod(method, args);
 			}
 			catch (InvocationTargetException ex) {

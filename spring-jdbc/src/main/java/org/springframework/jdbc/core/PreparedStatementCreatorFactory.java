@@ -21,10 +21,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -65,7 +65,7 @@ public class PreparedStatementCreatorFactory {
 	 */
 	public PreparedStatementCreatorFactory(String sql) {
 		this.sql = sql;
-		this.declaredParameters = new ArrayList<>();
+		this.declaredParameters = new LinkedList<>();
 	}
 
 	/**

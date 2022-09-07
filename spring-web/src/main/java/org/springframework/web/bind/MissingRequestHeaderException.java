@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import org.springframework.core.MethodParameter;
  * @see MissingRequestCookieException
  */
 @SuppressWarnings("serial")
-public class MissingRequestHeaderException extends MissingRequestValueException {
+public class MissingRequestHeaderException extends ServletRequestBindingException {
 
 	private final String headerName;
 
@@ -41,20 +41,7 @@ public class MissingRequestHeaderException extends MissingRequestValueException 
 	 * @param parameter the method parameter
 	 */
 	public MissingRequestHeaderException(String headerName, MethodParameter parameter) {
-		this(headerName, parameter, false);
-	}
-
-	/**
-	 * Constructor for use when a value was present but converted to {@code null}.
-	 * @param headerName the name of the missing request header
-	 * @param parameter the method parameter
-	 * @param missingAfterConversion whether the value became null after conversion
-	 * @since 5.3.6
-	 */
-	public MissingRequestHeaderException(
-			String headerName, MethodParameter parameter, boolean missingAfterConversion) {
-
-		super("", missingAfterConversion);
+		super("");
 		this.headerName = headerName;
 		this.parameter = parameter;
 	}
@@ -62,9 +49,8 @@ public class MissingRequestHeaderException extends MissingRequestValueException 
 
 	@Override
 	public String getMessage() {
-		String typeName = this.parameter.getNestedParameterType().getSimpleName();
-		return "Required request header '" + this.headerName + "' for method parameter type " + typeName + " is " +
-				(isMissingAfterConversion() ? "present but converted to null" : "not present");
+		return "Missing request header '" + this.headerName +
+				"' for method parameter of type " + this.parameter.getNestedParameterType().getSimpleName();
 	}
 
 	/**

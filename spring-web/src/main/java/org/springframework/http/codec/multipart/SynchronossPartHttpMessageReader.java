@@ -16,9 +16,7 @@
 
 package org.springframework.http.codec.multipart;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
@@ -42,7 +40,6 @@ import org.synchronoss.cloud.nio.multipart.MultipartUtils;
 import org.synchronoss.cloud.nio.multipart.NioMultipartParser;
 import org.synchronoss.cloud.nio.multipart.NioMultipartParserListener;
 import org.synchronoss.cloud.nio.multipart.PartBodyStreamStorageFactory;
-import org.synchronoss.cloud.nio.stream.storage.NameAwarePurgableFileInputStream;
 import org.synchronoss.cloud.nio.stream.storage.StreamStorage;
 import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
@@ -55,6 +52,7 @@ import org.springframework.core.ResolvableType;
 import org.springframework.core.codec.DecodingException;
 import org.springframework.core.codec.Hints;
 import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferFactory;
 import org.springframework.core.io.buffer.DataBufferLimitException;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.core.io.buffer.DefaultDataBufferFactory;
@@ -84,7 +82,11 @@ import org.springframework.util.Assert;
  */
 public class SynchronossPartHttpMessageReader extends LoggingCodecSupport implements HttpMessageReader<Part> {
 
+	// Static DataBufferFactory to copy from FileInputStream or wrap bytes[].
+	private static final DataBufferFactory bufferFactory = new DefaultDataBufferFactory();
+
 	private static final String FILE_STORAGE_DIRECTORY_PREFIX = "synchronoss-file-upload-";
+
 
 	private int maxInMemorySize = 256 * 1024;
 
@@ -152,22 +154,6 @@ public class SynchronossPartHttpMessageReader extends LoggingCodecSupport implem
 	 */
 	public int getMaxParts() {
 		return this.maxParts;
-	}
-
-	/**
-	 * Set the directory used to store parts larger than
-	 * {@link #setMaxInMemorySize(int) maxInMemorySize}. By default, a new
-	 * temporary directory is created.
-	 * @throws IOException if an I/O error occurs, or the parent directory
-	 * does not exist
-	 * @since 5.3.7
-	 */
-	public void setFileStorageDirectory(Path fileStorageDirectory) throws IOException {
-		Assert.notNull(fileStorageDirectory, "FileStorageDirectory must not be null");
-		if (!Files.exists(fileStorageDirectory)) {
-			Files.createDirectory(fileStorageDirectory);
-		}
-		this.fileStorageDirectory.set(fileStorageDirectory);
 	}
 
 
@@ -359,7 +345,7 @@ public class SynchronossPartHttpMessageReader extends LoggingCodecSupport implem
 			this.isFilePart = (MultipartUtils.getFileName(headers) != null);
 			this.partSize = 0;
 			if (maxParts > 0 && index > maxParts) {
-				throw new DecodingException("Too many parts: Part[" + index + "] but maxParts=" + maxParts);
+				throw new DecodingException("Too many parts (" + index + " allowed)");
 			}
 			return this.storageFactory.newStreamStorageForPartBody(headers, index);
 		}
@@ -395,7 +381,7 @@ public class SynchronossPartHttpMessageReader extends LoggingCodecSupport implem
 
 		private final LimitedPartBodyStreamStorageFactory storageFactory;
 
-		private final AtomicInteger terminated = new AtomicInteger();
+		private final AtomicInteger terminated = new AtomicInteger(0);
 
 		FluxSinkAdapterListener(
 				FluxSink<Part> sink, MultipartContext context, LimitedPartBodyStreamStorageFactory factory) {
@@ -491,46 +477,12 @@ public class SynchronossPartHttpMessageReader extends LoggingCodecSupport implem
 		}
 
 		@Override
-		@SuppressWarnings("resource")
 		public Flux<DataBuffer> content() {
-			return DataBufferUtils.readInputStream(
-					getStorage()::getInputStream, DefaultDataBufferFactory.sharedInstance, 4096);
+			return DataBufferUtils.readInputStream(getStorage()::getInputStream, bufferFactory, 4096);
 		}
 
 		protected StreamStorage getStorage() {
 			return this.storage;
-		}
-
-		@Override
-		public Mono<Void> delete() {
-			return Mono.fromRunnable(() -> {
-				File file = getFile();
-				if (file != null) {
-					file.delete();
-				}
-			});
-		}
-
-		@Nullable
-		private File getFile() {
-			InputStream inputStream = null;
-			try {
-				inputStream = getStorage().getInputStream();
-				if (inputStream instanceof NameAwarePurgableFileInputStream) {
-					NameAwarePurgableFileInputStream stream = (NameAwarePurgableFileInputStream) inputStream;
-					return stream.getFile();
-				}
-			}
-			finally {
-				if (inputStream != null) {
-					try {
-						inputStream.close();
-					}
-					catch (IOException ignore) {
-					}
-				}
-			}
-			return null;
 		}
 	}
 
@@ -615,7 +567,7 @@ public class SynchronossPartHttpMessageReader extends LoggingCodecSupport implem
 		@Override
 		public Flux<DataBuffer> content() {
 			byte[] bytes = this.content.getBytes(getCharset());
-			return Flux.just(DefaultDataBufferFactory.sharedInstance.wrap(bytes));
+			return Flux.just(bufferFactory.wrap(bytes));
 		}
 
 		private Charset getCharset() {

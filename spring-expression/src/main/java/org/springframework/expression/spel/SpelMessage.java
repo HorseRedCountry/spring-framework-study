@@ -27,7 +27,7 @@ import java.text.MessageFormat;
  * <p>When a message is formatted, it will have this kind of form, capturing the prefix
  * and the error kind:
  *
- * <pre class="code">EL1005E: Type cannot be found 'String'</pre>
+ * <pre class="code">EL1004E: Type cannot be found 'String'</pre>
  *
  * @author Andy Clement
  * @author Juergen Hoeller
@@ -258,11 +258,7 @@ public enum SpelMessage {
 	FLAWED_PATTERN(Kind.ERROR, 1073,
 			"Failed to efficiently evaluate pattern ''{0}'': consider redesigning it"),
 
-	/** @since 5.3.17 */
-	EXCEPTION_COMPILING_EXPRESSION(Kind.ERROR, 1074,
-			"An exception occurred while compiling an expression"),
-
-	/** @since 5.3.17 */
+	/** @since 5.2.20 */
 	MAX_ARRAY_ELEMENTS_THRESHOLD_EXCEEDED(Kind.ERROR, 1075,
 			"Array declares too many elements, exceeding the threshold of ''{0}''");
 
@@ -293,7 +289,7 @@ public enum SpelMessage {
 		formattedMessage.append("EL").append(this.code);
 		switch (this.kind) {
 			case ERROR:
-				formattedMessage.append('E');
+				formattedMessage.append("E");
 				break;
 		}
 		formattedMessage.append(": ");

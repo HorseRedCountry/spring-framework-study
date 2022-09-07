@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import org.springframework.util.ReflectionUtils;
  * {@link javax.resource.spi.endpoint.MessageEndpointFactory} interface,
  * providing transaction management capabilities for any kind of message
  * listener object (e.g. {@link javax.jms.MessageListener} objects or
- * {@link javax.resource.cci.MessageListener} objects).
+ * {@link javax.resource.cci.MessageListener} objects.
  *
  * <p>Uses AOP proxies for concrete endpoint instances, simply wrapping
  * the specified message listener object and exposing all of its implemented
@@ -107,7 +107,6 @@ public class GenericMessageEndpointFactory extends AbstractMessageEndpointFactor
 	private class GenericMessageEndpoint extends AbstractMessageEndpoint implements MethodInterceptor {
 
 		@Override
-		@Nullable
 		public Object invoke(MethodInvocation methodInvocation) throws Throwable {
 			Throwable endpointEx = null;
 			boolean applyDeliveryCalls = !hasBeforeDeliveryBeenCalled();

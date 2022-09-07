@@ -1,5 +1,5 @@
 /**
- * Support package for beans-style handling of annotations.
+ * Support package for beans-style handling of Java 5 annotations.
  */
 @NonNullApi
 @NonNullFields

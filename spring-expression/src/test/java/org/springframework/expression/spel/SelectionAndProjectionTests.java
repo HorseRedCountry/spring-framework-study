@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package org.springframework.expression.spel;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -39,79 +40,98 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Sam Brannen
  * @author Juergen Hoeller
  */
-class SelectionAndProjectionTests {
+public class SelectionAndProjectionTests {
 
 	@Test
-	@SuppressWarnings("unchecked")
-	void selectionWithList() throws Exception {
+	public void selectionWithList() throws Exception {
 		Expression expression = new SpelExpressionParser().parseRaw("integers.?[#this<5]");
 		EvaluationContext context = new StandardEvaluationContext(new ListTestBean());
 		Object value = expression.getValue(context);
-		assertThat(value).isInstanceOf(List.class);
-		List<Integer> list = (List<Integer>) value;
-		assertThat(list).containsExactly(0, 1, 2, 3, 4);
+		boolean condition = value instanceof List;
+		assertThat(condition).isTrue();
+		List<?> list = (List<?>) value;
+		assertThat(list.size()).isEqualTo(5);
+		assertThat(list.get(0)).isEqualTo(0);
+		assertThat(list.get(1)).isEqualTo(1);
+		assertThat(list.get(2)).isEqualTo(2);
+		assertThat(list.get(3)).isEqualTo(3);
+		assertThat(list.get(4)).isEqualTo(4);
 	}
 
 	@Test
-	void selectFirstItemInList() throws Exception {
+	public void selectFirstItemInList() throws Exception {
 		Expression expression = new SpelExpressionParser().parseRaw("integers.^[#this<5]");
 		EvaluationContext context = new StandardEvaluationContext(new ListTestBean());
 		Object value = expression.getValue(context);
-		assertThat(value).isInstanceOf(Integer.class);
+		boolean condition = value instanceof Integer;
+		assertThat(condition).isTrue();
 		assertThat(value).isEqualTo(0);
 	}
 
 	@Test
-	void selectLastItemInList() throws Exception {
+	public void selectLastItemInList() throws Exception {
 		Expression expression = new SpelExpressionParser().parseRaw("integers.$[#this<5]");
 		EvaluationContext context = new StandardEvaluationContext(new ListTestBean());
 		Object value = expression.getValue(context);
-		assertThat(value).isInstanceOf(Integer.class);
+		boolean condition = value instanceof Integer;
+		assertThat(condition).isTrue();
 		assertThat(value).isEqualTo(4);
 	}
 
 	@Test
-	@SuppressWarnings("unchecked")
-	void selectionWithSet() throws Exception {
+	public void selectionWithSet() throws Exception {
 		Expression expression = new SpelExpressionParser().parseRaw("integers.?[#this<5]");
 		EvaluationContext context = new StandardEvaluationContext(new SetTestBean());
 		Object value = expression.getValue(context);
-		assertThat(value).isInstanceOf(List.class);
-		List<Integer> list = (List<Integer>) value;
-		assertThat(list).containsExactly(0, 1, 2, 3, 4);
+		boolean condition = value instanceof List;
+		assertThat(condition).isTrue();
+		List<?> list = (List<?>) value;
+		assertThat(list.size()).isEqualTo(5);
+		assertThat(list.get(0)).isEqualTo(0);
+		assertThat(list.get(1)).isEqualTo(1);
+		assertThat(list.get(2)).isEqualTo(2);
+		assertThat(list.get(3)).isEqualTo(3);
+		assertThat(list.get(4)).isEqualTo(4);
 	}
 
 	@Test
-	void selectFirstItemInSet() throws Exception {
+	public void selectFirstItemInSet() throws Exception {
 		Expression expression = new SpelExpressionParser().parseRaw("integers.^[#this<5]");
 		EvaluationContext context = new StandardEvaluationContext(new SetTestBean());
 		Object value = expression.getValue(context);
-		assertThat(value).isInstanceOf(Integer.class);
+		boolean condition = value instanceof Integer;
+		assertThat(condition).isTrue();
 		assertThat(value).isEqualTo(0);
 	}
 
 	@Test
-	void selectLastItemInSet() throws Exception {
+	public void selectLastItemInSet() throws Exception {
 		Expression expression = new SpelExpressionParser().parseRaw("integers.$[#this<5]");
 		EvaluationContext context = new StandardEvaluationContext(new SetTestBean());
 		Object value = expression.getValue(context);
-		assertThat(value).isInstanceOf(Integer.class);
+		boolean condition = value instanceof Integer;
+		assertThat(condition).isTrue();
 		assertThat(value).isEqualTo(4);
 	}
 
 	@Test
-	@SuppressWarnings("unchecked")
-	void selectionWithIterable() throws Exception {
+	public void selectionWithIterable() throws Exception {
 		Expression expression = new SpelExpressionParser().parseRaw("integers.?[#this<5]");
 		EvaluationContext context = new StandardEvaluationContext(new IterableTestBean());
 		Object value = expression.getValue(context);
-		assertThat(value).isInstanceOf(List.class);
-		List<Integer> list = (List<Integer>) value;
-		assertThat(list).containsExactly(0, 1, 2, 3, 4);
+		boolean condition = value instanceof List;
+		assertThat(condition).isTrue();
+		List<?> list = (List<?>) value;
+		assertThat(list.size()).isEqualTo(5);
+		assertThat(list.get(0)).isEqualTo(0);
+		assertThat(list.get(1)).isEqualTo(1);
+		assertThat(list.get(2)).isEqualTo(2);
+		assertThat(list.get(3)).isEqualTo(3);
+		assertThat(list.get(4)).isEqualTo(4);
 	}
 
 	@Test
-	void selectionWithArray() throws Exception {
+	public void selectionWithArray() throws Exception {
 		Expression expression = new SpelExpressionParser().parseRaw("integers.?[#this<5]");
 		EvaluationContext context = new StandardEvaluationContext(new ArrayTestBean());
 		Object value = expression.getValue(context);
@@ -119,29 +139,36 @@ class SelectionAndProjectionTests {
 		TypedValue typedValue = new TypedValue(value);
 		assertThat(typedValue.getTypeDescriptor().getElementTypeDescriptor().getType()).isEqualTo(Integer.class);
 		Integer[] array = (Integer[]) value;
-		assertThat(array).containsExactly(0, 1, 2, 3, 4);
+		assertThat(array.length).isEqualTo(5);
+		assertThat(array[0]).isEqualTo(0);
+		assertThat(array[1]).isEqualTo(1);
+		assertThat(array[2]).isEqualTo(2);
+		assertThat(array[3]).isEqualTo(3);
+		assertThat(array[4]).isEqualTo(4);
 	}
 
 	@Test
-	void selectFirstItemInArray() throws Exception {
+	public void selectFirstItemInArray() throws Exception {
 		Expression expression = new SpelExpressionParser().parseRaw("integers.^[#this<5]");
 		EvaluationContext context = new StandardEvaluationContext(new ArrayTestBean());
 		Object value = expression.getValue(context);
-		assertThat(value).isInstanceOf(Integer.class);
+		boolean condition = value instanceof Integer;
+		assertThat(condition).isTrue();
 		assertThat(value).isEqualTo(0);
 	}
 
 	@Test
-	void selectLastItemInArray() throws Exception {
+	public void selectLastItemInArray() throws Exception {
 		Expression expression = new SpelExpressionParser().parseRaw("integers.$[#this<5]");
 		EvaluationContext context = new StandardEvaluationContext(new ArrayTestBean());
 		Object value = expression.getValue(context);
-		assertThat(value).isInstanceOf(Integer.class);
+		boolean condition = value instanceof Integer;
+		assertThat(condition).isTrue();
 		assertThat(value).isEqualTo(4);
 	}
 
 	@Test
-	void selectionWithPrimitiveArray() throws Exception {
+	public void selectionWithPrimitiveArray() throws Exception {
 		Expression expression = new SpelExpressionParser().parseRaw("ints.?[#this<5]");
 		EvaluationContext context = new StandardEvaluationContext(new ArrayTestBean());
 		Object value = expression.getValue(context);
@@ -149,41 +176,51 @@ class SelectionAndProjectionTests {
 		TypedValue typedValue = new TypedValue(value);
 		assertThat(typedValue.getTypeDescriptor().getElementTypeDescriptor().getType()).isEqualTo(Integer.class);
 		Integer[] array = (Integer[]) value;
-		assertThat(array).containsExactly(0, 1, 2, 3, 4);
+		assertThat(array.length).isEqualTo(5);
+		assertThat(array[0]).isEqualTo(0);
+		assertThat(array[1]).isEqualTo(1);
+		assertThat(array[2]).isEqualTo(2);
+		assertThat(array[3]).isEqualTo(3);
+		assertThat(array[4]).isEqualTo(4);
 	}
 
 	@Test
-	void selectFirstItemInPrimitiveArray() throws Exception {
+	public void selectFirstItemInPrimitiveArray() throws Exception {
 		Expression expression = new SpelExpressionParser().parseRaw("ints.^[#this<5]");
 		EvaluationContext context = new StandardEvaluationContext(new ArrayTestBean());
 		Object value = expression.getValue(context);
-		assertThat(value).isInstanceOf(Integer.class);
+		boolean condition = value instanceof Integer;
+		assertThat(condition).isTrue();
 		assertThat(value).isEqualTo(0);
 	}
 
 	@Test
-	void selectLastItemInPrimitiveArray() throws Exception {
+	public void selectLastItemInPrimitiveArray() throws Exception {
 		Expression expression = new SpelExpressionParser().parseRaw("ints.$[#this<5]");
 		EvaluationContext context = new StandardEvaluationContext(new ArrayTestBean());
 		Object value = expression.getValue(context);
-		assertThat(value).isInstanceOf(Integer.class);
+		boolean condition = value instanceof Integer;
+		assertThat(condition).isTrue();
 		assertThat(value).isEqualTo(4);
 	}
 
 	@Test
 	@SuppressWarnings("unchecked")
-	void selectionWithMap() {
+	public void selectionWithMap() {
 		EvaluationContext context = new StandardEvaluationContext(new MapTestBean());
 		ExpressionParser parser = new SpelExpressionParser();
 		Expression exp = parser.parseExpression("colors.?[key.startsWith('b')]");
 
 		Map<String, String> colorsMap = (Map<String, String>) exp.getValue(context);
-		assertThat(colorsMap).containsOnlyKeys("beige", "blue", "brown");
+		assertThat(colorsMap.size()).isEqualTo(3);
+		assertThat(colorsMap.containsKey("beige")).isTrue();
+		assertThat(colorsMap.containsKey("blue")).isTrue();
+		assertThat(colorsMap.containsKey("brown")).isTrue();
 	}
 
 	@Test
 	@SuppressWarnings("unchecked")
-	void selectFirstItemInMap() {
+	public void selectFirstItemInMap() {
 		EvaluationContext context = new StandardEvaluationContext(new MapTestBean());
 		ExpressionParser parser = new SpelExpressionParser();
 
@@ -195,7 +232,7 @@ class SelectionAndProjectionTests {
 
 	@Test
 	@SuppressWarnings("unchecked")
-	void selectLastItemInMap() {
+	public void selectLastItemInMap() {
 		EvaluationContext context = new StandardEvaluationContext(new MapTestBean());
 		ExpressionParser parser = new SpelExpressionParser();
 
@@ -206,43 +243,52 @@ class SelectionAndProjectionTests {
 	}
 
 	@Test
-	@SuppressWarnings("unchecked")
-	void projectionWithList() throws Exception {
+	public void projectionWithList() throws Exception {
 		Expression expression = new SpelExpressionParser().parseRaw("#testList.![wrapper.value]");
 		EvaluationContext context = new StandardEvaluationContext();
 		context.setVariable("testList", IntegerTestBean.createList());
 		Object value = expression.getValue(context);
-		assertThat(value).isInstanceOf(List.class);
-		List<Integer> list = (List<Integer>) value;
-		assertThat(list).containsExactly(5, 6, 7);
+		boolean condition = value instanceof List;
+		assertThat(condition).isTrue();
+		List<?> list = (List<?>) value;
+		assertThat(list.size()).isEqualTo(3);
+		assertThat(list.get(0)).isEqualTo(5);
+		assertThat(list.get(1)).isEqualTo(6);
+		assertThat(list.get(2)).isEqualTo(7);
 	}
 
 	@Test
-	@SuppressWarnings("unchecked")
-	void projectionWithSet() throws Exception {
+	public void projectionWithSet() throws Exception {
 		Expression expression = new SpelExpressionParser().parseRaw("#testList.![wrapper.value]");
 		EvaluationContext context = new StandardEvaluationContext();
 		context.setVariable("testList", IntegerTestBean.createSet());
 		Object value = expression.getValue(context);
-		assertThat(value).isInstanceOf(List.class);
-		List<Integer> list = (List<Integer>) value;
-		assertThat(list).containsExactly(5, 6, 7);
+		boolean condition = value instanceof List;
+		assertThat(condition).isTrue();
+		List<?> list = (List<?>) value;
+		assertThat(list.size()).isEqualTo(3);
+		assertThat(list.get(0)).isEqualTo(5);
+		assertThat(list.get(1)).isEqualTo(6);
+		assertThat(list.get(2)).isEqualTo(7);
 	}
 
 	@Test
-	@SuppressWarnings("unchecked")
-	void projectionWithIterable() throws Exception {
+	public void projectionWithIterable() throws Exception {
 		Expression expression = new SpelExpressionParser().parseRaw("#testList.![wrapper.value]");
 		EvaluationContext context = new StandardEvaluationContext();
 		context.setVariable("testList", IntegerTestBean.createIterable());
 		Object value = expression.getValue(context);
-		assertThat(value).isInstanceOf(List.class);
-		List<Integer> list = (List<Integer>) value;
-		assertThat(list).containsExactly(5, 6, 7);
+		boolean condition = value instanceof List;
+		assertThat(condition).isTrue();
+		List<?> list = (List<?>) value;
+		assertThat(list.size()).isEqualTo(3);
+		assertThat(list.get(0)).isEqualTo(5);
+		assertThat(list.get(1)).isEqualTo(6);
+		assertThat(list.get(2)).isEqualTo(7);
 	}
 
 	@Test
-	void projectionWithArray() throws Exception {
+	public void projectionWithArray() throws Exception {
 		Expression expression = new SpelExpressionParser().parseRaw("#testArray.![wrapper.value]");
 		EvaluationContext context = new StandardEvaluationContext();
 		context.setVariable("testArray", IntegerTestBean.createArray());
@@ -251,7 +297,10 @@ class SelectionAndProjectionTests {
 		TypedValue typedValue = new TypedValue(value);
 		assertThat(typedValue.getTypeDescriptor().getElementTypeDescriptor().getType()).isEqualTo(Number.class);
 		Number[] array = (Number[]) value;
-		assertThat(array).containsExactly(5, 5.9f, 7);
+		assertThat(array.length).isEqualTo(3);
+		assertThat(array[0]).isEqualTo(5);
+		assertThat(array[1]).isEqualTo(5.9f);
+		assertThat(array[2]).isEqualTo(7);
 	}
 
 
@@ -298,7 +347,12 @@ class SelectionAndProjectionTests {
 		}
 
 		public Iterable<Integer> getIntegers() {
-			return integers::iterator;
+			return new Iterable<Integer>() {
+				@Override
+				public Iterator<Integer> iterator() {
+					return integers.iterator();
+				}
+			};
 		}
 	}
 
@@ -375,7 +429,12 @@ class SelectionAndProjectionTests {
 
 		static Iterable<IntegerTestBean> createIterable() {
 			final Set<IntegerTestBean> set = createSet();
-			return set::iterator;
+			return new Iterable<IntegerTestBean>() {
+				@Override
+				public Iterator<IntegerTestBean> iterator() {
+					return set.iterator();
+				}
+			};
 		}
 
 		static IntegerTestBean[] createArray() {

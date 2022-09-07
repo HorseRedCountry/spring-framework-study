@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import java.util.UUID;
 
 import org.springframework.lang.Nullable;
 import org.springframework.util.StringUtils;
-import org.springframework.util.function.SingletonSupplier;
 
 /**
  * Mutable transaction context that encapsulates transactional synchronizations and
@@ -41,7 +40,7 @@ public class TransactionContext {
 
 	private final @Nullable TransactionContext parent;
 
-	private final SingletonSupplier<UUID> contextId = SingletonSupplier.of(UUID::randomUUID);
+	private final UUID contextId = UUID.randomUUID();
 
 	private final Map<Object, Object> resources = new LinkedHashMap<>();
 
@@ -71,18 +70,15 @@ public class TransactionContext {
 		return this.parent;
 	}
 
-	@Deprecated
 	public String getName() {
-		String name = getCurrentTransactionName();
-		if (StringUtils.hasText(name)) {
-			return getContextId() + ": " + name;
+		if (StringUtils.hasText(this.currentTransactionName)) {
+			return this.contextId + ": " + this.currentTransactionName;
 		}
-		return getContextId().toString();
+		return this.contextId.toString();
 	}
 
-	@Deprecated
 	public UUID getContextId() {
-		return this.contextId.obtain();
+		return this.contextId;
 	}
 
 	public Map<Object, Object> getResources() {

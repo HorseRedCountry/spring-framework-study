@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import javax.sql.DataSource;
 
 import org.junit.jupiter.api.Test;
 
-import org.springframework.jdbc.support.incrementer.DataFieldMaxValueIncrementer;
 import org.springframework.jdbc.support.incrementer.HanaSequenceMaxValueIncrementer;
 import org.springframework.jdbc.support.incrementer.HsqlMaxValueIncrementer;
 import org.springframework.jdbc.support.incrementer.MySQLMaxValueIncrementer;
@@ -39,13 +38,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 /**
- * Unit tests for {@link DataFieldMaxValueIncrementer} implementations.
- *
  * @author Juergen Hoeller
- * @author Sam Brannen
  * @since 27.02.2004
  */
-class DataFieldMaxValueIncrementerTests {
+public class DataFieldMaxValueIncrementerTests {
 
 	private final DataSource dataSource = mock(DataSource.class);
 
@@ -57,7 +53,7 @@ class DataFieldMaxValueIncrementerTests {
 
 
 	@Test
-	void hanaSequenceMaxValueIncrementer() throws SQLException {
+	public void testHanaSequenceMaxValueIncrementer() throws SQLException {
 		given(dataSource.getConnection()).willReturn(connection);
 		given(connection.createStatement()).willReturn(statement);
 		given(statement.executeQuery("select myseq.nextval from dummy")).willReturn(resultSet);
@@ -79,7 +75,7 @@ class DataFieldMaxValueIncrementerTests {
 	}
 
 	@Test
-	void hsqlMaxValueIncrementer() throws SQLException {
+	public void testHsqlMaxValueIncrementer() throws SQLException {
 		given(dataSource.getConnection()).willReturn(connection);
 		given(connection.createStatement()).willReturn(statement);
 		given(statement.executeQuery("select max(identity()) from myseq")).willReturn(resultSet);
@@ -109,7 +105,7 @@ class DataFieldMaxValueIncrementerTests {
 	}
 
 	@Test
-	void hsqlMaxValueIncrementerWithDeleteSpecificValues() throws SQLException {
+	public void testHsqlMaxValueIncrementerWithDeleteSpecificValues() throws SQLException {
 		given(dataSource.getConnection()).willReturn(connection);
 		given(connection.createStatement()).willReturn(statement);
 		given(statement.executeQuery("select max(identity()) from myseq")).willReturn(resultSet);
@@ -140,7 +136,7 @@ class DataFieldMaxValueIncrementerTests {
 	}
 
 	@Test
-	void mySQLMaxValueIncrementer() throws SQLException {
+	public void testMySQLMaxValueIncrementer() throws SQLException {
 		given(dataSource.getConnection()).willReturn(connection);
 		given(connection.createStatement()).willReturn(statement);
 		given(statement.executeQuery("select last_insert_id()")).willReturn(resultSet);
@@ -160,14 +156,14 @@ class DataFieldMaxValueIncrementerTests {
 		assertThat(incrementer.nextStringValue()).isEqualTo("3");
 		assertThat(incrementer.nextLongValue()).isEqualTo(4);
 
-		verify(statement, times(2)).executeUpdate("update myseq set seq = last_insert_id(seq + 2) limit 1");
+		verify(statement, times(2)).executeUpdate("update myseq set seq = last_insert_id(seq + 2)");
 		verify(resultSet, times(2)).close();
 		verify(statement, times(2)).close();
 		verify(connection, times(2)).close();
 	}
 
 	@Test
-	void oracleSequenceMaxValueIncrementer() throws SQLException {
+	public void testOracleSequenceMaxValueIncrementer() throws SQLException {
 		given(dataSource.getConnection()).willReturn(connection);
 		given(connection.createStatement()).willReturn(statement);
 		given(statement.executeQuery("select myseq.nextval from dual")).willReturn(resultSet);
@@ -189,7 +185,7 @@ class DataFieldMaxValueIncrementerTests {
 	}
 
 	@Test
-	void postgresSequenceMaxValueIncrementer() throws SQLException {
+	public void testPostgresSequenceMaxValueIncrementer() throws SQLException {
 		given(dataSource.getConnection()).willReturn(connection);
 		given(connection.createStatement()).willReturn(statement);
 		given(statement.executeQuery("select nextval('myseq')")).willReturn(resultSet);

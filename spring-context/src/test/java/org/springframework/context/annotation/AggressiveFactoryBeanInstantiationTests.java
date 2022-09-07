@@ -137,7 +137,6 @@ public class AggressiveFactoryBeanInstantiationTests {
 
 	static class ExceptionInInitializer {
 
-		@SuppressWarnings("unused")
 		private static final int ERROR = callInClinit();
 
 		private static int callInClinit() {

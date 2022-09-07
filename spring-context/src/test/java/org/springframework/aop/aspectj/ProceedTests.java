@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.springframework.aop.aspectj;
 
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -34,9 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Adrian Colyer
  * @author Chris Beams
  */
-class ProceedTests {
-
-	private ClassPathXmlApplicationContext ctx;
+public class ProceedTests {
 
 	private SimpleBean testBean;
 
@@ -46,45 +43,42 @@ class ProceedTests {
 
 
 	@BeforeEach
-	void setup() {
-		this.ctx = new ClassPathXmlApplicationContext(getClass().getSimpleName() + ".xml", getClass());
+	public void setup() {
+		ClassPathXmlApplicationContext ctx =
+				new ClassPathXmlApplicationContext(getClass().getSimpleName() + ".xml", getClass());
 		testBean = (SimpleBean) ctx.getBean("testBean");
 		firstTestAspect = (ProceedTestingAspect) ctx.getBean("firstTestAspect");
 		secondTestAspect = (ProceedTestingAspect) ctx.getBean("secondTestAspect");
 	}
 
-	@AfterEach
-	void tearDown() {
-		this.ctx.close();
-	}
-
 
 	@Test
-	void testSimpleProceedWithChangedArgs() {
+	public void testSimpleProceedWithChangedArgs() {
 		this.testBean.setName("abc");
 		assertThat(this.testBean.getName()).as("Name changed in around advice").isEqualTo("ABC");
 	}
 
 	@Test
-	void testGetArgsIsDefensive() {
+	public void testGetArgsIsDefensive() {
 		this.testBean.setAge(5);
 		assertThat(this.testBean.getAge()).as("getArgs is defensive").isEqualTo(5);
 	}
 
 	@Test
-	void testProceedWithArgsInSameAspect() {
+	public void testProceedWithArgsInSameAspect() {
 		this.testBean.setMyFloat(1.0F);
 		assertThat(this.testBean.getMyFloat() > 1.9F).as("value changed in around advice").isTrue();
 		assertThat(this.firstTestAspect.getLastBeforeFloatValue() > 1.9F).as("changed value visible to next advice in chain").isTrue();
 	}
 
 	@Test
-	void testProceedWithArgsAcrossAspects() {
+	public void testProceedWithArgsAcrossAspects() {
 		this.testBean.setSex("male");
 		assertThat(this.testBean.getSex()).as("value changed in around advice").isEqualTo("MALE");
 		assertThat(this.secondTestAspect.getLastBeforeStringValue()).as("changed value visible to next before advice in chain").isEqualTo("MALE");
 		assertThat(this.secondTestAspect.getLastAroundStringValue()).as("changed value visible to next around advice in chain").isEqualTo("MALE");
 	}
+
 
 }
 
@@ -168,13 +162,13 @@ class ProceedTestingAspect implements Ordered {
 
 	public Object doubleOrQuits(ProceedingJoinPoint pjp) throws Throwable {
 		int value = ((Integer) pjp.getArgs()[0]).intValue();
-		pjp.getArgs()[0] = Integer.valueOf(value * 2);
+		pjp.getArgs()[0] = new Integer(value * 2);
 		return pjp.proceed();
 	}
 
 	public Object addOne(ProceedingJoinPoint pjp, Float value) throws Throwable {
 		float fv = value.floatValue();
-		return pjp.proceed(new Object[] {Float.valueOf(fv + 1.0F)});
+		return pjp.proceed(new Object[] {new Float(fv + 1.0F)});
 	}
 
 	public void captureStringArgument(JoinPoint tjp, String arg) {
@@ -220,3 +214,4 @@ class ProceedTestingAspect implements Ordered {
 		return this.lastBeforeFloatValue;
 	}
 }
+

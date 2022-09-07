@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package org.springframework.cache.interceptor;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -29,7 +28,7 @@ import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.CachingConfigurer;
+import org.springframework.cache.annotation.CachingConfigurerSupport;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.support.SimpleCacheManager;
 import org.springframework.cache.support.SimpleValueWrapper;
@@ -48,9 +47,7 @@ import static org.mockito.Mockito.verify;
 /**
  * @author Stephane Nicoll
  */
-class CacheErrorHandlerTests {
-
-	private AnnotationConfigApplicationContext context;
+public class CacheErrorHandlerTests {
 
 	private Cache cache;
 
@@ -61,21 +58,16 @@ class CacheErrorHandlerTests {
 	private SimpleService simpleService;
 
 	@BeforeEach
-	void setup() {
-		this.context = new AnnotationConfigApplicationContext(Config.class);
+	public void setup() {
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(Config.class);
 		this.cache = context.getBean("mockCache", Cache.class);
 		this.cacheInterceptor = context.getBean(CacheInterceptor.class);
 		this.errorHandler = context.getBean(CacheErrorHandler.class);
 		this.simpleService = context.getBean(SimpleService.class);
 	}
 
-	@AfterEach
-	void tearDown() {
-		this.context.close();
-	}
-
 	@Test
-	void getFail() {
+	public void getFail() {
 		UnsupportedOperationException exception = new UnsupportedOperationException("Test exception on get");
 		willThrow(exception).given(this.cache).get(0L);
 
@@ -86,7 +78,7 @@ class CacheErrorHandlerTests {
 	}
 
 	@Test
-	void getAndPutFail() {
+	public void getAndPutFail() {
 		UnsupportedOperationException exception = new UnsupportedOperationException("Test exception on get");
 		willThrow(exception).given(this.cache).get(0L);
 		willThrow(exception).given(this.cache).put(0L, 0L); // Update of the cache will fail as well
@@ -101,7 +93,7 @@ class CacheErrorHandlerTests {
 	}
 
 	@Test
-	void getFailProperException() {
+	public void getFailProperException() {
 		UnsupportedOperationException exception = new UnsupportedOperationException("Test exception on get");
 		willThrow(exception).given(this.cache).get(0L);
 
@@ -113,7 +105,7 @@ class CacheErrorHandlerTests {
 	}
 
 	@Test
-	void putFail() {
+	public void putFail() {
 		UnsupportedOperationException exception = new UnsupportedOperationException("Test exception on put");
 		willThrow(exception).given(this.cache).put(0L, 0L);
 
@@ -122,7 +114,7 @@ class CacheErrorHandlerTests {
 	}
 
 	@Test
-	void putFailProperException() {
+	public void putFailProperException() {
 		UnsupportedOperationException exception = new UnsupportedOperationException("Test exception on put");
 		willThrow(exception).given(this.cache).put(0L, 0L);
 
@@ -134,7 +126,7 @@ class CacheErrorHandlerTests {
 	}
 
 	@Test
-	void evictFail() {
+	public void evictFail() {
 		UnsupportedOperationException exception = new UnsupportedOperationException("Test exception on evict");
 		willThrow(exception).given(this.cache).evict(0L);
 
@@ -143,7 +135,7 @@ class CacheErrorHandlerTests {
 	}
 
 	@Test
-	void evictFailProperException() {
+	public void evictFailProperException() {
 		UnsupportedOperationException exception = new UnsupportedOperationException("Test exception on evict");
 		willThrow(exception).given(this.cache).evict(0L);
 
@@ -155,7 +147,7 @@ class CacheErrorHandlerTests {
 	}
 
 	@Test
-	void clearFail() {
+	public void clearFail() {
 		UnsupportedOperationException exception = new UnsupportedOperationException("Test exception on evict");
 		willThrow(exception).given(this.cache).clear();
 
@@ -164,7 +156,7 @@ class CacheErrorHandlerTests {
 	}
 
 	@Test
-	void clearFailProperException() {
+	public void clearFailProperException() {
 		UnsupportedOperationException exception = new UnsupportedOperationException("Test exception on clear");
 		willThrow(exception).given(this.cache).clear();
 
@@ -178,7 +170,7 @@ class CacheErrorHandlerTests {
 
 	@Configuration
 	@EnableCaching
-	static class Config implements CachingConfigurer {
+	static class Config extends CachingConfigurerSupport {
 
 		@Bean
 		@Override

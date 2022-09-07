@@ -23,11 +23,12 @@ import java.util.function.Function;
 
 import javax.validation.constraints.NotEmpty;
 
-import io.reactivex.rxjava3.core.Single;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+import rx.RxReactiveStreams;
+import rx.Single;
 
 import org.springframework.core.MethodParameter;
 import org.springframework.core.ReactiveAdapterRegistry;
@@ -140,7 +141,7 @@ class ModelAttributeMethodArgumentResolverTests {
 
 		testBindPojo("pojoSingle", parameter, single -> {
 			assertThat(single).isInstanceOf(Single.class);
-			Object value = ((Single<?>) single).blockingGet();
+			Object value = ((Single<?>) single).toBlocking().value();
 			assertThat(value.getClass()).isEqualTo(Pojo.class);
 			return (Pojo) value;
 		});
@@ -177,7 +178,7 @@ class ModelAttributeMethodArgumentResolverTests {
 
 		createButDoNotBindToPojo("nonBindingPojoSingle", parameter, value -> {
 			assertThat(value).isInstanceOf(Single.class);
-			Object extractedValue = ((Single<?>) value).blockingGet();
+			Object extractedValue = ((Single<?>) value).toBlocking().value();
 			assertThat(extractedValue).isInstanceOf(NonBindingPojo.class);
 			return (NonBindingPojo) extractedValue;
 		});
@@ -312,7 +313,7 @@ class ModelAttributeMethodArgumentResolverTests {
 				resolvedArgumentMono -> {
 					Object value = resolvedArgumentMono.block(Duration.ofSeconds(5));
 					assertThat(value).isInstanceOf(Single.class);
-					return Mono.from(((Single<?>) value).toFlowable());
+					return Mono.from(RxReactiveStreams.toPublisher((Single<?>) value));
 				});
 	}
 
@@ -340,7 +341,7 @@ class ModelAttributeMethodArgumentResolverTests {
 		testValidationErrorWithoutBinding(parameter, resolvedArgumentMono -> {
 			Object value = resolvedArgumentMono.block(Duration.ofSeconds(5));
 			assertThat(value).isInstanceOf(Single.class);
-			return Mono.from(((Single<?>) value).toFlowable());
+			return Mono.from(RxReactiveStreams.toPublisher((Single<?>) value));
 		});
 	}
 

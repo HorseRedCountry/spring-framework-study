@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -124,37 +124,37 @@ class PathResourceTests {
 	@Test
 	void fileExists() {
 		PathResource resource = new PathResource(TEST_FILE);
-		assertThat(resource.exists()).isTrue();
+		assertThat(resource.exists()).isEqualTo(true);
 	}
 
 	@Test
 	void dirExists() {
 		PathResource resource = new PathResource(TEST_DIR);
-		assertThat(resource.exists()).isTrue();
+		assertThat(resource.exists()).isEqualTo(true);
 	}
 
 	@Test
 	void fileDoesNotExist() {
 		PathResource resource = new PathResource(NON_EXISTING_FILE);
-		assertThat(resource.exists()).isFalse();
+		assertThat(resource.exists()).isEqualTo(false);
 	}
 
 	@Test
 	void fileIsReadable() {
 		PathResource resource = new PathResource(TEST_FILE);
-		assertThat(resource.isReadable()).isTrue();
+		assertThat(resource.isReadable()).isEqualTo(true);
 	}
 
 	@Test
 	void doesNotExistIsNotReadable() {
 		PathResource resource = new PathResource(NON_EXISTING_FILE);
-		assertThat(resource.isReadable()).isFalse();
+		assertThat(resource.isReadable()).isEqualTo(false);
 	}
 
 	@Test
 	void directoryIsNotReadable() {
 		PathResource resource = new PathResource(TEST_DIR);
-		assertThat(resource.isReadable()).isFalse();
+		assertThat(resource.isReadable()).isEqualTo(false);
 	}
 
 	@Test
@@ -256,13 +256,13 @@ class PathResourceTests {
 	@Test
 	void fileIsWritable() {
 		PathResource resource = new PathResource(TEST_FILE);
-		assertThat(resource.isWritable()).isTrue();
+		assertThat(resource.isWritable()).isEqualTo(true);
 	}
 
 	@Test
 	void directoryIsNotWritable() {
 		PathResource resource = new PathResource(TEST_DIR);
-		assertThat(resource.isWritable()).isFalse();
+		assertThat(resource.isWritable()).isEqualTo(false);
 	}
 
 	@Test
@@ -291,11 +291,18 @@ class PathResourceTests {
 	@Test
 	void getReadableByteChannel() throws IOException {
 		PathResource resource = new PathResource(TEST_FILE);
-		try (ReadableByteChannel channel = resource.readableChannel()) {
+		ReadableByteChannel channel = null;
+		try {
+			channel = resource.readableChannel();
 			ByteBuffer buffer = ByteBuffer.allocate((int) resource.contentLength());
 			channel.read(buffer);
 			buffer.rewind();
 			assertThat(buffer.limit()).isGreaterThan(0);
+		}
+		finally {
+			if (channel != null) {
+				channel.close();
+			}
 		}
 	}
 
@@ -323,8 +330,15 @@ class PathResourceTests {
 		Files.createFile(testPath);
 		PathResource resource = new PathResource(testPath);
 		ByteBuffer buffer = ByteBuffer.wrap("test".getBytes(StandardCharsets.UTF_8));
-		try (WritableByteChannel channel = resource.writableChannel()) {
+		WritableByteChannel channel = null;
+		try {
+			channel = resource.writableChannel();
 			channel.write(buffer);
+		}
+		finally {
+			if (channel != null) {
+				channel.close();
+			}
 		}
 		assertThat(resource.contentLength()).isEqualTo(4L);
 	}

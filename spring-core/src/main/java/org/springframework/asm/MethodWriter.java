@@ -466,8 +466,7 @@ final class MethodWriter extends MethodVisitor {
 
   /**
    * Indicates what must be computed. Must be one of {@link #COMPUTE_ALL_FRAMES}, {@link
-   * #COMPUTE_INSERTED_FRAMES}, {@link COMPUTE_MAX_STACK_AND_LOCAL_FROM_FRAMES}, {@link
-   * #COMPUTE_MAX_STACK_AND_LOCAL} or {@link #COMPUTE_NOTHING}.
+   * #COMPUTE_INSERTED_FRAMES}, {@link #COMPUTE_MAX_STACK_AND_LOCAL} or {@link #COMPUTE_NOTHING}.
    */
   private final int compute;
 
@@ -593,7 +592,7 @@ final class MethodWriter extends MethodVisitor {
       final String signature,
       final String[] exceptions,
       final int compute) {
-    super(/* latest api = */ Opcodes.ASM9);
+    super(/* latest api = */ Opcodes.ASM7);
     this.symbolTable = symbolTable;
     this.accessFlags = "<init>".equals(name) ? access | Constants.ACC_CONSTRUCTOR : access;
     this.nameIndex = symbolTable.addConstantUtf8(name);
@@ -905,26 +904,26 @@ final class MethodWriter extends MethodVisitor {
   }
 
   @Override
-  public void visitVarInsn(final int opcode, final int varIndex) {
+  public void visitVarInsn(final int opcode, final int var) {
     lastBytecodeOffset = code.length;
     // Add the instruction to the bytecode of the method.
-    if (varIndex < 4 && opcode != Opcodes.RET) {
+    if (var < 4 && opcode != Opcodes.RET) {
       int optimizedOpcode;
       if (opcode < Opcodes.ISTORE) {
-        optimizedOpcode = Constants.ILOAD_0 + ((opcode - Opcodes.ILOAD) << 2) + varIndex;
+        optimizedOpcode = Constants.ILOAD_0 + ((opcode - Opcodes.ILOAD) << 2) + var;
       } else {
-        optimizedOpcode = Constants.ISTORE_0 + ((opcode - Opcodes.ISTORE) << 2) + varIndex;
+        optimizedOpcode = Constants.ISTORE_0 + ((opcode - Opcodes.ISTORE) << 2) + var;
       }
       code.putByte(optimizedOpcode);
-    } else if (varIndex >= 256) {
-      code.putByte(Constants.WIDE).put12(opcode, varIndex);
+    } else if (var >= 256) {
+      code.putByte(Constants.WIDE).put12(opcode, var);
     } else {
-      code.put11(opcode, varIndex);
+      code.put11(opcode, var);
     }
     // If needed, update the maximum stack size and number of locals, and stack map frames.
     if (currentBasicBlock != null) {
       if (compute == COMPUTE_ALL_FRAMES || compute == COMPUTE_INSERTED_FRAMES) {
-        currentBasicBlock.frame.execute(opcode, varIndex, null, null);
+        currentBasicBlock.frame.execute(opcode, var, null, null);
       } else {
         if (opcode == Opcodes.RET) {
           // No stack size delta.
@@ -946,9 +945,9 @@ final class MethodWriter extends MethodVisitor {
           || opcode == Opcodes.DLOAD
           || opcode == Opcodes.LSTORE
           || opcode == Opcodes.DSTORE) {
-        currentMaxLocals = varIndex + 2;
+        currentMaxLocals = var + 2;
       } else {
-        currentMaxLocals = varIndex + 1;
+        currentMaxLocals = var + 1;
       }
       if (currentMaxLocals > maxLocals) {
         maxLocals = currentMaxLocals;
@@ -1308,21 +1307,21 @@ final class MethodWriter extends MethodVisitor {
   }
 
   @Override
-  public void visitIincInsn(final int varIndex, final int increment) {
+  public void visitIincInsn(final int var, final int increment) {
     lastBytecodeOffset = code.length;
     // Add the instruction to the bytecode of the method.
-    if ((varIndex > 255) || (increment > 127) || (increment < -128)) {
-      code.putByte(Constants.WIDE).put12(Opcodes.IINC, varIndex).putShort(increment);
+    if ((var > 255) || (increment > 127) || (increment < -128)) {
+      code.putByte(Constants.WIDE).put12(Opcodes.IINC, var).putShort(increment);
     } else {
-      code.putByte(Opcodes.IINC).put11(varIndex, increment);
+      code.putByte(Opcodes.IINC).put11(var, increment);
     }
     // If needed, update the maximum stack size and number of locals, and stack map frames.
     if (currentBasicBlock != null
         && (compute == COMPUTE_ALL_FRAMES || compute == COMPUTE_INSERTED_FRAMES)) {
-      currentBasicBlock.frame.execute(Opcodes.IINC, varIndex, null, null);
+      currentBasicBlock.frame.execute(Opcodes.IINC, var, null, null);
     }
     if (compute != COMPUTE_NOTHING) {
-      int currentMaxLocals = varIndex + 1;
+      int currentMaxLocals = var + 1;
       if (currentMaxLocals > maxLocals) {
         maxLocals = currentMaxLocals;
       }

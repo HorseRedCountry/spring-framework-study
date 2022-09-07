@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,13 +44,13 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Chris Beams
  * @author Sam Brannen
  */
-class AnnotationBeanNameGeneratorTests {
+public class AnnotationBeanNameGeneratorTests {
 
 	private AnnotationBeanNameGenerator beanNameGenerator = new AnnotationBeanNameGenerator();
 
 
 	@Test
-	void generateBeanNameWithNamedComponent() {
+	public void generateBeanNameWithNamedComponent() {
 		BeanDefinitionRegistry registry = new SimpleBeanDefinitionRegistry();
 		AnnotatedBeanDefinition bd = new AnnotatedGenericBeanDefinition(ComponentWithName.class);
 		String beanName = this.beanNameGenerator.generateBeanName(bd, registry);
@@ -60,7 +60,7 @@ class AnnotationBeanNameGeneratorTests {
 	}
 
 	@Test
-	void generateBeanNameWithDefaultNamedComponent() {
+	public void generateBeanNameWithDefaultNamedComponent() {
 		BeanDefinitionRegistry registry = new SimpleBeanDefinitionRegistry();
 		AnnotatedBeanDefinition bd = new AnnotatedGenericBeanDefinition(DefaultNamedComponent.class);
 		String beanName = this.beanNameGenerator.generateBeanName(bd, registry);
@@ -70,7 +70,7 @@ class AnnotationBeanNameGeneratorTests {
 	}
 
 	@Test
-	void generateBeanNameWithNamedComponentWhereTheNameIsBlank() {
+	public void generateBeanNameWithNamedComponentWhereTheNameIsBlank() {
 		BeanDefinitionRegistry registry = new SimpleBeanDefinitionRegistry();
 		AnnotatedBeanDefinition bd = new AnnotatedGenericBeanDefinition(ComponentWithBlankName.class);
 		String beanName = this.beanNameGenerator.generateBeanName(bd, registry);
@@ -81,7 +81,7 @@ class AnnotationBeanNameGeneratorTests {
 	}
 
 	@Test
-	void generateBeanNameWithAnonymousComponentYieldsGeneratedBeanName() {
+	public void generateBeanNameWithAnonymousComponentYieldsGeneratedBeanName() {
 		BeanDefinitionRegistry registry = new SimpleBeanDefinitionRegistry();
 		AnnotatedBeanDefinition bd = new AnnotatedGenericBeanDefinition(AnonymousComponent.class);
 		String beanName = this.beanNameGenerator.generateBeanName(bd, registry);
@@ -92,7 +92,7 @@ class AnnotationBeanNameGeneratorTests {
 	}
 
 	@Test
-	void generateBeanNameFromMetaComponentWithStringValue() {
+	public void generateBeanNameFromMetaComponentWithStringValue() {
 		BeanDefinitionRegistry registry = new SimpleBeanDefinitionRegistry();
 		AnnotatedBeanDefinition bd = new AnnotatedGenericBeanDefinition(ComponentFromStringMeta.class);
 		String beanName = this.beanNameGenerator.generateBeanName(bd, registry);
@@ -100,7 +100,7 @@ class AnnotationBeanNameGeneratorTests {
 	}
 
 	@Test
-	void generateBeanNameFromMetaComponentWithNonStringValue() {
+	public void generateBeanNameFromMetaComponentWithNonStringValue() {
 		BeanDefinitionRegistry registry = new SimpleBeanDefinitionRegistry();
 		AnnotatedBeanDefinition bd = new AnnotatedGenericBeanDefinition(ComponentFromNonStringMeta.class);
 		String beanName = this.beanNameGenerator.generateBeanName(bd, registry);
@@ -108,7 +108,7 @@ class AnnotationBeanNameGeneratorTests {
 	}
 
 	@Test
-	void generateBeanNameFromComposedControllerAnnotationWithoutName() {
+	public void generateBeanNameFromComposedControllerAnnotationWithoutName() {
 		// SPR-11360
 		BeanDefinitionRegistry registry = new SimpleBeanDefinitionRegistry();
 		AnnotatedBeanDefinition bd = new AnnotatedGenericBeanDefinition(ComposedControllerAnnotationWithoutName.class);
@@ -118,7 +118,7 @@ class AnnotationBeanNameGeneratorTests {
 	}
 
 	@Test
-	void generateBeanNameFromComposedControllerAnnotationWithBlankName() {
+	public void generateBeanNameFromComposedControllerAnnotationWithBlankName() {
 		// SPR-11360
 		BeanDefinitionRegistry registry = new SimpleBeanDefinitionRegistry();
 		AnnotatedBeanDefinition bd = new AnnotatedGenericBeanDefinition(ComposedControllerAnnotationWithBlankName.class);
@@ -128,7 +128,7 @@ class AnnotationBeanNameGeneratorTests {
 	}
 
 	@Test
-	void generateBeanNameFromComposedControllerAnnotationWithStringValue() {
+	public void generateBeanNameFromComposedControllerAnnotationWithStringValue() {
 		// SPR-11360
 		BeanDefinitionRegistry registry = new SimpleBeanDefinitionRegistry();
 		AnnotatedBeanDefinition bd = new AnnotatedGenericBeanDefinition(
@@ -157,7 +157,7 @@ class AnnotationBeanNameGeneratorTests {
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target(ElementType.TYPE)
 	@Component
-	@interface NonStringMetaComponent {
+	public @interface NonStringMetaComponent {
 
 		long value();
 	}
@@ -172,21 +172,21 @@ class AnnotationBeanNameGeneratorTests {
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target(ElementType.TYPE)
 	@Controller
-	@interface TestRestController {
+	public static @interface TestRestController {
 
 		String value() default "";
 	}
 
 	@TestRestController
-	static class ComposedControllerAnnotationWithoutName {
+	public static class ComposedControllerAnnotationWithoutName {
 	}
 
 	@TestRestController(" ")
-	static class ComposedControllerAnnotationWithBlankName {
+	public static class ComposedControllerAnnotationWithBlankName {
 	}
 
 	@TestRestController("restController")
-	static class ComposedControllerAnnotationWithStringValue {
+	public static class ComposedControllerAnnotationWithStringValue {
 	}
 
 }

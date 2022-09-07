@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.core.testfixture.TimeStamped;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatRuntimeException;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 /**
  * Also tests AdvisedSupport and ProxyCreatorSupport superclasses.
@@ -240,16 +240,6 @@ public class ProxyFactoryTests {
 		assertThat(factory.countAdvicesOfType(NopInterceptor.class) == 2).isTrue();
 	}
 
-	@Test
-	public void testSealedInterfaceExclusion() {
-		// String implements ConstantDesc on JDK 12+, sealed as of JDK 17
-		ProxyFactory factory = new ProxyFactory(new String());
-		NopInterceptor di = new NopInterceptor();
-		factory.addAdvice(0, di);
-		Object proxy = factory.getProxy();
-		assertThat(proxy).isInstanceOf(CharSequence.class);
-	}
-
 	/**
 	 * Should see effect immediately on behavior.
 	 */
@@ -277,7 +267,7 @@ public class ProxyFactoryTests {
 
 		assertThat(config.getAdvisors().length == oldCount).isTrue();
 
-		assertThatRuntimeException()
+		assertThatExceptionOfType(RuntimeException.class)
 				.as("Existing object won't implement this interface any more")
 				.isThrownBy(ts::getTimeStamp); // Existing reference will fail
 

@@ -24,8 +24,7 @@ import java.lang.annotation.Target;
 
 /**
  * Annotation that marks a method as a candidate for <i>asynchronous</i> execution.
- *
- * <p>Can also be used at the type level, in which case all the type's methods are
+ * Can also be used at the type level, in which case all of the type's methods are
  * considered as asynchronous. Note, however, that {@code @Async} is not supported
  * on methods declared within a
  * {@link org.springframework.context.annotation.Configuration @Configuration} class.

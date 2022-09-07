@@ -105,7 +105,7 @@ import org.springframework.util.StringValueResolver;
  *
  * <p>The common annotations supported by this post-processor are available in
  * Java 6 (JDK 1.6) as well as in Java EE 5/6 (which provides a standalone jar for
- * its common annotations as well, allowing for use in any based application).
+ * its common annotations as well, allowing for use in any Java 5 based application).
  *
  * <p>For default usage, resolving resource names as Spring bean names,
  * simply define the following in your application context:
@@ -146,27 +146,22 @@ import org.springframework.util.StringValueResolver;
 public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBeanPostProcessor
 		implements InstantiationAwareBeanPostProcessor, BeanFactoryAware, Serializable {
 
-	// Defensive reference to JNDI API for JDK 9+ (optional java.naming module)
-	private static final boolean jndiPresent = ClassUtils.isPresent(
-			"javax.naming.InitialContext", CommonAnnotationBeanPostProcessor.class.getClassLoader());
-
-	private static final Set<Class<? extends Annotation>> resourceAnnotationTypes = new LinkedHashSet<>(4);
-
 	@Nullable
 	private static final Class<? extends Annotation> webServiceRefClass;
 
 	@Nullable
 	private static final Class<? extends Annotation> ejbClass;
 
-	static {
-		resourceAnnotationTypes.add(Resource.class);
+	private static final Set<Class<? extends Annotation>> resourceAnnotationTypes = new LinkedHashSet<>(4);
 
+	static {
 		webServiceRefClass = loadAnnotationType("javax.xml.ws.WebServiceRef");
+		ejbClass = loadAnnotationType("javax.ejb.EJB");
+
+		resourceAnnotationTypes.add(Resource.class);
 		if (webServiceRefClass != null) {
 			resourceAnnotationTypes.add(webServiceRefClass);
 		}
-
-		ejbClass = loadAnnotationType("javax.ejb.EJB");
 		if (ejbClass != null) {
 			resourceAnnotationTypes.add(ejbClass);
 		}
@@ -179,8 +174,7 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 
 	private boolean alwaysUseJndiLookup = false;
 
-	@Nullable
-	private transient BeanFactory jndiFactory;
+	private transient BeanFactory jndiFactory = new SimpleJndiBeanFactory();
 
 	@Nullable
 	private transient BeanFactory resourceFactory;
@@ -205,11 +199,6 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 		setInitAnnotationType(PostConstruct.class);
 		setDestroyAnnotationType(PreDestroy.class);
 		ignoreResourceType("javax.xml.ws.WebServiceContext");
-
-		// java.naming module present on JDK 9+?
-		if (jndiPresent) {
-			this.jndiFactory = new SimpleJndiBeanFactory();
-		}
 	}
 
 
@@ -496,23 +485,12 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 	protected Object getResource(LookupElement element, @Nullable String requestingBeanName)
 			throws NoSuchBeanDefinitionException {
 
-		// JNDI lookup to perform?
-		String jndiName = null;
 		if (StringUtils.hasLength(element.mappedName)) {
-			jndiName = element.mappedName;
+			return this.jndiFactory.getBean(element.mappedName, element.lookupType);
 		}
-		else if (this.alwaysUseJndiLookup) {
-			jndiName = element.name;
+		if (this.alwaysUseJndiLookup) {
+			return this.jndiFactory.getBean(element.name, element.lookupType);
 		}
-		if (jndiName != null) {
-			if (this.jndiFactory == null) {
-				throw new NoSuchBeanDefinitionException(element.lookupType,
-						"No JNDI factory configured - specify the 'jndiFactory' property");
-			}
-			return this.jndiFactory.getBean(jndiName, element.lookupType);
-		}
-
-		// Regular resource autowiring
 		if (this.resourceFactory == null) {
 			throw new NoSuchBeanDefinitionException(element.lookupType,
 					"No resource factory configured - specify the 'resourceFactory' property");

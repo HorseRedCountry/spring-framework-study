@@ -80,7 +80,7 @@ public class FluxExchangeResult<T> extends ExchangeResult {
 	 * 		.exchange()
 	 * 		.expectStatus().isOk()
 	 *	 	.returnResult()
-	 *	 	.consumeWith(result -&gt; assertThat(...);
+	 *	 	.consumeWith(result -> assertThat(...);
 	 * </pre>
 	 * @param consumer the consumer for {@code "this"} instance
 	 */

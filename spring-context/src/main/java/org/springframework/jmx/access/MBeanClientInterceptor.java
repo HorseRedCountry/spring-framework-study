@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,6 @@ import org.springframework.jmx.support.ObjectNameManager;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -165,10 +164,10 @@ public class MBeanClientInterceptor
 	}
 
 	/**
-	 * Allow {@code Map} access to the environment to be set for the connector,
+	 * Allow Map access to the environment to be set for the connector,
 	 * with the option to add or override specific entries.
 	 * <p>Useful for specifying entries directly, for example via
-	 * {@code environment[myKey]}. This is particularly useful for
+	 * "environment[myKey]". This is particularly useful for
 	 * adding or overriding entries in child bean definitions.
 	 */
 	@Nullable
@@ -189,9 +188,9 @@ public class MBeanClientInterceptor
 	}
 
 	/**
-	 * Set whether the proxy should connect to the {@code MBeanServer}
-	 * at creation time ({@code true}) or the first time it is invoked
-	 * ({@code false}). Default is {@code true}.
+	 * Set whether or not the proxy should connect to the {@code MBeanServer}
+	 * at creation time ("true") or the first time it is invoked ("false").
+	 * Default is "true".
 	 */
 	public void setConnectOnStartup(boolean connectOnStartup) {
 		this.connectOnStartup = connectOnStartup;
@@ -199,7 +198,7 @@ public class MBeanClientInterceptor
 
 	/**
 	 * Set whether to refresh the MBeanServer connection on connect failure.
-	 * Default is {@code false}.
+	 * Default is "false".
 	 * <p>Can be turned on to allow for hot restart of the JMX server,
 	 * automatically reconnecting and retrying in case of an IOException.
 	 */
@@ -302,13 +301,13 @@ public class MBeanClientInterceptor
 			MBeanInfo info = server.getMBeanInfo(this.objectName);
 
 			MBeanAttributeInfo[] attributeInfo = info.getAttributes();
-			this.allowedAttributes = CollectionUtils.newHashMap(attributeInfo.length);
+			this.allowedAttributes = new HashMap<>(attributeInfo.length);
 			for (MBeanAttributeInfo infoEle : attributeInfo) {
 				this.allowedAttributes.put(infoEle.getName(), infoEle);
 			}
 
 			MBeanOperationInfo[] operationInfo = info.getOperations();
-			this.allowedOperations = CollectionUtils.newHashMap(operationInfo.length);
+			this.allowedOperations = new HashMap<>(operationInfo.length);
 			for (MBeanOperationInfo infoEle : operationInfo) {
 				Class<?>[] paramTypes = JmxUtils.parameterInfoToTypes(infoEle.getSignature(), this.beanClassLoader);
 				this.allowedOperations.put(new MethodCacheKey(infoEle.getName(), paramTypes), infoEle);

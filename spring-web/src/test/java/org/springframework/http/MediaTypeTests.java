@@ -465,7 +465,7 @@ public class MediaTypeTests {
 	@Test  // gh-26127
 	void serialize() throws Exception {
 		MediaType original = new MediaType("text", "plain", StandardCharsets.UTF_8);
-		MediaType deserialized = SerializationTestUtils.serializeAndDeserialize(original);
+		MediaType deserialized = (MediaType) SerializationTestUtils.serializeAndDeserialize(original);
 		assertThat(deserialized).isEqualTo(original);
 		assertThat(original).isEqualTo(deserialized);
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -148,15 +148,13 @@ public class ResourceRegionHttpMessageConverter extends AbstractGenericHttpMessa
 
 		long start = region.getPosition();
 		long end = start + region.getCount() - 1;
-		long resourceLength = region.getResource().contentLength();
+		Long resourceLength = region.getResource().contentLength();
 		end = Math.min(end, resourceLength - 1);
 		long rangeLength = end - start + 1;
 		responseHeaders.add("Content-Range", "bytes " + start + '-' + end + '/' + resourceLength);
 		responseHeaders.setContentLength(rangeLength);
 
 		InputStream in = region.getResource().getInputStream();
-		// We cannot use try-with-resources here for the InputStream, since we have
-		// custom handling of the close() method in a finally-block.
 		try {
 			StreamUtils.copyRange(in, outputMessage.getBody(), start, end);
 		}
@@ -203,10 +201,10 @@ public class ResourceRegionHttpMessageConverter extends AbstractGenericHttpMessa
 				print(out, "--" + boundaryString);
 				println(out);
 				if (contentType != null) {
-					print(out, "Content-Type: " + contentType);
+					print(out, "Content-Type: " + contentType.toString());
 					println(out);
 				}
-				long resourceLength = region.getResource().contentLength();
+				Long resourceLength = region.getResource().contentLength();
 				end = Math.min(end, resourceLength - inputStreamPosition - 1);
 				print(out, "Content-Range: bytes " +
 						region.getPosition() + '-' + (region.getPosition() + region.getCount() - 1) +

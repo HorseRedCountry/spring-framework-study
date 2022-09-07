@@ -355,18 +355,18 @@ class DataBinderTests {
 		LocaleContextHolder.setLocale(Locale.GERMAN);
 		try {
 			binder.bind(pvs);
-			assertThat(tb.getMyFloat()).isEqualTo(Float.valueOf(1.2f));
+			assertThat(tb.getMyFloat()).isEqualTo(new Float(1.2));
 			assertThat(binder.getBindingResult().getFieldValue("myFloat")).isEqualTo("1,2");
 
 			PropertyEditor editor = binder.getBindingResult().findEditor("myFloat", Float.class);
 			assertThat(editor).isNotNull();
-			editor.setValue(1.4f);
+			editor.setValue(new Float(1.4));
 			assertThat(editor.getAsText()).isEqualTo("1,4");
 
 			editor = binder.getBindingResult().findEditor("myFloat", null);
 			assertThat(editor).isNotNull();
 			editor.setAsText("1,6");
-			assertThat(editor.getValue()).isEqualTo(1.6f);
+			assertThat(editor.getValue()).isEqualTo(new Float(1.6));
 		}
 		finally {
 			LocaleContextHolder.resetLocaleContext();
@@ -387,7 +387,7 @@ class DataBinderTests {
 		LocaleContextHolder.setLocale(Locale.GERMAN);
 		try {
 			binder.bind(pvs);
-			assertThat(tb.getMyFloat()).isEqualTo(Float.valueOf(0.0f));
+			assertThat(tb.getMyFloat()).isEqualTo(new Float(0.0));
 			assertThat(binder.getBindingResult().getFieldValue("myFloat")).isEqualTo("1x2");
 			assertThat(binder.getBindingResult().hasFieldErrors("myFloat")).isTrue();
 		}
@@ -512,18 +512,18 @@ class DataBinderTests {
 		LocaleContextHolder.setLocale(Locale.GERMAN);
 		try {
 			binder.bind(pvs);
-			assertThat(tb.getMyFloat()).isEqualTo(Float.valueOf(1.2f));
+			assertThat(tb.getMyFloat()).isEqualTo(new Float(1.2));
 			assertThat(binder.getBindingResult().getFieldValue("myFloat")).isEqualTo("1,2");
 
 			PropertyEditor editor = binder.getBindingResult().findEditor("myFloat", Float.class);
 			assertThat(editor).isNotNull();
-			editor.setValue(1.4f);
+			editor.setValue(new Float(1.4));
 			assertThat(editor.getAsText()).isEqualTo("1,4");
 
 			editor = binder.getBindingResult().findEditor("myFloat", null);
 			assertThat(editor).isNotNull();
 			editor.setAsText("1,6");
-			assertThat(editor.getValue()).isEqualTo(1.6f);
+			assertThat(editor.getValue()).isEqualTo(new Float(1.6));
 		}
 		finally {
 			LocaleContextHolder.resetLocaleContext();
@@ -545,7 +545,7 @@ class DataBinderTests {
 		LocaleContextHolder.setLocale(Locale.GERMAN);
 		try {
 			binder.bind(pvs);
-			assertThat(tb.getMyFloat()).isEqualTo(Float.valueOf(0.0f));
+			assertThat(tb.getMyFloat()).isEqualTo(new Float(0.0));
 			assertThat(binder.getBindingResult().getFieldValue("myFloat")).isEqualTo("1x2");
 			assertThat(binder.getBindingResult().hasFieldErrors("myFloat")).isTrue();
 		}
@@ -565,12 +565,12 @@ class DataBinderTests {
 		LocaleContextHolder.setLocale(Locale.GERMAN);
 		try {
 			binder.bind(pvs);
-			assertThat(tb.getMyFloat()).isEqualTo(Float.valueOf(1.2f));
+			assertThat(tb.getMyFloat()).isEqualTo(new Float(1.2));
 			assertThat(binder.getBindingResult().getFieldValue("myFloat")).isEqualTo("1,2");
 
 			PropertyEditor editor = binder.getBindingResult().findEditor("myFloat", Float.class);
 			assertThat(editor).isNotNull();
-			editor.setValue(1.4f);
+			editor.setValue(new Float(1.4));
 			assertThat(editor.getAsText()).isEqualTo("1,4");
 
 			editor = binder.getBindingResult().findEditor("myFloat", null);
@@ -594,7 +594,7 @@ class DataBinderTests {
 		LocaleContextHolder.setLocale(Locale.GERMAN);
 		try {
 			binder.bind(pvs);
-			assertThat(tb.getMyFloat()).isEqualTo(Float.valueOf(0.0f));
+			assertThat(tb.getMyFloat()).isEqualTo(new Float(0.0));
 			assertThat(binder.getBindingResult().getFieldValue("myFloat")).isEqualTo("1x2");
 			assertThat(binder.getBindingResult().hasFieldErrors("myFloat")).isTrue();
 			assertThat(binder.getBindingResult().getFieldError("myFloat").getCode()).isEqualTo("typeMismatch");
@@ -756,7 +756,7 @@ class DataBinderTests {
 		assertThat("Rod".equals(rod.getTouchy())).as("changed touchy correctly").isTrue();
 		assertThat(rod.getAge() == 0).as("did not change age").isTrue();
 		String[] disallowedFields = binder.getBindingResult().getSuppressedFields();
-		assertThat(disallowedFields).hasSize(1);
+		assertThat(disallowedFields.length).isEqualTo(1);
 		assertThat(disallowedFields[0]).isEqualTo("age");
 
 		Map<?,?> m = binder.getBindingResult().getModel();
@@ -1114,7 +1114,7 @@ class DataBinderTests {
 		pvs.add("name", null);
 		binder.bind(pvs);
 		assertThat(bean.getId()).isEqualTo("1");
-		assertThat(bean.getName()).isEmpty();
+		assertThat(bean.getName().isPresent()).isFalse();
 
 		pvs = new MutablePropertyValues();
 		pvs.add("id", "2");
@@ -1243,7 +1243,7 @@ class DataBinderTests {
 		assertThat(errors.getFieldError("name").getCodes()[2]).isEqualTo("NOT_ROD.java.lang.String");
 		assertThat(errors.getFieldError("name").getCodes()[3]).isEqualTo("NOT_ROD");
 		assertThat((errors.getFieldErrors("name").get(0)).getField()).isEqualTo("name");
-		assertThat((errors.getFieldErrors("name").get(0)).getRejectedValue()).isNull();
+		assertThat((errors.getFieldErrors("name").get(0)).getRejectedValue()).isEqualTo(null);
 
 		assertThat(errors.hasFieldErrors("spouse.age")).isTrue();
 		assertThat(errors.getFieldErrorCount("spouse.age")).isEqualTo(1);
@@ -1315,7 +1315,7 @@ class DataBinderTests {
 		assertThat(errors.getFieldError("name").getCodes()[2]).isEqualTo("validation.NOT_ROD.java.lang.String");
 		assertThat(errors.getFieldError("name").getCodes()[3]).isEqualTo("validation.NOT_ROD");
 		assertThat((errors.getFieldErrors("name").get(0)).getField()).isEqualTo("name");
-		assertThat((errors.getFieldErrors("name").get(0)).getRejectedValue()).isNull();
+		assertThat((errors.getFieldErrors("name").get(0)).getRejectedValue()).isEqualTo(null);
 
 		assertThat(errors.hasFieldErrors("spouse.age")).isTrue();
 		assertThat(errors.getFieldErrorCount("spouse.age")).isEqualTo(1);
@@ -1340,7 +1340,7 @@ class DataBinderTests {
 		assertThat(errors.getFieldErrorCount("spouse")).isEqualTo(1);
 		assertThat(errors.getFieldError("spouse").getCode()).isEqualTo("SPOUSE_NOT_AVAILABLE");
 		assertThat((errors.getFieldErrors("spouse").get(0)).getObjectName()).isEqualTo("tb");
-		assertThat((errors.getFieldErrors("spouse").get(0)).getRejectedValue()).isNull();
+		assertThat((errors.getFieldErrors("spouse").get(0)).getRejectedValue()).isEqualTo(null);
 	}
 
 	@Test
@@ -1365,7 +1365,7 @@ class DataBinderTests {
 		binder.registerCustomEditor(Set.class, new CustomCollectionEditor(TreeSet.class) {
 			@Override
 			protected Object convertElement(Object element) {
-				return Integer.valueOf(element.toString());
+				return new Integer(element.toString());
 			}
 		});
 		MutablePropertyValues pvs = new MutablePropertyValues();
@@ -1870,7 +1870,7 @@ class DataBinderTests {
 		mpvs.add("friends[4]", "");
 		binder.bind(mpvs);
 
-		assertThat(testBean.getFriends()).hasSize(5);
+		assertThat(testBean.getFriends().size()).isEqualTo(5);
 	}
 
 	@Test
@@ -1880,10 +1880,9 @@ class DataBinderTests {
 
 		MutablePropertyValues mpvs = new MutablePropertyValues();
 		mpvs.add("friends[256]", "");
-		assertThatExceptionOfType(InvalidPropertyException.class)
-			.isThrownBy(() -> binder.bind(mpvs))
-			.havingRootCause()
-			.isInstanceOf(IndexOutOfBoundsException.class);
+		assertThatExceptionOfType(InvalidPropertyException.class).isThrownBy(() ->
+				binder.bind(mpvs))
+			.satisfies(ex -> assertThat(ex.getRootCause()).isInstanceOf(IndexOutOfBoundsException.class));
 	}
 
 	@Test
@@ -1896,7 +1895,7 @@ class DataBinderTests {
 		mpvs.add("friends[4]", "");
 		binder.bind(mpvs);
 
-		assertThat(testBean.getFriends()).hasSize(5);
+		assertThat(testBean.getFriends().size()).isEqualTo(5);
 	}
 
 	@Test
@@ -1907,10 +1906,9 @@ class DataBinderTests {
 
 		MutablePropertyValues mpvs = new MutablePropertyValues();
 		mpvs.add("friends[16]", "");
-		assertThatExceptionOfType(InvalidPropertyException.class)
-			.isThrownBy(() -> binder.bind(mpvs))
-			.havingRootCause()
-			.isInstanceOf(IndexOutOfBoundsException.class);
+		assertThatExceptionOfType(InvalidPropertyException.class).isThrownBy(() ->
+				binder.bind(mpvs))
+			.satisfies(ex -> assertThat(ex.getRootCause()).isInstanceOf(IndexOutOfBoundsException.class));
 	}
 
 	@Test
@@ -1961,7 +1959,7 @@ class DataBinderTests {
 		binder.bind(pvs);
 		assertThat(tb.getIntegerList().size()).isEqualTo(257);
 		assertThat(tb.getIntegerList().get(256)).isEqualTo(Integer.valueOf(1));
-		assertThat(binder.getBindingResult().getFieldValue("integerList[256]")).isEqualTo(1);
+		assertThat(binder.getBindingResult().getFieldValue("integerList[256]")).isEqualTo(Integer.valueOf(1));
 	}
 
 	@Test  // SPR-14888
@@ -1987,7 +1985,7 @@ class DataBinderTests {
 		mpv.add("age", "invalid");
 		binder.bind(mpv);
 		assertThat(binder.getBindingResult().getFieldError("age").getCode()).isEqualTo("errors.typeMismatch");
-		assertThat(((BeanWrapper) binder.getInternalBindingResult().getPropertyAccessor()).getAutoGrowCollectionLimit()).isEqualTo(512);
+		assertThat(BeanWrapper.class.cast(binder.getInternalBindingResult().getPropertyAccessor()).getAutoGrowCollectionLimit()).isEqualTo(512);
 	}
 
 	@Test // SPR-15009
@@ -2042,17 +2040,8 @@ class DataBinderTests {
 		assertThatIllegalStateException().isThrownBy(() ->
 				binder.setMessageCodesResolver(new DefaultMessageCodesResolver()))
 			.withMessageContaining("DataBinder is already initialized with MessageCodesResolver");
-	}
 
-	@Test // gh-24347
-	void overrideBindingResultType() {
-		TestBean testBean = new TestBean();
-		DataBinder binder = new DataBinder(testBean, "testBean");
-		binder.initDirectFieldAccess();
-		binder.initBeanPropertyAccess();
-		assertThat(binder.getBindingResult()).isInstanceOf(BeanPropertyBindingResult.class);
 	}
-
 
 	@SuppressWarnings("unused")
 	private static class BeanWithIntegerList {

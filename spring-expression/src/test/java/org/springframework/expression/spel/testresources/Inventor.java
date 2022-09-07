@@ -30,7 +30,6 @@ import org.springframework.util.ObjectUtils;
 ///CLOVER:OFF
 @SuppressWarnings("unused")
 public class Inventor {
-
 	private String name;
 	public String _name;
 	public String _name_;
@@ -206,14 +205,8 @@ public class Inventor {
 		return Arrays.toString(values);
 	}
 
-	public String aVarargsMethod3(String str1, String... strings) {
-		if (ObjectUtils.isEmpty(strings)) {
-			return str1;
-		}
-		return str1 + "-" + String.join("-", strings);
-	}
-
 	public Inventor(String... strings) {
+
 	}
 
 	public boolean getSomeProperty() {

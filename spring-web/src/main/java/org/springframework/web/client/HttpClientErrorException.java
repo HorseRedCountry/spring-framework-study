@@ -68,7 +68,7 @@ public class HttpClientErrorException extends HttpStatusCodeException {
 
 	/**
 	 * Constructor with a status code and status text, headers, and content,
-	 * and a prepared message.
+	 * and an prepared message.
 	 * @since 5.2.2
 	 */
 	public HttpClientErrorException(String message, HttpStatus statusCode, String statusText,
@@ -79,7 +79,7 @@ public class HttpClientErrorException extends HttpStatusCodeException {
 
 
 	/**
-	 * Create {@code HttpClientErrorException} or an HTTP status specific subclass.
+	 * Create {@code HttpClientErrorException} or an HTTP status specific sub-class.
 	 * @since 5.1
 	 */
 	public static HttpClientErrorException create(

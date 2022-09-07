@@ -16,7 +16,6 @@
 
 package org.springframework.messaging.converter;
 
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -26,8 +25,6 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.springframework.core.GenericTypeResolver;
-import org.springframework.core.MethodParameter;
 import org.springframework.lang.Nullable;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
@@ -127,7 +124,7 @@ public abstract class AbstractMessageConverter implements SmartMessageConverter 
 	 * Whether this converter should convert messages for which no content type
 	 * could be resolved through the configured
 	 * {@link org.springframework.messaging.converter.ContentTypeResolver}.
-	 * <p>A converter can be configured to be strict only when a
+	 * <p>A converter can configured to be strict only when a
 	 * {@link #setContentTypeResolver contentTypeResolver} is configured and the
 	 * list of {@link #getSupportedMimeTypes() supportedMimeTypes} is not be empty.
 	 * <p>When this flag is set to {@code true}, {@link #supportsMimeType(MessageHeaders)}
@@ -310,21 +307,6 @@ public abstract class AbstractMessageConverter implements SmartMessageConverter 
 			Object payload, @Nullable MessageHeaders headers, @Nullable Object conversionHint) {
 
 		return null;
-	}
-
-
-	static Type getResolvedType(Class<?> targetClass, @Nullable Object conversionHint) {
-		if (conversionHint instanceof MethodParameter) {
-			MethodParameter param = (MethodParameter) conversionHint;
-			param = param.nestedIfOptional();
-			if (Message.class.isAssignableFrom(param.getParameterType())) {
-				param = param.nested();
-			}
-			Type genericParameterType = param.getNestedGenericParameterType();
-			Class<?> contextClass = param.getContainingClass();
-			return GenericTypeResolver.resolveType(genericParameterType, contextClass);
-		}
-		return targetClass;
 	}
 
 }

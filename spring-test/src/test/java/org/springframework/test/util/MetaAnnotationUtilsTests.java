@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,6 @@ import static org.springframework.test.util.MetaAnnotationUtils.findAnnotationDe
  * @since 4.0
  * @see OverriddenMetaAnnotationAttributesTests
  */
-@SuppressWarnings("deprecation")
 class MetaAnnotationUtilsTests {
 
 	private void assertAtComponentOnComposedAnnotation(
@@ -480,7 +479,7 @@ class MetaAnnotationUtilsTests {
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target(ElementType.TYPE)
 	@Documented
-	@interface Meta1 {
+	static @interface Meta1 {
 	}
 
 	@Component(value = "meta2")
@@ -488,7 +487,7 @@ class MetaAnnotationUtilsTests {
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target(ElementType.TYPE)
 	@Documented
-	@interface Meta2 {
+	static @interface Meta2 {
 	}
 
 	@Meta2
@@ -530,7 +529,7 @@ class MetaAnnotationUtilsTests {
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target(ElementType.TYPE)
 	@Documented
-	@interface MetaConfig {
+	static @interface MetaConfig {
 
 		static class DevConfig {
 		}
@@ -555,7 +554,7 @@ class MetaAnnotationUtilsTests {
 	}
 
 	@Meta1
-	interface InterfaceWithMetaAnnotation {
+	static interface InterfaceWithMetaAnnotation {
 	}
 
 	static class ClassWithMetaAnnotatedInterface implements InterfaceWithMetaAnnotation {
@@ -592,26 +591,26 @@ class MetaAnnotationUtilsTests {
 	// -------------------------------------------------------------------------
 
 	@Transactional
-	interface InheritedAnnotationInterface {
+	static interface InheritedAnnotationInterface {
 	}
 
-	interface SubInheritedAnnotationInterface extends InheritedAnnotationInterface {
+	static interface SubInheritedAnnotationInterface extends InheritedAnnotationInterface {
 	}
 
-	interface SubSubInheritedAnnotationInterface extends SubInheritedAnnotationInterface {
+	static interface SubSubInheritedAnnotationInterface extends SubInheritedAnnotationInterface {
 	}
 
 	@Order
-	interface NonInheritedAnnotationInterface {
+	static interface NonInheritedAnnotationInterface {
 	}
 
-	interface SubNonInheritedAnnotationInterface extends NonInheritedAnnotationInterface {
+	static interface SubNonInheritedAnnotationInterface extends NonInheritedAnnotationInterface {
 	}
 
 	static class NonAnnotatedClass {
 	}
 
-	interface NonAnnotatedInterface {
+	static interface NonAnnotatedInterface {
 	}
 
 	@Transactional

@@ -69,11 +69,11 @@ class InstanceComparatorTests {
 		assertThat(comparator.compare(c4, null)).isEqualTo(0);
 	}
 
-	private interface I1 {
+	private static interface I1 {
 
 	}
 
-	private interface I2 {
+	private static interface I2 {
 
 	}
 

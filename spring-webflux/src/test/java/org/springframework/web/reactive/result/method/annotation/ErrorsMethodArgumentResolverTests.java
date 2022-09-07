@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import java.time.Duration;
 
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.MonoProcessor;
 
 import org.springframework.core.MethodParameter;
 import org.springframework.core.ReactiveAdapterRegistry;
@@ -41,7 +42,7 @@ import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
  *
  * @author Rossen Stoyanchev
  */
-class ErrorsMethodArgumentResolverTests {
+public class ErrorsMethodArgumentResolverTests {
 
 	private final ErrorsMethodArgumentResolver resolver =
 			new ErrorsMethodArgumentResolver(ReactiveAdapterRegistry.getSharedInstance());
@@ -55,7 +56,7 @@ class ErrorsMethodArgumentResolverTests {
 
 
 	@Test
-	void supports() {
+	public void supports() {
 		MethodParameter parameter = this.testMethod.arg(Errors.class);
 		assertThat(this.resolver.supportsParameter(parameter)).isTrue();
 
@@ -70,7 +71,7 @@ class ErrorsMethodArgumentResolverTests {
 	}
 
 	@Test
-	void resolveWithInferredModelAttributeName() {
+	public void resolve() {
 		BindingResult bindingResult = createBindingResult(new Foo(), "foo");
 		this.bindingContext.getModel().asMap().put(BindingResult.MODEL_KEY_PREFIX + "foo", bindingResult);
 
@@ -81,38 +82,17 @@ class ErrorsMethodArgumentResolverTests {
 		assertThat(actual).isSameAs(bindingResult);
 	}
 
-	@Test
-	void resolveWithCustomModelAttributeNameConfiguredViaValueAttribute() {
-		BindingResult bindingResult = createBindingResult(new Foo(), "custom");
-		this.bindingContext.getModel().asMap().put(BindingResult.MODEL_KEY_PREFIX + "custom", bindingResult);
-
-		ResolvableMethod testMethod = ResolvableMethod.on(getClass()).named("handleWithCustomModelAttributeNameViaValueAttribute").build();
-
-		MethodParameter parameter = testMethod.arg(Errors.class);
-		Object actual = this.resolver.resolveArgument(parameter, this.bindingContext, this.exchange)
-				.block(Duration.ofMillis(5000));
-
-		assertThat(actual).isSameAs(bindingResult);
+	private BindingResult createBindingResult(Foo target, String name) {
+		DataBinder binder = this.bindingContext.createDataBinder(this.exchange, target, name);
+		return binder.getBindingResult();
 	}
 
 	@Test
-	void resolveWithCustomModelAttributeNameConfiguredViaNameAttribute() {
-		BindingResult bindingResult = createBindingResult(new Foo(), "custom");
-		this.bindingContext.getModel().asMap().put(BindingResult.MODEL_KEY_PREFIX + "custom", bindingResult);
-
-		ResolvableMethod testMethod = ResolvableMethod.on(getClass()).named("handleWithCustomModelAttributeNameViaNameAttribute").build();
-
-		MethodParameter parameter = testMethod.arg(Errors.class);
-		Object actual = this.resolver.resolveArgument(parameter, this.bindingContext, this.exchange)
-				.block(Duration.ofMillis(5000));
-
-		assertThat(actual).isSameAs(bindingResult);
-	}
-
-	@Test
-	void resolveWithMono() {
+	public void resolveWithMono() {
 		BindingResult bindingResult = createBindingResult(new Foo(), "foo");
-		this.bindingContext.getModel().asMap().put(BindingResult.MODEL_KEY_PREFIX + "foo", Mono.just(bindingResult));
+		MonoProcessor<BindingResult> monoProcessor = MonoProcessor.create();
+		monoProcessor.onNext(bindingResult);
+		this.bindingContext.getModel().asMap().put(BindingResult.MODEL_KEY_PREFIX + "foo", monoProcessor);
 
 		MethodParameter parameter = this.testMethod.arg(Errors.class);
 		Object actual = this.resolver.resolveArgument(parameter, this.bindingContext, this.exchange)
@@ -122,21 +102,7 @@ class ErrorsMethodArgumentResolverTests {
 	}
 
 	@Test
-	void resolveWithMonoAndCustomModelAttributeNameConfiguredViaValueAttribute() {
-		BindingResult bindingResult = createBindingResult(new Foo(), "custom");
-		this.bindingContext.getModel().asMap().put(BindingResult.MODEL_KEY_PREFIX + "custom", Mono.just(bindingResult));
-
-		ResolvableMethod testMethod = ResolvableMethod.on(getClass()).named("handleWithCustomModelAttributeNameViaValueAttribute").build();
-
-		MethodParameter parameter = testMethod.arg(Errors.class);
-		Object actual = this.resolver.resolveArgument(parameter, this.bindingContext, this.exchange)
-				.block(Duration.ofMillis(5000));
-
-		assertThat(actual).isSameAs(bindingResult);
-	}
-
-	@Test
-	void resolveWithMonoOnBindingResultAndModelAttribute() {
+	public void resolveWithMonoOnBindingResultAndModelAttribute() {
 		MethodParameter parameter = this.testMethod.arg(BindingResult.class);
 		assertThatIllegalStateException().isThrownBy(() ->
 				this.resolver.resolveArgument(parameter, this.bindingContext, this.exchange)
@@ -146,18 +112,13 @@ class ErrorsMethodArgumentResolverTests {
 	}
 
 	@Test  // SPR-16187
-	void resolveWithBindingResultNotFound() {
+	public void resolveWithBindingResultNotFound() {
 		MethodParameter parameter = this.testMethod.arg(Errors.class);
 		assertThatIllegalStateException().isThrownBy(() ->
 				this.resolver.resolveArgument(parameter, this.bindingContext, this.exchange)
 						.block(Duration.ofMillis(5000)))
 			.withMessageContaining("An Errors/BindingResult argument is expected " +
 					"immediately after the @ModelAttribute argument");
-	}
-
-	private BindingResult createBindingResult(Foo target, String name) {
-		DataBinder binder = this.bindingContext.createDataBinder(this.exchange, target, name);
-		return binder.getBindingResult();
 	}
 
 
@@ -190,18 +151,6 @@ class ErrorsMethodArgumentResolverTests {
 			BindingResult bindingResult,
 			Mono<Errors> errorsMono,
 			String string) {
-	}
-
-	@SuppressWarnings("unused")
-	void handleWithCustomModelAttributeNameViaValueAttribute(
-			@ModelAttribute("custom") Foo foo,
-			Errors errors) {
-	}
-
-	@SuppressWarnings("unused")
-	void handleWithCustomModelAttributeNameViaNameAttribute(
-			@ModelAttribute(name = "custom") Foo foo,
-			Errors errors) {
 	}
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,6 +67,7 @@ import org.springframework.web.servlet.support.RequestContextUtils;
 import org.springframework.web.servlet.theme.SessionThemeResolver;
 import org.springframework.web.servlet.theme.ThemeChangeInterceptor;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
+import org.springframework.web.servlet.view.ResourceBundleViewResolver;
 import org.springframework.web.util.WebUtils;
 
 /**
@@ -76,7 +77,6 @@ import org.springframework.web.util.WebUtils;
 public class ComplexWebApplicationContext extends StaticWebApplicationContext {
 
 	@Override
-	@SuppressWarnings("deprecation")
 	public void refresh() throws BeansException {
 		registerSingleton(DispatcherServlet.LOCALE_RESOLVER_BEAN_NAME, SessionLocaleResolver.class);
 		registerSingleton(DispatcherServlet.THEME_RESOLVER_BEAN_NAME, SessionThemeResolver.class);
@@ -126,7 +126,7 @@ public class ComplexWebApplicationContext extends StaticWebApplicationContext {
 		pvs = new MutablePropertyValues();
 		pvs.add("order", 0);
 		pvs.add("basename", "org.springframework.web.servlet.complexviews");
-		registerSingleton("viewResolver", org.springframework.web.servlet.view.ResourceBundleViewResolver.class, pvs);
+		registerSingleton("viewResolver", ResourceBundleViewResolver.class, pvs);
 
 		pvs = new MutablePropertyValues();
 		pvs.add("suffix", ".jsp");
@@ -158,7 +158,9 @@ public class ComplexWebApplicationContext extends StaticWebApplicationContext {
 		pvs = new MutablePropertyValues();
 		pvs.add("order", "0");
 		pvs.add("exceptionMappings", "java.lang.Exception=failed1");
-		pvs.add("mappedHandlers", ManagedList.of(new RuntimeBeanReference("anotherLocaleHandler")));
+		List<RuntimeBeanReference> mappedHandlers = new ManagedList<>();
+		mappedHandlers.add(new RuntimeBeanReference("anotherLocaleHandler"));
+		pvs.add("mappedHandlers", mappedHandlers);
 		pvs.add("defaultStatusCode", "500");
 		pvs.add("defaultErrorView", "failed2");
 		registerSingleton("handlerExceptionResolver", SimpleMappingExceptionResolver.class, pvs);
@@ -264,7 +266,6 @@ public class ComplexWebApplicationContext extends StaticWebApplicationContext {
 		}
 
 		@Override
-		@SuppressWarnings("deprecation")
 		public long getLastModified(HttpServletRequest request, Object delegate) {
 			return ((MyHandler) delegate).lastModified();
 		}
@@ -285,7 +286,6 @@ public class ComplexWebApplicationContext extends StaticWebApplicationContext {
 		}
 
 		@Override
-		@SuppressWarnings("deprecation")
 		public long getLastModified(HttpServletRequest request, Object delegate) {
 			return -1;
 		}

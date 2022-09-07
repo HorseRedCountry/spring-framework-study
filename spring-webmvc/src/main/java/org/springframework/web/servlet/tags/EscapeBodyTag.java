@@ -61,7 +61,7 @@ import org.springframework.web.util.JavaScriptUtils;
  * <td>false</td>
  * <td>true</td>
  * <td>Set JavaScript escaping for this tag, as boolean value.
- * Default is {@code false}.</td>
+ * Default is false.</td>
  * </tr>
  * </tbody>
  * </table>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,14 +78,14 @@ public final class SpelCompiler implements Opcodes {
 
 
 	// The child ClassLoader used to load the compiled expression classes
-	private volatile ChildClassLoader childClassLoader;
+	private ChildClassLoader ccl;
 
 	// Counter suffix for generated classes within this SpelCompiler instance
 	private final AtomicInteger suffixId = new AtomicInteger(1);
 
 
 	private SpelCompiler(@Nullable ClassLoader classloader) {
-		this.childClassLoader = new ChildClassLoader(classloader);
+		this.ccl = new ChildClassLoader(classloader);
 	}
 
 
@@ -110,8 +110,7 @@ public final class SpelCompiler implements Opcodes {
 					return ReflectionUtils.accessibleConstructor(clazz).newInstance();
 				}
 				catch (Throwable ex) {
-					throw new IllegalStateException("Failed to instantiate CompiledExpression for expression: " +
-							expression.toStringAST(), ex);
+					throw new IllegalStateException("Failed to instantiate CompiledExpression", ex);
 				}
 			}
 		}
@@ -137,9 +136,8 @@ public final class SpelCompiler implements Opcodes {
 	private Class<? extends CompiledExpression> createExpressionClass(SpelNodeImpl expressionToCompile) {
 		// Create class outline 'spel/ExNNN extends org.springframework.expression.spel.CompiledExpression'
 		String className = "spel/Ex" + getNextSuffix();
-		String evaluationContextClass = "org/springframework/expression/EvaluationContext";
 		ClassWriter cw = new ExpressionClassWriter();
-		cw.visit(V1_8, ACC_PUBLIC, className, null, "org/springframework/expression/spel/CompiledExpression", null);
+		cw.visit(V1_5, ACC_PUBLIC, className, null, "org/springframework/expression/spel/CompiledExpression", null);
 
 		// Create default constructor
 		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
@@ -153,7 +151,7 @@ public final class SpelCompiler implements Opcodes {
 
 		// Create getValue() method
 		mv = cw.visitMethod(ACC_PUBLIC, "getValue",
-				"(Ljava/lang/Object;L" + evaluationContextClass + ";)Ljava/lang/Object;", null,
+				"(Ljava/lang/Object;Lorg/springframework/expression/EvaluationContext;)Ljava/lang/Object;", null,
 				new String[] {"org/springframework/expression/EvaluationException"});
 		mv.visitCode();
 
@@ -200,22 +198,10 @@ public final class SpelCompiler implements Opcodes {
 	 */
 	@SuppressWarnings("unchecked")
 	private Class<? extends CompiledExpression> loadClass(String name, byte[] bytes) {
-		ChildClassLoader ccl = this.childClassLoader;
-		if (ccl.getClassesDefinedCount() >= CLASSES_DEFINED_LIMIT) {
-			synchronized (this) {
-				ChildClassLoader currentCcl = this.childClassLoader;
-				if (ccl == currentCcl) {
-					// Still the same ClassLoader that needs to be replaced...
-					ccl = new ChildClassLoader(ccl.getParent());
-					this.childClassLoader = ccl;
-				}
-				else {
-					// Already replaced by some other thread, let's pick it up.
-					ccl = currentCcl;
-				}
-			}
+		if (this.ccl.getClassesDefinedCount() > CLASSES_DEFINED_LIMIT) {
+			this.ccl = new ChildClassLoader(this.ccl.getParent());
 		}
-		return (Class<? extends CompiledExpression>) ccl.defineClass(name, bytes);
+		return (Class<? extends CompiledExpression>) this.ccl.defineClass(name, bytes);
 	}
 
 
@@ -228,19 +214,14 @@ public final class SpelCompiler implements Opcodes {
 	 */
 	public static SpelCompiler getCompiler(@Nullable ClassLoader classLoader) {
 		ClassLoader clToUse = (classLoader != null ? classLoader : ClassUtils.getDefaultClassLoader());
-		// Quick check for existing compiler without lock contention
-		SpelCompiler compiler = compilers.get(clToUse);
-		if (compiler == null) {
-			// Full lock now since we're creating a child ClassLoader
-			synchronized (compilers) {
-				compiler = compilers.get(clToUse);
-				if (compiler == null) {
-					compiler = new SpelCompiler(clToUse);
-					compilers.put(clToUse, compiler);
-				}
+		synchronized (compilers) {
+			SpelCompiler compiler = compilers.get(clToUse);
+			if (compiler == null) {
+				compiler = new SpelCompiler(clToUse);
+				compilers.put(clToUse, compiler);
 			}
+			return compiler;
 		}
-		return compiler;
 	}
 
 	/**
@@ -274,7 +255,7 @@ public final class SpelCompiler implements Opcodes {
 
 		private static final URL[] NO_URLS = new URL[0];
 
-		private final AtomicInteger classesDefinedCount = new AtomicInteger(0);
+		private int classesDefinedCount = 0;
 
 		public ChildClassLoader(@Nullable ClassLoader classLoader) {
 			super(NO_URLS, classLoader);
@@ -282,12 +263,12 @@ public final class SpelCompiler implements Opcodes {
 
 		public Class<?> defineClass(String name, byte[] bytes) {
 			Class<?> clazz = super.defineClass(name, bytes, 0, bytes.length);
-			this.classesDefinedCount.incrementAndGet();
+			this.classesDefinedCount++;
 			return clazz;
 		}
 
 		public int getClassesDefinedCount() {
-			return this.classesDefinedCount.get();
+			return this.classesDefinedCount;
 		}
 	}
 
@@ -303,7 +284,7 @@ public final class SpelCompiler implements Opcodes {
 
 		@Override
 		protected ClassLoader getClassLoader() {
-			return childClassLoader;
+			return ccl;
 		}
 	}
 

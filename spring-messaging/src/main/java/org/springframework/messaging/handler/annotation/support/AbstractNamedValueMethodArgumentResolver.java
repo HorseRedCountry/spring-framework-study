@@ -115,11 +115,6 @@ public abstract class AbstractNamedValueMethodArgumentResolver implements Handle
 
 		if (parameter != nestedParameter || !ClassUtils.isAssignableValue(parameter.getParameterType(), arg)) {
 			arg = this.conversionService.convert(arg, TypeDescriptor.forObject(arg), new TypeDescriptor(parameter));
-			// Check for null value after conversion of incoming argument value
-			if (arg == null && namedValueInfo.defaultValue == null &&
-					namedValueInfo.required && !nestedParameter.isOptional()) {
-				handleMissingValue(namedValueInfo.name, nestedParameter, message);
-			}
 		}
 
 		handleResolvedValue(arg, namedValueInfo.name, parameter, message);
@@ -198,7 +193,7 @@ public abstract class AbstractNamedValueMethodArgumentResolver implements Handle
 
 	/**
 	 * Invoked when a value is required, but {@link #resolveArgumentInternal}
-	 * returned {@code null} and there is no default value. Subclasses can
+	 * returned {@code null} and there is no default value. Sub-classes can
 	 * throw an appropriate exception for this case.
 	 * @param name the name for the value
 	 * @param parameter the target method parameter

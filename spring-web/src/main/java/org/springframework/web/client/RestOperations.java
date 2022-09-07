@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -448,6 +448,7 @@ public interface RestOperations {
 	/**
 	 * Delete the resources at the specified URI.
 	 * <p>URI Template variables are expanded using the given map.
+	 *
 	 * @param url the URL
 	 * @param uriVariables the variables to expand the template
 	 */
@@ -463,27 +464,27 @@ public interface RestOperations {
 	// OPTIONS
 
 	/**
-	 * Return the value of the {@code Allow} header for the given URI.
+	 * Return the value of the Allow header for the given URI.
 	 * <p>URI Template variables are expanded using the given URI variables, if any.
 	 * @param url the URL
 	 * @param uriVariables the variables to expand in the template
-	 * @return the value of the {@code Allow} header
+	 * @return the value of the allow header
 	 */
 	Set<HttpMethod> optionsForAllow(String url, Object... uriVariables) throws RestClientException;
 
 	/**
-	 * Return the value of the {@code Allow} header for the given URI.
+	 * Return the value of the Allow header for the given URI.
 	 * <p>URI Template variables are expanded using the given map.
 	 * @param url the URL
 	 * @param uriVariables the variables to expand in the template
-	 * @return the value of the {@code Allow} header
+	 * @return the value of the allow header
 	 */
 	Set<HttpMethod> optionsForAllow(String url, Map<String, ?> uriVariables) throws RestClientException;
 
 	/**
-	 * Return the value of the {@code Allow} header for the given URL.
+	 * Return the value of the Allow header for the given URL.
 	 * @param url the URL
-	 * @return the value of the {@code Allow} header
+	 * @return the value of the allow header
 	 */
 	Set<HttpMethod> optionsForAllow(URI url) throws RestClientException;
 
@@ -498,7 +499,7 @@ public interface RestOperations {
 	 * @param method the HTTP method (GET, POST, etc)
 	 * @param requestEntity the entity (headers and/or body) to write to the request
 	 * may be {@code null})
-	 * @param responseType the type to convert the response to, or {@code Void.class} for no body
+	 * @param responseType the type of the return value
 	 * @param uriVariables the variables to expand in the template
 	 * @return the response as entity
 	 * @since 3.0.2
@@ -514,7 +515,7 @@ public interface RestOperations {
 	 * @param method the HTTP method (GET, POST, etc)
 	 * @param requestEntity the entity (headers and/or body) to write to the request
 	 * (may be {@code null})
-	 * @param responseType the type to convert the response to, or {@code Void.class} for no body
+	 * @param responseType the type of the return value
 	 * @param uriVariables the variables to expand in the template
 	 * @return the response as entity
 	 * @since 3.0.2
@@ -529,7 +530,7 @@ public interface RestOperations {
 	 * @param method the HTTP method (GET, POST, etc)
 	 * @param requestEntity the entity (headers and/or body) to write to the request
 	 * (may be {@code null})
-	 * @param responseType the type to convert the response to, or {@code Void.class} for no body
+	 * @param responseType the type of the return value
 	 * @return the response as entity
 	 * @since 3.0.2
 	 */
@@ -551,7 +552,7 @@ public interface RestOperations {
 	 * @param method the HTTP method (GET, POST, etc)
 	 * @param requestEntity the entity (headers and/or body) to write to the
 	 * request (may be {@code null})
-	 * @param responseType the type to convert the response to, or {@code Void.class} for no body
+	 * @param responseType the type of the return value
 	 * @param uriVariables the variables to expand in the template
 	 * @return the response as entity
 	 * @since 3.2
@@ -574,7 +575,7 @@ public interface RestOperations {
 	 * @param method the HTTP method (GET, POST, etc)
 	 * @param requestEntity the entity (headers and/or body) to write to the request
 	 * (may be {@code null})
-	 * @param responseType the type to convert the response to, or {@code Void.class} for no body
+	 * @param responseType the type of the return value
 	 * @param uriVariables the variables to expand in the template
 	 * @return the response as entity
 	 * @since 3.2
@@ -597,7 +598,7 @@ public interface RestOperations {
 	 * @param method the HTTP method (GET, POST, etc)
 	 * @param requestEntity the entity (headers and/or body) to write to the request
 	 * (may be {@code null})
-	 * @param responseType the type to convert the response to, or {@code Void.class} for no body
+	 * @param responseType the type of the return value
 	 * @return the response as entity
 	 * @since 3.2
 	 */
@@ -617,7 +618,7 @@ public interface RestOperations {
 	 * ResponseEntity&lt;MyResponse&gt; response = template.exchange(request, MyResponse.class);
 	 * </pre>
 	 * @param requestEntity the entity to write to the request
-	 * @param responseType the type to convert the response to, or {@code Void.class} for no body
+	 * @param responseType the type of the return value
 	 * @return the response as entity
 	 * @since 4.1
 	 */
@@ -639,7 +640,7 @@ public interface RestOperations {
 	 * ResponseEntity&lt;List&lt;MyResponse&gt;&gt; response = template.exchange(request, myBean);
 	 * </pre>
 	 * @param requestEntity the entity to write to the request
-	 * @param responseType the type to convert the response to, or {@code Void.class} for no body
+	 * @param responseType the type of the return value
 	 * @return the response as entity
 	 * @since 4.1
 	 */

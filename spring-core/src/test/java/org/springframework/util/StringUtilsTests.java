@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package org.springframework.util;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Locale;
 import java.util.Properties;
 
@@ -37,18 +36,18 @@ class StringUtilsTests {
 	@Test
 	void hasTextBlank() {
 		String blank = "          ";
-		assertThat(StringUtils.hasText(blank)).isFalse();
+		assertThat(StringUtils.hasText(blank)).isEqualTo(false);
 	}
 
 	@Test
 	void hasTextNullEmpty() {
-		assertThat(StringUtils.hasText(null)).isFalse();
-		assertThat(StringUtils.hasText("")).isFalse();
+		assertThat(StringUtils.hasText(null)).isEqualTo(false);
+		assertThat(StringUtils.hasText("")).isEqualTo(false);
 	}
 
 	@Test
 	void hasTextValid() {
-		assertThat(StringUtils.hasText("t")).isTrue();
+		assertThat(StringUtils.hasText("t")).isEqualTo(true);
 	}
 
 	@Test
@@ -68,7 +67,7 @@ class StringUtilsTests {
 
 	@Test
 	void trimWhitespace() {
-		assertThat(StringUtils.trimWhitespace(null)).isNull();
+		assertThat(StringUtils.trimWhitespace(null)).isEqualTo(null);
 		assertThat(StringUtils.trimWhitespace("")).isEqualTo("");
 		assertThat(StringUtils.trimWhitespace(" ")).isEqualTo("");
 		assertThat(StringUtils.trimWhitespace("\t")).isEqualTo("");
@@ -83,7 +82,7 @@ class StringUtilsTests {
 
 	@Test
 	void trimAllWhitespace() {
-		assertThat(StringUtils.trimAllWhitespace(null)).isNull();
+		assertThat(StringUtils.trimAllWhitespace(null)).isEqualTo(null);
 		assertThat(StringUtils.trimAllWhitespace("")).isEqualTo("");
 		assertThat(StringUtils.trimAllWhitespace(" ")).isEqualTo("");
 		assertThat(StringUtils.trimAllWhitespace("\t")).isEqualTo("");
@@ -98,7 +97,7 @@ class StringUtilsTests {
 
 	@Test
 	void trimLeadingWhitespace() {
-		assertThat(StringUtils.trimLeadingWhitespace(null)).isNull();
+		assertThat(StringUtils.trimLeadingWhitespace(null)).isEqualTo(null);
 		assertThat(StringUtils.trimLeadingWhitespace("")).isEqualTo("");
 		assertThat(StringUtils.trimLeadingWhitespace(" ")).isEqualTo("");
 		assertThat(StringUtils.trimLeadingWhitespace("\t")).isEqualTo("");
@@ -113,7 +112,7 @@ class StringUtilsTests {
 
 	@Test
 	void trimTrailingWhitespace() {
-		assertThat(StringUtils.trimTrailingWhitespace(null)).isNull();
+		assertThat(StringUtils.trimTrailingWhitespace(null)).isEqualTo(null);
 		assertThat(StringUtils.trimTrailingWhitespace("")).isEqualTo("");
 		assertThat(StringUtils.trimTrailingWhitespace(" ")).isEqualTo("");
 		assertThat(StringUtils.trimTrailingWhitespace("\t")).isEqualTo("");
@@ -128,7 +127,7 @@ class StringUtilsTests {
 
 	@Test
 	void trimLeadingCharacter() {
-		assertThat(StringUtils.trimLeadingCharacter(null, ' ')).isNull();
+		assertThat(StringUtils.trimLeadingCharacter(null, ' ')).isEqualTo(null);
 		assertThat(StringUtils.trimLeadingCharacter("", ' ')).isEqualTo("");
 		assertThat(StringUtils.trimLeadingCharacter(" ", ' ')).isEqualTo("");
 		assertThat(StringUtils.trimLeadingCharacter("\t", ' ')).isEqualTo("\t");
@@ -141,7 +140,7 @@ class StringUtilsTests {
 
 	@Test
 	void trimTrailingCharacter() {
-		assertThat(StringUtils.trimTrailingCharacter(null, ' ')).isNull();
+		assertThat(StringUtils.trimTrailingCharacter(null, ' ')).isEqualTo(null);
 		assertThat(StringUtils.trimTrailingCharacter("", ' ')).isEqualTo("");
 		assertThat(StringUtils.trimTrailingCharacter(" ", ' ')).isEqualTo("");
 		assertThat(StringUtils.trimTrailingCharacter("\t", ' ')).isEqualTo("\t");
@@ -150,14 +149,6 @@ class StringUtilsTests {
 		assertThat(StringUtils.trimTrailingCharacter(" a ", ' ')).isEqualTo(" a");
 		assertThat(StringUtils.trimTrailingCharacter(" a b ", ' ')).isEqualTo(" a b");
 		assertThat(StringUtils.trimTrailingCharacter(" a b  c ", ' ')).isEqualTo(" a b  c");
-	}
-
-	@Test
-	void matchesCharacter() {
-		assertThat(StringUtils.matchesCharacter(null, '/')).isFalse();
-		assertThat(StringUtils.matchesCharacter("/a", '/')).isFalse();
-		assertThat(StringUtils.matchesCharacter("a", '/')).isFalse();
-		assertThat(StringUtils.matchesCharacter("/", '/')).isTrue();
 	}
 
 	@Test
@@ -340,7 +331,7 @@ class StringUtilsTests {
 
 	@Test
 	void getFilename() {
-		assertThat(StringUtils.getFilename(null)).isNull();
+		assertThat(StringUtils.getFilename(null)).isEqualTo(null);
 		assertThat(StringUtils.getFilename("")).isEqualTo("");
 		assertThat(StringUtils.getFilename("myfile")).isEqualTo("myfile");
 		assertThat(StringUtils.getFilename("mypath/myfile")).isEqualTo("myfile");
@@ -352,11 +343,11 @@ class StringUtilsTests {
 
 	@Test
 	void getFilenameExtension() {
-		assertThat(StringUtils.getFilenameExtension(null)).isNull();
-		assertThat(StringUtils.getFilenameExtension("")).isNull();
-		assertThat(StringUtils.getFilenameExtension("myfile")).isNull();
-		assertThat(StringUtils.getFilenameExtension("myPath/myfile")).isNull();
-		assertThat(StringUtils.getFilenameExtension("/home/user/.m2/settings/myfile")).isNull();
+		assertThat(StringUtils.getFilenameExtension(null)).isEqualTo(null);
+		assertThat(StringUtils.getFilenameExtension("")).isEqualTo(null);
+		assertThat(StringUtils.getFilenameExtension("myfile")).isEqualTo(null);
+		assertThat(StringUtils.getFilenameExtension("myPath/myfile")).isEqualTo(null);
+		assertThat(StringUtils.getFilenameExtension("/home/user/.m2/settings/myfile")).isEqualTo(null);
 		assertThat(StringUtils.getFilenameExtension("myfile.")).isEqualTo("");
 		assertThat(StringUtils.getFilenameExtension("myPath/myfile.")).isEqualTo("");
 		assertThat(StringUtils.getFilenameExtension("myfile.txt")).isEqualTo("txt");
@@ -411,8 +402,6 @@ class StringUtilsTests {
 		assertThat(StringUtils.cleanPath("file:.././")).isEqualTo("file:../");
 		assertThat(StringUtils.cleanPath("file:/mypath/spring.factories")).isEqualTo("file:/mypath/spring.factories");
 		assertThat(StringUtils.cleanPath("file:///c:/some/../path/the%20file.txt")).isEqualTo("file:///c:/path/the%20file.txt");
-		assertThat(StringUtils.cleanPath("jar:file:///c:\\some\\..\\path\\.\\the%20file.txt")).isEqualTo("jar:file:///c:/path/the%20file.txt");
-		assertThat(StringUtils.cleanPath("jar:file:///c:/some/../path/./the%20file.txt")).isEqualTo("jar:file:///c:/path/the%20file.txt");
 	}
 
 	@Test
@@ -620,8 +609,14 @@ class StringUtilsTests {
 	}
 
 	private void doTestCommaDelimitedListToStringArrayLegalMatch(String[] components) {
-		String sb = String.join(String.valueOf(','), components);
-		String[] sa = StringUtils.commaDelimitedListToStringArray(sb);
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < components.length; i++) {
+			if (i != 0) {
+				sb.append(",");
+			}
+			sb.append(components[i]);
+		}
+		String[] sa = StringUtils.commaDelimitedListToStringArray(sb.toString());
 		assertThat(sa != null).as("String array isn't null with legal match").isTrue();
 		assertThat(sa.length).as("String array length is correct with legal match").isEqualTo(components.length);
 		assertThat(Arrays.equals(sa, components)).as("Output equals input").isTrue();
@@ -778,11 +773,6 @@ class StringUtilsTests {
 		assertThat(StringUtils.split(null, ",")).isNull();
 		assertThat(StringUtils.split("Hello, world", null)).isNull();
 		assertThat(StringUtils.split(null, null)).isNull();
-	}
-
-	@Test
-	void collectionToDelimitedStringWithNullValuesShouldNotFail() {
-		assertThat(StringUtils.collectionToCommaDelimitedString(Collections.singletonList(null))).isEqualTo("null");
 	}
 
 }

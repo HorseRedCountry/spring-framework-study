@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,20 +32,15 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.Part;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 
-import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.mock.web.MockPart;
 import org.springframework.stereotype.Controller;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.ui.Model;
-import org.springframework.util.StreamUtils;
-import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -61,48 +56,33 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standal
 /**
  * @author Rossen Stoyanchev
  * @author Juergen Hoeller
- * @author Jaebin Joo
- * @author Sam Brannen
  */
-class MultipartControllerTests {
+public class MultipartControllerTests {
 
-	@ParameterizedTest
-	@ValueSource(strings = {"/multipartfile", "/multipartfile-via-put", "/part"})
-	void multipartRequestWithSingleFileOrPart(String url) throws Exception {
+	@Test
+	public void multipartRequestWithSingleFile() throws Exception {
 		byte[] fileContent = "bar".getBytes(StandardCharsets.UTF_8);
+		MockMultipartFile filePart = new MockMultipartFile("file", "orig", null, fileContent);
 
 		byte[] json = "{\"name\":\"yeeeah\"}".getBytes(StandardCharsets.UTF_8);
 		MockMultipartFile jsonPart = new MockMultipartFile("json", "json", "application/json", json);
 
-		MockMultipartHttpServletRequestBuilder requestBuilder;
-		switch (url) {
-			case "/multipartfile":
-				requestBuilder = multipart(url).file(new MockMultipartFile("file", "orig", null, fileContent));
-				break;
-			case "/multipartfile-via-put":
-				requestBuilder = multipart(HttpMethod.PUT, url).file(new MockMultipartFile("file", "orig", null, fileContent));
-				break;
-			default:
-				requestBuilder = multipart(url).part(new MockPart("part", "orig", fileContent));
-				break;
-		}
-
 		standaloneSetup(new MultipartController()).build()
-				.perform(requestBuilder.file(jsonPart))
+				.perform(multipart("/multipartfile").file(filePart).file(jsonPart))
 				.andExpect(status().isFound())
 				.andExpect(model().attribute("fileContent", fileContent))
 				.andExpect(model().attribute("jsonContent", Collections.singletonMap("name", "yeeeah")));
 	}
 
 	@Test
-	void multipartRequestWithSingleFileNotPresent() throws Exception {
+	public void multipartRequestWithSingleFileNotPresent() throws Exception {
 		standaloneSetup(new MultipartController()).build()
 				.perform(multipart("/multipartfile"))
 				.andExpect(status().isFound());
 	}
 
 	@Test
-	void multipartRequestWithFileArray() throws Exception {
+	public void multipartRequestWithFileArray() throws Exception {
 		byte[] fileContent = "bar".getBytes(StandardCharsets.UTF_8);
 		MockMultipartFile filePart1 = new MockMultipartFile("file", "orig", null, fileContent);
 		MockMultipartFile filePart2 = new MockMultipartFile("file", "orig", null, fileContent);
@@ -118,21 +98,21 @@ class MultipartControllerTests {
 	}
 
 	@Test
-	void multipartRequestWithFileArrayNotPresent() throws Exception {
+	public void multipartRequestWithFileArrayNotPresent() throws Exception {
 		standaloneSetup(new MultipartController()).build()
 				.perform(multipart("/multipartfilearray"))
 				.andExpect(status().isFound());
 	}
 
 	@Test
-	void multipartRequestWithFileArrayNoMultipart() throws Exception {
+	public void multipartRequestWithFileArrayNoMultipart() throws Exception {
 		standaloneSetup(new MultipartController()).build()
 				.perform(post("/multipartfilearray"))
 				.andExpect(status().isFound());
 	}
 
 	@Test
-	void multipartRequestWithFileList() throws Exception {
+	public void multipartRequestWithFileList() throws Exception {
 		byte[] fileContent = "bar".getBytes(StandardCharsets.UTF_8);
 		MockMultipartFile filePart1 = new MockMultipartFile("file", "orig", null, fileContent);
 		MockMultipartFile filePart2 = new MockMultipartFile("file", "orig", null, fileContent);
@@ -148,21 +128,21 @@ class MultipartControllerTests {
 	}
 
 	@Test
-	void multipartRequestWithFileListNotPresent() throws Exception {
+	public void multipartRequestWithFileListNotPresent() throws Exception {
 		standaloneSetup(new MultipartController()).build()
 				.perform(multipart("/multipartfilelist"))
 				.andExpect(status().isFound());
 	}
 
 	@Test
-	void multipartRequestWithFileListNoMultipart() throws Exception {
+	public void multipartRequestWithFileListNoMultipart() throws Exception {
 		standaloneSetup(new MultipartController()).build()
 				.perform(post("/multipartfilelist"))
 				.andExpect(status().isFound());
 	}
 
 	@Test
-	void multipartRequestWithOptionalFile() throws Exception {
+	public void multipartRequestWithOptionalFile() throws Exception {
 		byte[] fileContent = "bar".getBytes(StandardCharsets.UTF_8);
 		MockMultipartFile filePart = new MockMultipartFile("file", "orig", null, fileContent);
 
@@ -177,7 +157,7 @@ class MultipartControllerTests {
 	}
 
 	@Test
-	void multipartRequestWithOptionalFileNotPresent() throws Exception {
+	public void multipartRequestWithOptionalFileNotPresent() throws Exception {
 		byte[] json = "{\"name\":\"yeeeah\"}".getBytes(StandardCharsets.UTF_8);
 		MockMultipartFile jsonPart = new MockMultipartFile("json", "json", "application/json", json);
 
@@ -189,7 +169,7 @@ class MultipartControllerTests {
 	}
 
 	@Test
-	void multipartRequestWithOptionalFileArray() throws Exception {
+	public void multipartRequestWithOptionalFileArray() throws Exception {
 		byte[] fileContent = "bar".getBytes(StandardCharsets.UTF_8);
 		MockMultipartFile filePart1 = new MockMultipartFile("file", "orig", null, fileContent);
 		MockMultipartFile filePart2 = new MockMultipartFile("file", "orig", null, fileContent);
@@ -205,7 +185,7 @@ class MultipartControllerTests {
 	}
 
 	@Test
-	void multipartRequestWithOptionalFileArrayNotPresent() throws Exception {
+	public void multipartRequestWithOptionalFileArrayNotPresent() throws Exception {
 		byte[] json = "{\"name\":\"yeeeah\"}".getBytes(StandardCharsets.UTF_8);
 		MockMultipartFile jsonPart = new MockMultipartFile("json", "json", "application/json", json);
 
@@ -217,7 +197,7 @@ class MultipartControllerTests {
 	}
 
 	@Test
-	void multipartRequestWithOptionalFileList() throws Exception {
+	public void multipartRequestWithOptionalFileList() throws Exception {
 		byte[] fileContent = "bar".getBytes(StandardCharsets.UTF_8);
 		MockMultipartFile filePart1 = new MockMultipartFile("file", "orig", null, fileContent);
 		MockMultipartFile filePart2 = new MockMultipartFile("file", "orig", null, fileContent);
@@ -233,7 +213,7 @@ class MultipartControllerTests {
 	}
 
 	@Test
-	void multipartRequestWithOptionalFileListNotPresent() throws Exception {
+	public void multipartRequestWithOptionalFileListNotPresent() throws Exception {
 		byte[] json = "{\"name\":\"yeeeah\"}".getBytes(StandardCharsets.UTF_8);
 		MockMultipartFile jsonPart = new MockMultipartFile("json", "json", "application/json", json);
 
@@ -245,18 +225,23 @@ class MultipartControllerTests {
 	}
 
 	@Test
-	void multipartRequestWithDataBindingToFile() throws Exception {
+	public void multipartRequestWithServletParts() throws Exception {
 		byte[] fileContent = "bar".getBytes(StandardCharsets.UTF_8);
 		MockPart filePart = new MockPart("file", "orig", fileContent);
 
+		byte[] json = "{\"name\":\"yeeeah\"}".getBytes(StandardCharsets.UTF_8);
+		MockPart jsonPart = new MockPart("json", "json", json);
+		jsonPart.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+
 		standaloneSetup(new MultipartController()).build()
-				.perform(multipart("/multipartfilebinding").part(filePart))
+				.perform(multipart("/multipartfile").part(filePart).part(jsonPart))
 				.andExpect(status().isFound())
-				.andExpect(model().attribute("fileContent", fileContent));
+				.andExpect(model().attribute("fileContent", fileContent))
+				.andExpect(model().attribute("jsonContent", Collections.singletonMap("name", "yeeeah")));
 	}
 
 	@Test  // SPR-13317
-	void multipartRequestWrapped() throws Exception {
+	public void multipartRequestWrapped() throws Exception {
 		byte[] json = "{\"name\":\"yeeeah\"}".getBytes(StandardCharsets.UTF_8);
 		MockMultipartFile jsonPart = new MockMultipartFile("json", "json", "application/json", json);
 
@@ -271,7 +256,7 @@ class MultipartControllerTests {
 	@Controller
 	private static class MultipartController {
 
-		@PostMapping("/multipartfile")
+		@RequestMapping(value = "/multipartfile", method = RequestMethod.POST)
 		public String processMultipartFile(@RequestParam(required = false) MultipartFile file,
 				@RequestPart(required = false) Map<String, String> json, Model model) throws IOException {
 
@@ -285,14 +270,7 @@ class MultipartControllerTests {
 			return "redirect:/index";
 		}
 
-		@PutMapping("/multipartfile-via-put")
-		public String processMultipartFileViaHttpPut(@RequestParam(required = false) MultipartFile file,
-				@RequestPart(required = false) Map<String, String> json, Model model) throws IOException {
-
-			return processMultipartFile(file, json, model);
-		}
-
-		@PostMapping("/multipartfilearray")
+		@RequestMapping(value = "/multipartfilearray", method = RequestMethod.POST)
 		public String processMultipartFileArray(@RequestParam(required = false) MultipartFile[] file,
 				@RequestPart(required = false) Map<String, String> json, Model model) throws IOException {
 
@@ -308,7 +286,7 @@ class MultipartControllerTests {
 			return "redirect:/index";
 		}
 
-		@PostMapping("/multipartfilelist")
+		@RequestMapping(value = "/multipartfilelist", method = RequestMethod.POST)
 		public String processMultipartFileList(@RequestParam(required = false) List<MultipartFile> file,
 				@RequestPart(required = false) Map<String, String> json, Model model) throws IOException {
 
@@ -324,7 +302,7 @@ class MultipartControllerTests {
 			return "redirect:/index";
 		}
 
-		@PostMapping("/optionalfile")
+		@RequestMapping(value = "/optionalfile", method = RequestMethod.POST)
 		public String processOptionalFile(@RequestParam Optional<MultipartFile> file,
 				@RequestPart Map<String, String> json, Model model) throws IOException {
 
@@ -336,7 +314,7 @@ class MultipartControllerTests {
 			return "redirect:/index";
 		}
 
-		@PostMapping("/optionalfilearray")
+		@RequestMapping(value = "/optionalfilearray", method = RequestMethod.POST)
 		public String processOptionalFileArray(@RequestParam Optional<MultipartFile[]> file,
 				@RequestPart Map<String, String> json, Model model) throws IOException {
 
@@ -350,7 +328,7 @@ class MultipartControllerTests {
 			return "redirect:/index";
 		}
 
-		@PostMapping("/optionalfilelist")
+		@RequestMapping(value = "/optionalfilelist", method = RequestMethod.POST)
 		public String processOptionalFileList(@RequestParam Optional<List<MultipartFile>> file,
 				@RequestPart Map<String, String> json, Model model) throws IOException {
 
@@ -364,50 +342,20 @@ class MultipartControllerTests {
 			return "redirect:/index";
 		}
 
-		@PostMapping("/part")
-		public String processPart(@RequestPart Part part,
+		@RequestMapping(value = "/part", method = RequestMethod.POST)
+		public String processPart(@RequestParam Part part,
 				@RequestPart Map<String, String> json, Model model) throws IOException {
 
-			if (part != null) {
-				byte[] content = StreamUtils.copyToByteArray(part.getInputStream());
-				model.addAttribute("fileContent", content);
-			}
+			model.addAttribute("fileContent", part.getInputStream());
 			model.addAttribute("jsonContent", json);
 
 			return "redirect:/index";
 		}
 
-		@PostMapping("/json")
+		@RequestMapping(value = "/json", method = RequestMethod.POST)
 		public String processMultipart(@RequestPart Map<String, String> json, Model model) {
 			model.addAttribute("json", json);
 			return "redirect:/index";
-		}
-
-		@PostMapping("/multipartfilebinding")
-		public String processMultipartFileBean(
-				MultipartFileBean multipartFileBean, Model model, BindingResult bindingResult) throws IOException {
-
-			if (!bindingResult.hasErrors()) {
-				MultipartFile file = multipartFileBean.getFile();
-				if (file != null) {
-					model.addAttribute("fileContent", file.getBytes());
-				}
-			}
-			return "redirect:/index";
-		}
-	}
-
-	private static class MultipartFileBean {
-
-		private MultipartFile file;
-
-		public MultipartFile getFile() {
-			return file;
-		}
-
-		@SuppressWarnings("unused")
-		public void setFile(MultipartFile file) {
-			this.file = file;
 		}
 	}
 

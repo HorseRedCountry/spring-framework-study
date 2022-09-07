@@ -34,7 +34,7 @@ operator fun PropertyResolver.get(key: String) : String? = getProperty(key)
 
 /**
  * Extension for [PropertyResolver.getProperty] providing a `getProperty<Foo>(...)`
- * variant returning a nullable `Foo`.
+ * variant returning a nullable [String].
  *
  * @author Sebastien Deleuze
  * @since 5.1

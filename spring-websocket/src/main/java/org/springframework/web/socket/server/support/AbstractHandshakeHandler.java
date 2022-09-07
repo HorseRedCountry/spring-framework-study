@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ import org.springframework.web.socket.server.HandshakeHandler;
 import org.springframework.web.socket.server.RequestUpgradeStrategy;
 
 /**
- * A base class for {@link HandshakeHandler} implementations, independent of the Servlet API.
+ * A base class for {@link HandshakeHandler} implementations, independent from the Servlet API.
  *
  * <p>Performs initial validation of the WebSocket handshake request - possibly rejecting it
  * through the appropriate HTTP status code - while also allowing its subclasses to override
@@ -58,7 +58,7 @@ import org.springframework.web.socket.server.RequestUpgradeStrategy;
  *
  * <p>If the negotiation succeeds, the actual upgrade is delegated to a server-specific
  * {@link org.springframework.web.socket.server.RequestUpgradeStrategy}, which will update
- * the response as necessary and initialize the WebSocket. Currently, supported servers are
+ * the response as necessary and initialize the WebSocket. Currently supported servers are
  * Jetty 9.0-9.3, Tomcat 7.0.47+ and 8.x, Undertow 1.0-1.3, GlassFish 4.1+, WebLogic 12.1.3+.
  *
  * @author Rossen Stoyanchev
@@ -72,11 +72,9 @@ import org.springframework.web.socket.server.RequestUpgradeStrategy;
  */
 public abstract class AbstractHandshakeHandler implements HandshakeHandler, Lifecycle {
 
-	private static final boolean tomcatWsPresent;
-
 	private static final boolean jettyWsPresent;
 
-	private static final boolean jetty10WsPresent;
+	private static final boolean tomcatWsPresent;
 
 	private static final boolean undertowWsPresent;
 
@@ -88,12 +86,10 @@ public abstract class AbstractHandshakeHandler implements HandshakeHandler, Life
 
 	static {
 		ClassLoader classLoader = AbstractHandshakeHandler.class.getClassLoader();
-		tomcatWsPresent = ClassUtils.isPresent(
-				"org.apache.tomcat.websocket.server.WsHttpUpgradeHandler", classLoader);
-		jetty10WsPresent = ClassUtils.isPresent(
-				"org.eclipse.jetty.websocket.server.JettyWebSocketServerContainer", classLoader);
 		jettyWsPresent = ClassUtils.isPresent(
 				"org.eclipse.jetty.websocket.server.WebSocketServerFactory", classLoader);
+		tomcatWsPresent = ClassUtils.isPresent(
+				"org.apache.tomcat.websocket.server.WsHttpUpgradeHandler", classLoader);
 		undertowWsPresent = ClassUtils.isPresent(
 				"io.undertow.websockets.jsr.ServerWebSocketContainer", classLoader);
 		glassfishWsPresent = ClassUtils.isPresent(
@@ -102,6 +98,7 @@ public abstract class AbstractHandshakeHandler implements HandshakeHandler, Life
 				"weblogic.websocket.tyrus.TyrusServletWriter", classLoader);
 		websphereWsPresent = ClassUtils.isPresent(
 				"com.ibm.websphere.wsoc.WsWsocServerContainer", classLoader);
+
 	}
 
 
@@ -111,7 +108,7 @@ public abstract class AbstractHandshakeHandler implements HandshakeHandler, Life
 
 	private final List<String> supportedProtocols = new ArrayList<>();
 
-	private volatile boolean running;
+	private volatile boolean running = false;
 
 
 	/**
@@ -140,9 +137,6 @@ public abstract class AbstractHandshakeHandler implements HandshakeHandler, Life
 		}
 		else if (jettyWsPresent) {
 			className = "org.springframework.web.socket.server.jetty.JettyRequestUpgradeStrategy";
-		}
-		else if (jetty10WsPresent) {
-			className = "org.springframework.web.socket.server.jetty.Jetty10RequestUpgradeStrategy";
 		}
 		else if (undertowWsPresent) {
 			className = "org.springframework.web.socket.server.standard.UndertowRequestUpgradeStrategy";
@@ -184,9 +178,9 @@ public abstract class AbstractHandshakeHandler implements HandshakeHandler, Life
 	 * is accepted. If there are no matches the response will not contain a
 	 * {@literal Sec-WebSocket-Protocol} header.
 	 * <p>Note that if the WebSocketHandler passed in at runtime is an instance of
-	 * {@link SubProtocolCapable} then there is no need to explicitly configure
+	 * {@link SubProtocolCapable} then there is not need to explicitly configure
 	 * this property. That is certainly the case with the built-in STOMP over
-	 * WebSocket support. Therefore, this property should be configured explicitly
+	 * WebSocket support. Therefore this property should be configured explicitly
 	 * only if the WebSocketHandler does not implement {@code SubProtocolCapable}.
 	 */
 	public void setSupportedProtocols(String... protocols) {

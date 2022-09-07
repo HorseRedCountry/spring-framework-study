@@ -24,6 +24,7 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.lang.reflect.Constructor;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -56,7 +57,6 @@ import com.thoughtworks.xstream.io.xml.DomReader;
 import com.thoughtworks.xstream.io.xml.DomWriter;
 import com.thoughtworks.xstream.io.xml.QNameMap;
 import com.thoughtworks.xstream.io.xml.SaxWriter;
-import com.thoughtworks.xstream.io.xml.StaxDriver;
 import com.thoughtworks.xstream.io.xml.StaxReader;
 import com.thoughtworks.xstream.io.xml.StaxWriter;
 import com.thoughtworks.xstream.io.xml.XmlFriendlyNameCoder;
@@ -83,7 +83,6 @@ import org.springframework.oxm.UnmarshallingFailureException;
 import org.springframework.oxm.XmlMappingException;
 import org.springframework.oxm.support.AbstractMarshaller;
 import org.springframework.util.ClassUtils;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.util.function.SingletonSupplier;
@@ -610,7 +609,7 @@ public class XStreamMarshaller extends AbstractMarshaller implements BeanClassLo
 	}
 
 	private Map<String, Class<?>> toClassMap(Map<String, ?> map) throws ClassNotFoundException {
-		Map<String, Class<?>> result = CollectionUtils.newLinkedHashMap(map.size());
+		Map<String, Class<?>> result = new LinkedHashMap<>(map.size());
 		for (Map.Entry<String, ?> entry : map.entrySet()) {
 			String key = entry.getKey();
 			Object value = entry.getValue();
@@ -697,14 +696,7 @@ public class XStreamMarshaller extends AbstractMarshaller implements BeanClassLo
 	@Override
 	protected void marshalXmlStreamWriter(Object graph, XMLStreamWriter streamWriter) throws XmlMappingException {
 		try {
-			StaxWriter writer;
-			if (this.streamDriver instanceof StaxDriver) {
-				writer = ((StaxDriver) this.streamDriver).createStaxWriter(streamWriter);
-			}
-			else {
-				writer = new StaxWriter(new QNameMap(), streamWriter, this.nameCoder);
-			}
-			doMarshal(graph, writer, null);
+			doMarshal(graph, new StaxWriter(new QNameMap(), streamWriter, this.nameCoder), null);
 		}
 		catch (XMLStreamException ex) {
 			throw convertXStreamException(ex, true);

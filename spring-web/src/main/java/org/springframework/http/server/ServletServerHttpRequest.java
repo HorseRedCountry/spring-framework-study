@@ -56,6 +56,8 @@ import org.springframework.util.StringUtils;
  */
 public class ServletServerHttpRequest implements ServerHttpRequest {
 
+	protected static final String FORM_CONTENT_TYPE = "application/x-www-form-urlencoded";
+
 	protected static final Charset FORM_CHARSET = StandardCharsets.UTF_8;
 
 
@@ -156,9 +158,7 @@ public class ServletServerHttpRequest implements ServerHttpRequest {
 					String requestContentType = this.servletRequest.getContentType();
 					if (StringUtils.hasLength(requestContentType)) {
 						contentType = MediaType.parseMediaType(requestContentType);
-						if (contentType.isConcrete()) {
-							this.headers.setContentType(contentType);
-						}
+						this.headers.setContentType(contentType);
 					}
 				}
 				if (contentType != null && contentType.getCharset() == null) {
@@ -229,7 +229,7 @@ public class ServletServerHttpRequest implements ServerHttpRequest {
 
 	private static boolean isFormPost(HttpServletRequest request) {
 		String contentType = request.getContentType();
-		return (contentType != null && contentType.contains(MediaType.APPLICATION_FORM_URLENCODED_VALUE) &&
+		return (contentType != null && contentType.contains(FORM_CONTENT_TYPE) &&
 				HttpMethod.POST.matches(request.getMethod()));
 	}
 
@@ -244,10 +244,9 @@ public class ServletServerHttpRequest implements ServerHttpRequest {
 		Writer writer = new OutputStreamWriter(bos, FORM_CHARSET);
 
 		Map<String, String[]> form = request.getParameterMap();
-		for (Iterator<Map.Entry<String, String[]>> entryIterator = form.entrySet().iterator(); entryIterator.hasNext();) {
-			Map.Entry<String, String[]> entry = entryIterator.next();
-			String name = entry.getKey();
-			List<String> values = Arrays.asList(entry.getValue());
+		for (Iterator<String> nameIterator = form.keySet().iterator(); nameIterator.hasNext();) {
+			String name = nameIterator.next();
+			List<String> values = Arrays.asList(form.get(name));
 			for (Iterator<String> valueIterator = values.iterator(); valueIterator.hasNext();) {
 				String value = valueIterator.next();
 				writer.write(URLEncoder.encode(name, FORM_CHARSET.name()));
@@ -259,7 +258,7 @@ public class ServletServerHttpRequest implements ServerHttpRequest {
 					}
 				}
 			}
-			if (entryIterator.hasNext()) {
+			if (nameIterator.hasNext()) {
 				writer.append('&');
 			}
 		}

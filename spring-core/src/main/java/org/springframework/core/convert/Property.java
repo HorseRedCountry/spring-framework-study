@@ -142,13 +142,10 @@ public final class Property {
 			}
 			else {
 				index = this.readMethod.getName().indexOf("is");
-				if (index != -1) {
-					index += 2;
+				if (index == -1) {
+					throw new IllegalArgumentException("Not a getter method");
 				}
-				else {
-					// Record-style plain accessor method, e.g. name()
-					index = 0;
-				}
+				index += 2;
 			}
 			return StringUtils.uncapitalize(this.readMethod.getName().substring(index));
 		}

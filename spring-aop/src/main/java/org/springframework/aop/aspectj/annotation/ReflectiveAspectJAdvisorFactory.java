@@ -51,7 +51,6 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.convert.converter.ConvertingComparator;
 import org.springframework.lang.Nullable;
 import org.springframework.util.ReflectionUtils;
-import org.springframework.util.ReflectionUtils.MethodFilter;
 import org.springframework.util.StringUtils;
 import org.springframework.util.comparator.InstanceComparator;
 
@@ -71,11 +70,7 @@ import org.springframework.util.comparator.InstanceComparator;
 @SuppressWarnings("serial")
 public class ReflectiveAspectJAdvisorFactory extends AbstractAspectJAdvisorFactory implements Serializable {
 
-	// Exclude @Pointcut methods
-	private static final MethodFilter adviceMethodFilter = ReflectionUtils.USER_DECLARED_METHODS
-			.and(method -> (AnnotationUtils.getAnnotation(method, Pointcut.class) == null));
-
-	private static final Comparator<Method> adviceMethodComparator;
+	private static final Comparator<Method> METHOD_COMPARATOR;
 
 	static {
 		// Note: although @After is ordered before @AfterReturning and @AfterThrowing,
@@ -91,7 +86,7 @@ public class ReflectiveAspectJAdvisorFactory extends AbstractAspectJAdvisorFacto
 					return (ann != null ? ann.getAnnotation() : null);
 				});
 		Comparator<Method> methodNameComparator = new ConvertingComparator<>(Method::getName);
-		adviceMethodComparator = adviceKindComparator.thenComparing(methodNameComparator);
+		METHOD_COMPARATOR = adviceKindComparator.thenComparing(methodNameComparator);
 	}
 
 
@@ -165,10 +160,15 @@ public class ReflectiveAspectJAdvisorFactory extends AbstractAspectJAdvisorFacto
 	}
 
 	private List<Method> getAdvisorMethods(Class<?> aspectClass) {
-		List<Method> methods = new ArrayList<>();
-		ReflectionUtils.doWithMethods(aspectClass, methods::add, adviceMethodFilter);
+		final List<Method> methods = new ArrayList<>();
+		ReflectionUtils.doWithMethods(aspectClass, method -> {
+			// Exclude pointcuts
+			if (AnnotationUtils.getAnnotation(method, Pointcut.class) == null) {
+				methods.add(method);
+			}
+		}, ReflectionUtils.USER_DECLARED_METHODS);
 		if (methods.size() > 1) {
-			methods.sort(adviceMethodComparator);
+			methods.sort(METHOD_COMPARATOR);
 		}
 		return methods;
 	}

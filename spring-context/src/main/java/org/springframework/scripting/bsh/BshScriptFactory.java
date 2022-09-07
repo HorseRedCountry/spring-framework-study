@@ -139,7 +139,7 @@ public class BshScriptFactory implements ScriptFactory, BeanClassLoaderAware {
 							scriptSource.getScriptAsString(), actualInterfaces, this.beanClassLoader);
 					if (result instanceof Class) {
 						// A Class: We'll cache the Class here and create an instance
-						// outside the synchronized block.
+						// outside of the synchronized block.
 						this.scriptClass = (Class<?>) result;
 					}
 					else {

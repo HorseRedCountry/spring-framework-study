@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Jeremy Grelle
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
-class OptionsTagTests extends AbstractHtmlElementTagTests {
+public class OptionsTagTests extends AbstractHtmlElementTagTests {
 
 	private static final String COMMAND_NAME = "testBean";
 
@@ -87,7 +87,7 @@ class OptionsTagTests extends AbstractHtmlElementTagTests {
 	}
 
 	@Test
-	void withCollection() throws Exception {
+	public void withCollection() throws Exception {
 		getPageContext().setAttribute(
 				SelectTag.LIST_VALUE_PAGE_ATTRIBUTE, new BindStatus(getRequestContext(), "testBean.country", false));
 
@@ -117,7 +117,7 @@ class OptionsTagTests extends AbstractHtmlElementTagTests {
 	}
 
 	@Test
-	void withCollectionAndDynamicAttributes() throws Exception {
+	public void withCollectionAndDynamicAttributes() throws Exception {
 		String dynamicAttribute1 = "attr1";
 		String dynamicAttribute2 = "attr2";
 
@@ -155,11 +155,11 @@ class OptionsTagTests extends AbstractHtmlElementTagTests {
 	}
 
 	@Test
-	void withCollectionAndCustomEditor() throws Exception {
+	public void withCollectionAndCustomEditor() throws Exception {
 		PropertyEditor propertyEditor = new SimpleFloatEditor();
 
 		TestBean target = new TestBean();
-		target.setMyFloat(Float.valueOf("12.34"));
+		target.setMyFloat(new Float("12.34"));
 
 		BeanPropertyBindingResult errors = new BeanPropertyBindingResult(target, COMMAND_NAME);
 		errors.getPropertyAccessor().registerCustomEditor(Float.class, propertyEditor);
@@ -169,12 +169,12 @@ class OptionsTagTests extends AbstractHtmlElementTagTests {
 				SelectTag.LIST_VALUE_PAGE_ATTRIBUTE, new BindStatus(getRequestContext(), "testBean.myFloat", false));
 
 		List<Float> floats = new ArrayList<>();
-		floats.add(Float.valueOf("12.30"));
-		floats.add(Float.valueOf("12.31"));
-		floats.add(Float.valueOf("12.32"));
-		floats.add(Float.valueOf("12.33"));
-		floats.add(Float.valueOf("12.34"));
-		floats.add(Float.valueOf("12.35"));
+		floats.add(new Float("12.30"));
+		floats.add(new Float("12.31"));
+		floats.add(new Float("12.32"));
+		floats.add(new Float("12.33"));
+		floats.add(new Float("12.34"));
+		floats.add(new Float("12.35"));
 
 		this.tag.setItems(floats);
 		int result = this.tag.doStartTag();
@@ -201,7 +201,7 @@ class OptionsTagTests extends AbstractHtmlElementTagTests {
 	}
 
 	@Test
-	void withItemsNullReference() throws Exception {
+	public void withItemsNullReference() throws Exception {
 		getPageContext().setAttribute(
 				SelectTag.LIST_VALUE_PAGE_ATTRIBUTE, new BindStatus(getRequestContext(), "testBean.country", false));
 
@@ -222,7 +222,7 @@ class OptionsTagTests extends AbstractHtmlElementTagTests {
 	}
 
 	@Test
-	void withoutItems() throws Exception {
+	public void withoutItems() throws Exception {
 		this.tag.setItemValue("isoCode");
 		this.tag.setItemLabel("name");
 		this.selectTag.setPath("testBean");
@@ -243,7 +243,7 @@ class OptionsTagTests extends AbstractHtmlElementTagTests {
 	}
 
 	@Test
-	void withoutItemsEnumParent() throws Exception {
+	public void withoutItemsEnumParent() throws Exception {
 		BeanWithEnum testBean = new BeanWithEnum();
 		testBean.setTestEnum(TestEnum.VALUE_2);
 		getPageContext().getRequest().setAttribute("testBean", testBean);
@@ -271,7 +271,7 @@ class OptionsTagTests extends AbstractHtmlElementTagTests {
 	}
 
 	@Test
-	void withoutItemsEnumParentWithExplicitLabelsAndValues() throws Exception {
+	public void withoutItemsEnumParentWithExplicitLabelsAndValues() throws Exception {
 		BeanWithEnum testBean = new BeanWithEnum();
 		testBean.setTestEnum(TestEnum.VALUE_2);
 		getPageContext().getRequest().setAttribute("testBean", testBean);
@@ -305,16 +305,16 @@ class OptionsTagTests extends AbstractHtmlElementTagTests {
 		TestBean bean = new TestBean();
 		bean.setName("foo");
 		bean.setCountry("UK");
-		bean.setMyFloat(Float.valueOf("12.34"));
+		bean.setMyFloat(new Float("12.34"));
 		request.setAttribute(COMMAND_NAME, bean);
 
 		List floats = new ArrayList();
-		floats.add(Float.valueOf("12.30"));
-		floats.add(Float.valueOf("12.31"));
-		floats.add(Float.valueOf("12.32"));
-		floats.add(Float.valueOf("12.33"));
-		floats.add(Float.valueOf("12.34"));
-		floats.add(Float.valueOf("12.35"));
+		floats.add(new Float("12.30"));
+		floats.add(new Float("12.31"));
+		floats.add(new Float("12.32"));
+		floats.add(new Float("12.33"));
+		floats.add(new Float("12.34"));
+		floats.add(new Float("12.35"));
 
 		request.setAttribute("floats", floats);
 	}

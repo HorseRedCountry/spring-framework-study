@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,13 +108,17 @@ public class Jackson2SmileEncoderTests extends AbstractEncoderTests<Jackson2Smil
 	}
 
 	@Test
-	public void encodeError() {
+	public void encodeError() throws Exception {
 		Mono<Pojo> input = Mono.error(new InputException());
-		testEncode(input, Pojo.class, step -> step.expectError(InputException.class).verify());
+
+		testEncode(input, Pojo.class, step -> step
+				.expectError(InputException.class)
+				.verify());
+
 	}
 
 	@Test
-	public void encodeAsStream() {
+	public void encodeAsStream() throws Exception {
 		Pojo pojo1 = new Pojo("foo", "bar");
 		Pojo pojo2 = new Pojo("foofoo", "barbar");
 		Pojo pojo3 = new Pojo("foofoofoo", "barbarbar");

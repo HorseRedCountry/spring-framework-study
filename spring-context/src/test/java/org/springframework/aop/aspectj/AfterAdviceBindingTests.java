@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package org.springframework.aop.aspectj;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -38,9 +37,7 @@ import static org.mockito.Mockito.verify;
  * @author Rod Johnson
  * @author Chris Beams
  */
-class AfterAdviceBindingTests {
-
-	private ClassPathXmlApplicationContext ctx;
+public class AfterAdviceBindingTests {
 
 	private AdviceBindingCollaborator mockCollaborator;
 
@@ -50,8 +47,9 @@ class AfterAdviceBindingTests {
 
 
 	@BeforeEach
-	void setup() throws Exception {
-		this.ctx = new ClassPathXmlApplicationContext(getClass().getSimpleName() + ".xml", getClass());
+	public void setup() throws Exception {
+		ClassPathXmlApplicationContext ctx =
+				new ClassPathXmlApplicationContext(getClass().getSimpleName() + ".xml", getClass());
 		AdviceBindingTestAspect afterAdviceAspect = (AdviceBindingTestAspect) ctx.getBean("testAspect");
 
 		testBeanProxy = (ITestBean) ctx.getBean("testBean");
@@ -64,44 +62,39 @@ class AfterAdviceBindingTests {
 		afterAdviceAspect.setCollaborator(mockCollaborator);
 	}
 
-	@AfterEach
-	void tearDown() throws Exception {
-		this.ctx.close();
-	}
-
 
 	@Test
-	void oneIntArg() {
+	public void testOneIntArg() {
 		testBeanProxy.setAge(5);
 		verify(mockCollaborator).oneIntArg(5);
 	}
 
 	@Test
-	void oneObjectArgBindingProxyWithThis() {
+	public void testOneObjectArgBindingProxyWithThis() {
 		testBeanProxy.getAge();
 		verify(mockCollaborator).oneObjectArg(this.testBeanProxy);
 	}
 
 	@Test
-	void oneObjectArgBindingTarget() {
+	public void testOneObjectArgBindingTarget() {
 		testBeanProxy.getDoctor();
 		verify(mockCollaborator).oneObjectArg(this.testBeanTarget);
 	}
 
 	@Test
-	void oneIntAndOneObjectArgs() {
+	public void testOneIntAndOneObjectArgs() {
 		testBeanProxy.setAge(5);
 		verify(mockCollaborator).oneIntAndOneObject(5,this.testBeanProxy);
 	}
 
 	@Test
-	void needsJoinPoint() {
+	public void testNeedsJoinPoint() {
 		testBeanProxy.getAge();
 		verify(mockCollaborator).needsJoinPoint("getAge");
 	}
 
 	@Test
-	void needsJoinPointStaticPart() {
+	public void testNeedsJoinPointStaticPart() {
 		testBeanProxy.getAge();
 		verify(mockCollaborator).needsJoinPointStaticPart("getAge");
 	}

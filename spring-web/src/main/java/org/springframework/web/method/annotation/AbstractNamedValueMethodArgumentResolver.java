@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,11 +132,6 @@ public abstract class AbstractNamedValueMethodArgumentResolver implements Handle
 				throw new MethodArgumentTypeMismatchException(arg, ex.getRequiredType(),
 						namedValueInfo.name, parameter, ex.getCause());
 			}
-			// Check for null value after conversion of incoming argument value
-			if (arg == null && namedValueInfo.defaultValue == null &&
-					namedValueInfo.required && !nestedParameter.isOptional()) {
-				handleMissingValueAfterConversion(namedValueInfo.name, nestedParameter, webRequest);
-			}
 		}
 
 		handleResolvedValue(arg, namedValueInfo.name, parameter, mavContainer, webRequest);
@@ -235,19 +230,6 @@ public abstract class AbstractNamedValueMethodArgumentResolver implements Handle
 	protected void handleMissingValue(String name, MethodParameter parameter) throws ServletException {
 		throw new ServletRequestBindingException("Missing argument '" + name +
 				"' for method parameter of type " + parameter.getNestedParameterType().getSimpleName());
-	}
-
-	/**
-	 * Invoked when a named value is present but becomes {@code null} after conversion.
-	 * @param name the name for the value
-	 * @param parameter the method parameter
-	 * @param request the current request
-	 * @since 5.3.6
-	 */
-	protected void handleMissingValueAfterConversion(String name, MethodParameter parameter, NativeWebRequest request)
-			throws Exception {
-
-		handleMissingValue(name, parameter, request);
 	}
 
 	/**

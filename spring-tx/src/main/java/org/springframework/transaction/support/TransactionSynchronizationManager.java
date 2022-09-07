@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.springframework.core.NamedThreadLocal;
-import org.springframework.core.OrderComparator;
+import org.springframework.core.annotation.AnnotationAwareOrderComparator;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -72,6 +75,8 @@ import org.springframework.util.Assert;
  * @see org.springframework.jdbc.datasource.DataSourceUtils#getConnection
  */
 public abstract class TransactionSynchronizationManager {
+
+	private static final Log logger = LogFactory.getLog(TransactionSynchronizationManager.class);
 
 	private static final ThreadLocal<Map<Object, Object>> resources =
 			new NamedThreadLocal<>("Transactional resources");
@@ -132,7 +137,12 @@ public abstract class TransactionSynchronizationManager {
 	@Nullable
 	public static Object getResource(Object key) {
 		Object actualKey = TransactionSynchronizationUtils.unwrapResourceIfNecessary(key);
-		return doGetResource(actualKey);
+		Object value = doGetResource(actualKey);
+		if (value != null && logger.isTraceEnabled()) {
+			logger.trace("Retrieved value [" + value + "] for key [" + actualKey + "] bound to thread [" +
+					Thread.currentThread().getName() + "]");
+		}
+		return value;
 	}
 
 	/**
@@ -179,8 +189,12 @@ public abstract class TransactionSynchronizationManager {
 			oldValue = null;
 		}
 		if (oldValue != null) {
-			throw new IllegalStateException(
-					"Already value [" + oldValue + "] for key [" + actualKey + "] bound to thread");
+			throw new IllegalStateException("Already value [" + oldValue + "] for key [" +
+					actualKey + "] bound to thread [" + Thread.currentThread().getName() + "]");
+		}
+		if (logger.isTraceEnabled()) {
+			logger.trace("Bound value [" + value + "] for key [" + actualKey + "] to thread [" +
+					Thread.currentThread().getName() + "]");
 		}
 	}
 
@@ -195,7 +209,8 @@ public abstract class TransactionSynchronizationManager {
 		Object actualKey = TransactionSynchronizationUtils.unwrapResourceIfNecessary(key);
 		Object value = doUnbindResource(actualKey);
 		if (value == null) {
-			throw new IllegalStateException("No value for key [" + actualKey + "] bound to thread");
+			throw new IllegalStateException(
+					"No value for key [" + actualKey + "] bound to thread [" + Thread.currentThread().getName() + "]");
 		}
 		return value;
 	}
@@ -229,6 +244,10 @@ public abstract class TransactionSynchronizationManager {
 		if (value instanceof ResourceHolder && ((ResourceHolder) value).isVoid()) {
 			value = null;
 		}
+		if (value != null && logger.isTraceEnabled()) {
+			logger.trace("Removed value [" + value + "] for key [" + actualKey + "] from thread [" +
+					Thread.currentThread().getName() + "]");
+		}
 		return value;
 	}
 
@@ -255,6 +274,7 @@ public abstract class TransactionSynchronizationManager {
 		if (isSynchronizationActive()) {
 			throw new IllegalStateException("Cannot activate transaction synchronization - already active");
 		}
+		logger.trace("Initializing transaction synchronization");
 		synchronizations.set(new LinkedHashSet<>());
 	}
 
@@ -300,7 +320,7 @@ public abstract class TransactionSynchronizationManager {
 		else {
 			// Sort lazily here, not in registerSynchronization.
 			List<TransactionSynchronization> sortedSynchs = new ArrayList<>(synchs);
-			OrderComparator.sort(sortedSynchs);
+			AnnotationAwareOrderComparator.sort(sortedSynchs);
 			return Collections.unmodifiableList(sortedSynchs);
 		}
 	}
@@ -314,6 +334,7 @@ public abstract class TransactionSynchronizationManager {
 		if (!isSynchronizationActive()) {
 			throw new IllegalStateException("Cannot deactivate transaction synchronization - not active");
 		}
+		logger.trace("Clearing transaction synchronization");
 		synchronizations.remove();
 	}
 

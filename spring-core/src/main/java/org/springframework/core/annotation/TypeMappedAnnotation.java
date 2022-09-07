@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -328,47 +328,18 @@ final class TypeMappedAnnotation<A extends Annotation> extends AbstractMergedAnn
 
 	@Override
 	@SuppressWarnings("unchecked")
-	protected A createSynthesizedAnnotation() {
-		// Check root annotation
-		if (isTargetAnnotation(this.rootAttributes) && !isSynthesizable((Annotation) this.rootAttributes)) {
+	protected A createSynthesized() {
+		if (getType().isInstance(this.rootAttributes) && !isSynthesizable()) {
 			return (A) this.rootAttributes;
-		}
-		// Check meta-annotation
-		else if (isTargetAnnotation(this.mapping.getAnnotation()) && !isSynthesizable(this.mapping.getAnnotation())) {
-			return (A) this.mapping.getAnnotation();
 		}
 		return SynthesizedMergedAnnotationInvocationHandler.createProxy(this, getType());
 	}
 
-	/**
-	 * Determine if the supplied object is an annotation of the required
-	 * {@linkplain #getType() type}.
-	 * @param obj the object to check
-	 * @since 5.3.22
-	 */
-	private boolean isTargetAnnotation(@Nullable Object obj) {
-		return getType().isInstance(obj);
-	}
-
-	/**
-	 * Determine if the supplied annotation has not already been synthesized
-	 * <strong>and</strong> whether the mapped annotation is a composed annotation
-	 * that needs to have its attributes merged or the mapped annotation is
-	 * {@linkplain AnnotationTypeMapping#isSynthesizable() synthesizable} in general.
-	 * @param annotation the annotation to check
-	 * @since 5.3.22
-	 */
-	private boolean isSynthesizable(Annotation annotation) {
+	private boolean isSynthesizable() {
 		// Already synthesized?
-		if (annotation instanceof SynthesizedAnnotation) {
+		if (this.rootAttributes instanceof SynthesizedAnnotation) {
 			return false;
 		}
-		// Is this a mapped annotation for a composed annotation, and are there
-		// annotation attributes (mirrors) that need to be merged?
-		if (getDistance() > 0 && this.resolvedMirrors.length > 0) {
-			return true;
-		}
-		// Is the mapped annotation itself synthesizable?
 		return this.mapping.isSynthesizable();
 	}
 
@@ -602,7 +573,7 @@ final class TypeMappedAnnotation<A extends Annotation> extends AbstractMergedAnn
 		}
 		if (this.source != null) {
 			if (this.source instanceof Class) {
-				return ((Class<?>) this.source).getClassLoader();
+				return ((Class<?>) source).getClassLoader();
 			}
 			if (this.source instanceof Member) {
 				((Member) this.source).getDeclaringClass().getClassLoader();

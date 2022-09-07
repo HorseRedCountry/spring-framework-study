@@ -16,8 +16,6 @@
 
 package org.springframework.transaction.event;
 
-import java.util.function.Consumer;
-
 import org.springframework.transaction.support.TransactionSynchronization;
 
 /**
@@ -27,9 +25,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
  * @author Juergen Hoeller
  * @author Sam Brannen
  * @since 4.2
- * @see TransactionalEventListener#phase()
- * @see TransactionalApplicationListener#getTransactionPhase()
- * @see TransactionalApplicationListener#forPayload(TransactionPhase, Consumer)
+ * @see TransactionalEventListener
  */
 public enum TransactionPhase {
 

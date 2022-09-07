@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import org.springframework.web.testfixture.http.server.reactive.MockServerHttpRe
 import org.springframework.web.testfixture.server.MockServerWebExchange;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.springframework.http.HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS;
 import static org.springframework.http.HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN;
 import static org.springframework.http.HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS;
@@ -57,7 +56,7 @@ public class DefaultCorsProcessorTests {
 
 
 	@Test
-	public void requestWithoutOriginHeader() {
+	public void requestWithoutOriginHeader() throws Exception {
 		MockServerHttpRequest request = MockServerHttpRequest
 				.method(HttpMethod.GET, "http://domain1.example/test.html")
 				.build();
@@ -72,7 +71,7 @@ public class DefaultCorsProcessorTests {
 	}
 
 	@Test
-	public void sameOriginRequest() {
+	public void sameOriginRequest() throws Exception {
 		MockServerHttpRequest request = MockServerHttpRequest
 				.method(HttpMethod.GET, "http://domain1.example/test.html")
 				.header(HttpHeaders.ORIGIN, "http://domain1.example")
@@ -88,7 +87,7 @@ public class DefaultCorsProcessorTests {
 	}
 
 	@Test
-	public void actualRequestWithOriginHeader() {
+	public void actualRequestWithOriginHeader() throws Exception {
 		ServerWebExchange exchange = actualRequest();
 		this.processor.process(this.conf, exchange);
 
@@ -100,7 +99,7 @@ public class DefaultCorsProcessorTests {
 	}
 
 	@Test
-	public void actualRequestWithOriginHeaderAndNullConfig() {
+	public void actualRequestWithOriginHeaderAndNullConfig() throws Exception {
 		ServerWebExchange exchange = actualRequest();
 		this.processor.process(null, exchange);
 
@@ -110,7 +109,7 @@ public class DefaultCorsProcessorTests {
 	}
 
 	@Test
-	public void actualRequestWithOriginHeaderAndAllowedOrigin() {
+	public void actualRequestWithOriginHeaderAndAllowedOrigin() throws Exception {
 		ServerWebExchange exchange = actualRequest();
 		this.conf.addAllowedOrigin("*");
 		this.processor.process(this.conf, exchange);
@@ -126,7 +125,7 @@ public class DefaultCorsProcessorTests {
 	}
 
 	@Test
-	public void actualRequestCredentials() {
+	public void actualRequestCredentials() throws Exception {
 		ServerWebExchange exchange = actualRequest();
 		this.conf.addAllowedOrigin("https://domain1.com");
 		this.conf.addAllowedOrigin("https://domain2.com");
@@ -145,14 +144,10 @@ public class DefaultCorsProcessorTests {
 	}
 
 	@Test
-	public void actualRequestCredentialsWithWildcardOrigin() {
+	public void actualRequestCredentialsWithOriginWildcard() throws Exception {
 		ServerWebExchange exchange = actualRequest();
 		this.conf.addAllowedOrigin("*");
 		this.conf.setAllowCredentials(true);
-		assertThatIllegalArgumentException().isThrownBy(() -> this.processor.process(this.conf, exchange));
-
-		this.conf.setAllowedOrigins(null);
-		this.conf.addAllowedOriginPattern("*");
 		this.processor.process(this.conf, exchange);
 
 		ServerHttpResponse response = exchange.getResponse();
@@ -166,32 +161,20 @@ public class DefaultCorsProcessorTests {
 	}
 
 	@Test
-	public void actualRequestCaseInsensitiveOriginMatch() {
+	public void actualRequestCaseInsensitiveOriginMatch() throws Exception {
 		ServerWebExchange exchange = actualRequest();
 		this.conf.addAllowedOrigin("https://DOMAIN2.com");
 		this.processor.process(this.conf, exchange);
 
 		ServerHttpResponse response = exchange.getResponse();
-		assertThat((Object) response.getStatusCode()).isNull();
 		assertThat(response.getHeaders().containsKey(ACCESS_CONTROL_ALLOW_ORIGIN)).isTrue();
-	}
-
-	@Test // gh-26892
-	public void actualRequestTrailingSlashOriginMatch() {
-		ServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest
-				.method(HttpMethod.GET, "http://localhost/test.html")
-				.header(HttpHeaders.ORIGIN, "https://domain2.com/"));
-
-		this.conf.addAllowedOrigin("https://domain2.com");
-		this.processor.process(this.conf, exchange);
-
-		ServerHttpResponse response = exchange.getResponse();
+		assertThat(response.getHeaders().get(VARY)).contains(ORIGIN,
+				ACCESS_CONTROL_REQUEST_METHOD, ACCESS_CONTROL_REQUEST_HEADERS);
 		assertThat((Object) response.getStatusCode()).isNull();
-		assertThat(response.getHeaders().containsKey(ACCESS_CONTROL_ALLOW_ORIGIN)).isTrue();
 	}
 
 	@Test
-	public void actualRequestExposedHeaders() {
+	public void actualRequestExposedHeaders() throws Exception {
 		ServerWebExchange exchange = actualRequest();
 		this.conf.addExposedHeader("header1");
 		this.conf.addExposedHeader("header2");
@@ -210,7 +193,7 @@ public class DefaultCorsProcessorTests {
 	}
 
 	@Test
-	public void preflightRequestAllOriginsAllowed() {
+	public void preflightRequestAllOriginsAllowed() throws Exception {
 		ServerWebExchange exchange = MockServerWebExchange.from(
 				preFlightRequest().header(ACCESS_CONTROL_REQUEST_METHOD, "GET"));
 		this.conf.addAllowedOrigin("*");
@@ -224,7 +207,7 @@ public class DefaultCorsProcessorTests {
 
 
 	@Test
-	public void preflightRequestWrongAllowedMethod() {
+	public void preflightRequestWrongAllowedMethod() throws Exception {
 		ServerWebExchange exchange = MockServerWebExchange.from(
 				preFlightRequest().header(ACCESS_CONTROL_REQUEST_METHOD, "DELETE"));
 		this.conf.addAllowedOrigin("*");
@@ -237,7 +220,7 @@ public class DefaultCorsProcessorTests {
 	}
 
 	@Test
-	public void preflightRequestMatchedAllowedMethod() {
+	public void preflightRequestMatchedAllowedMethod() throws Exception {
 		ServerWebExchange exchange = MockServerWebExchange.from(
 				preFlightRequest().header(ACCESS_CONTROL_REQUEST_METHOD, "GET"));
 		this.conf.addAllowedOrigin("*");
@@ -251,7 +234,7 @@ public class DefaultCorsProcessorTests {
 	}
 
 	@Test
-	public void preflightRequestTestWithOriginButWithoutOtherHeaders() {
+	public void preflightRequestTestWithOriginButWithoutOtherHeaders() throws Exception {
 		ServerWebExchange exchange = MockServerWebExchange.from(preFlightRequest());
 		this.processor.process(this.conf, exchange);
 
@@ -263,7 +246,7 @@ public class DefaultCorsProcessorTests {
 	}
 
 	@Test
-	public void preflightRequestWithoutRequestMethod() {
+	public void preflightRequestWithoutRequestMethod() throws Exception {
 		ServerWebExchange exchange = MockServerWebExchange.from(
 				preFlightRequest().header(ACCESS_CONTROL_REQUEST_HEADERS, "Header1"));
 		this.processor.process(this.conf, exchange);
@@ -276,7 +259,7 @@ public class DefaultCorsProcessorTests {
 	}
 
 	@Test
-	public void preflightRequestWithRequestAndMethodHeaderButNoConfig() {
+	public void preflightRequestWithRequestAndMethodHeaderButNoConfig() throws Exception {
 		ServerWebExchange exchange = MockServerWebExchange.from(preFlightRequest()
 				.header(ACCESS_CONTROL_REQUEST_METHOD, "GET")
 				.header(ACCESS_CONTROL_REQUEST_HEADERS, "Header1"));
@@ -291,7 +274,7 @@ public class DefaultCorsProcessorTests {
 	}
 
 	@Test
-	public void preflightRequestValidRequestAndConfig() {
+	public void preflightRequestValidRequestAndConfig() throws Exception {
 		ServerWebExchange exchange = MockServerWebExchange.from(preFlightRequest()
 				.header(ACCESS_CONTROL_REQUEST_METHOD, "GET")
 				.header(ACCESS_CONTROL_REQUEST_HEADERS, "Header1"));
@@ -316,7 +299,7 @@ public class DefaultCorsProcessorTests {
 	}
 
 	@Test
-	public void preflightRequestCredentials() {
+	public void preflightRequestCredentials() throws Exception {
 		ServerWebExchange exchange = MockServerWebExchange.from(preFlightRequest()
 				.header(ACCESS_CONTROL_REQUEST_METHOD, "GET")
 				.header(ACCESS_CONTROL_REQUEST_HEADERS, "Header1"));
@@ -340,7 +323,7 @@ public class DefaultCorsProcessorTests {
 	}
 
 	@Test
-	public void preflightRequestCredentialsWithWildcardOrigin() {
+	public void preflightRequestCredentialsWithOriginWildcard() throws Exception {
 		ServerWebExchange exchange = MockServerWebExchange.from(preFlightRequest()
 				.header(ACCESS_CONTROL_REQUEST_METHOD, "GET")
 				.header(ACCESS_CONTROL_REQUEST_HEADERS, "Header1"));
@@ -350,10 +333,7 @@ public class DefaultCorsProcessorTests {
 		this.conf.addAllowedOrigin("http://domain3.example");
 		this.conf.addAllowedHeader("Header1");
 		this.conf.setAllowCredentials(true);
-		assertThatIllegalArgumentException().isThrownBy(() -> this.processor.process(this.conf, exchange));
 
-		this.conf.setAllowedOrigins(null);
-		this.conf.addAllowedOriginPattern("*");
 		this.processor.process(this.conf, exchange);
 
 		ServerHttpResponse response = exchange.getResponse();
@@ -365,7 +345,7 @@ public class DefaultCorsProcessorTests {
 	}
 
 	@Test
-	public void preflightRequestAllowedHeaders() {
+	public void preflightRequestAllowedHeaders() throws Exception {
 		ServerWebExchange exchange = MockServerWebExchange.from(preFlightRequest()
 				.header(ACCESS_CONTROL_REQUEST_METHOD, "GET")
 				.header(ACCESS_CONTROL_REQUEST_HEADERS, "Header1, Header2"));
@@ -389,7 +369,7 @@ public class DefaultCorsProcessorTests {
 	}
 
 	@Test
-	public void preflightRequestAllowsAllHeaders() {
+	public void preflightRequestAllowsAllHeaders() throws Exception {
 		ServerWebExchange exchange = MockServerWebExchange.from(preFlightRequest()
 				.header(ACCESS_CONTROL_REQUEST_METHOD, "GET")
 				.header(ACCESS_CONTROL_REQUEST_HEADERS, "Header1, Header2"));
@@ -411,7 +391,7 @@ public class DefaultCorsProcessorTests {
 	}
 
 	@Test
-	public void preflightRequestWithEmptyHeaders() {
+	public void preflightRequestWithEmptyHeaders() throws Exception {
 		ServerWebExchange exchange = MockServerWebExchange.from(preFlightRequest()
 				.header(ACCESS_CONTROL_REQUEST_METHOD, "GET")
 				.header(ACCESS_CONTROL_REQUEST_HEADERS, ""));

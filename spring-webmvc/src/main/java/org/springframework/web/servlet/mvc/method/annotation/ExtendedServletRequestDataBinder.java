@@ -40,8 +40,6 @@ import org.springframework.web.servlet.HandlerMapping;
  *
  * @author Rossen Stoyanchev
  * @since 3.1
- * @see ServletRequestDataBinder
- * @see HandlerMapping#URI_TEMPLATE_VARIABLES_ATTRIBUTE
  */
 public class ExtendedServletRequestDataBinder extends ServletRequestDataBinder {
 
@@ -71,9 +69,9 @@ public class ExtendedServletRequestDataBinder extends ServletRequestDataBinder {
 	 * Merge URI variables into the property values to use for data binding.
 	 */
 	@Override
+	@SuppressWarnings("unchecked")
 	protected void addBindValues(MutablePropertyValues mpvs, ServletRequest request) {
 		String attr = HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE;
-		@SuppressWarnings("unchecked")
 		Map<String, String> uriVars = (Map<String, String>) request.getAttribute(attr);
 		if (uriVars != null) {
 			uriVars.forEach((name, value) -> {

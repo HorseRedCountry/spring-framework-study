@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,14 +22,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.function.BiConsumer;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpRequest;
@@ -40,7 +35,6 @@ import org.springframework.web.testfixture.servlet.MockHttpServletRequest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 
 /**
  * Unit tests for {@link UriComponentsBuilder}.
@@ -246,12 +240,6 @@ class UriComponentsBuilderTests {
 		assertThat(resultIPv4compatible.getHost()).isEqualTo("[::192.168.1.1]");
 	}
 
-	@Test
-	void fromUriStringInvalidIPv6Host() {
-		assertThatIllegalArgumentException().isThrownBy(() ->
-				UriComponentsBuilder.fromUriString("http://[1abc:2abc:3abc::5ABC:6abc:8080/resource"));
-	}
-
 	@Test  // SPR-11970
 	void fromUriStringNoPathWithReservedCharInQuery() {
 		UriComponents result = UriComponentsBuilder.fromUriString("https://example.com?foo=bar@baz").build();
@@ -376,11 +364,10 @@ class UriComponentsBuilderTests {
 		assertThat(result.getQuery()).isEqualTo("a=1");
 	}
 
-	@ParameterizedTest // gh-17368, gh-27097
-	@ValueSource(strings = {"https", "wss"})
-	void fromHttpRequestResetsPort443(String protocol) {
+	@Test  // SPR-12771
+	void fromHttpRequestResetsPortBeforeSettingIt() {
 		MockHttpServletRequest request = new MockHttpServletRequest();
-		request.addHeader("X-Forwarded-Proto", protocol);
+		request.addHeader("X-Forwarded-Proto", "https");
 		request.addHeader("X-Forwarded-Host", "84.198.58.199");
 		request.addHeader("X-Forwarded-Port", 443);
 		request.setScheme("http");
@@ -391,31 +378,10 @@ class UriComponentsBuilderTests {
 		HttpRequest httpRequest = new ServletServerHttpRequest(request);
 		UriComponents result = UriComponentsBuilder.fromHttpRequest(httpRequest).build();
 
-		assertThat(result.getScheme()).isEqualTo(protocol);
+		assertThat(result.getScheme()).isEqualTo("https");
 		assertThat(result.getHost()).isEqualTo("84.198.58.199");
 		assertThat(result.getPort()).isEqualTo(-1);
 		assertThat(result.getPath()).isEqualTo("/rest/mobile/users/1");
-	}
-
-	@ParameterizedTest // gh-27097
-	@ValueSource(strings = {"http", "ws"})
-	void fromHttpRequestResetsPort80(String protocol) {
-		MockHttpServletRequest request = new MockHttpServletRequest();
-		request.addHeader("X-Forwarded-Proto", protocol);
-		request.addHeader("X-Forwarded-Host", "84.198.58.199");
-		request.addHeader("X-Forwarded-Port", 80);
-		request.setScheme("http");
-		request.setServerName("example.com");
-		request.setServerPort(80);
-		request.setRequestURI("/path");
-
-		HttpRequest httpRequest = new ServletServerHttpRequest(request);
-		UriComponents result = UriComponentsBuilder.fromHttpRequest(httpRequest).build();
-
-		assertThat(result.getScheme()).isEqualTo(protocol);
-		assertThat(result.getHost()).isEqualTo("84.198.58.199");
-		assertThat(result.getPort()).isEqualTo(-1);
-		assertThat(result.getPath()).isEqualTo("/path");
 	}
 
 	@Test  // SPR-14761
@@ -476,21 +442,6 @@ class UriComponentsBuilderTests {
 		UriComponents result = UriComponentsBuilder.fromHttpRequest(httpRequest).build();
 
 		assertThat(result.toString()).isEqualTo("http://[1abc:2abc:3abc::5ABC:6abc]:8080/mvc-showcase");
-	}
-
-	@Test  // gh-26748
-	void fromHttpRequestWithForwardedInvalidIPv6Address() {
-		MockHttpServletRequest request = new MockHttpServletRequest();
-		request.setScheme("http");
-		request.setServerName("localhost");
-		request.setServerPort(-1);
-		request.setRequestURI("/mvc-showcase");
-		request.addHeader("X-Forwarded-Host", "2a02:918:175:ab60:45ee:c12c:dac1:808b");
-
-		HttpRequest httpRequest = new ServletServerHttpRequest(request);
-
-		assertThatIllegalArgumentException().isThrownBy(() ->
-				UriComponentsBuilder.fromHttpRequest(httpRequest).build());
 	}
 
 	@Test
@@ -811,48 +762,14 @@ class UriComponentsBuilderTests {
 
 	@Test
 	void queryParamWithList() {
-		List<String> values = Arrays.asList("qux", "42");
-		UriComponents result = UriComponentsBuilder.newInstance().queryParam("baz", values).build();
+		UriComponentsBuilder builder = UriComponentsBuilder.newInstance();
+		UriComponents result = builder.queryParam("baz", Arrays.asList("qux", 42)).build();
 
 		assertThat(result.getQuery()).isEqualTo("baz=qux&baz=42");
-		assertThat(result.getQueryParams()).containsOnlyKeys("baz").containsEntry("baz", values);
-	}
-
-	@Test
-	void queryParamWithOptionalValue() {
-		UriComponents result = UriComponentsBuilder.newInstance()
-				.queryParam("foo", Optional.empty())
-				.queryParam("baz", Optional.of("qux"), 42)
-				.build();
-
-		assertThat(result.getQuery()).isEqualTo("foo&baz=qux&baz=42");
-		assertThat(result.getQueryParams()).containsOnlyKeys("foo", "baz")
-				.containsEntry("foo", Collections.singletonList(null))
-				.containsEntry("baz", Arrays.asList("qux", "42"));
-	}
-
-	@Test
-	void queryParamIfPresent() {
-		UriComponents result = UriComponentsBuilder.newInstance()
-				.queryParamIfPresent("baz", Optional.of("qux"))
-				.queryParamIfPresent("foo", Optional.empty())
-				.build();
-
-		assertThat(result.getQuery()).isEqualTo("baz=qux");
-		assertThat(result.getQueryParams())
-				.containsOnlyKeys("baz")
-				.containsEntry("baz", Collections.singletonList("qux"));
-	}
-
-	@Test
-	void queryParamIfPresentCollection() {
-		List<String> values = Arrays.asList("foo", "bar");
-		UriComponents result = UriComponentsBuilder.newInstance()
-				.queryParamIfPresent("baz", Optional.of(values))
-				.build();
-
-		assertThat(result.getQuery()).isEqualTo("baz=foo&baz=bar");
-		assertThat(result.getQueryParams()).containsOnlyKeys("baz").containsEntry("baz", values);
+		MultiValueMap<String, String> expectedQueryParams = new LinkedMultiValueMap<>(2);
+		expectedQueryParams.add("baz", "qux");
+		expectedQueryParams.add("baz", "42");
+		assertThat(result.getQueryParams()).isEqualTo(expectedQueryParams);
 	}
 
 	@Test
@@ -1066,7 +983,7 @@ class UriComponentsBuilderTests {
 		assertThat(result1.getPath()).isEqualTo("/p1/%s/%s", vars.get("ps1"), vars.get("ps2"));
 		assertThat(result1.getQuery()).isEqualTo("q1");
 		assertThat(result1.getFragment()).isEqualTo("f1");
-		assertThat(result1.getSchemeSpecificPart()).isNull();
+		assertThat(result1.getSchemeSpecificPart()).isEqualTo(null);
 
 		UriComponents result2 = builder2.build();
 		assertThat(result2.getScheme()).isEqualTo("http");
@@ -1075,36 +992,7 @@ class UriComponentsBuilderTests {
 		assertThat(result2.getPath()).isEqualTo("/p1/%s/%s", vars.get("ps1"), vars.get("ps2"));
 		assertThat(result2.getQuery()).isEqualTo("q1");
 		assertThat(result2.getFragment()).isEqualTo("f1");
-		assertThat(result1.getSchemeSpecificPart()).isNull();
-	}
-
-	@Test // gh-26466
-	void encodeTemplateWithInvalidPlaceholderSyntax() {
-
-		BiConsumer<String, String> tester = (in, out) ->
-				assertThat(UriComponentsBuilder.fromUriString(in).encode().toUriString()).isEqualTo(out);
-
-		// empty
-		tester.accept("{}", "%7B%7D");
-		tester.accept("{ \t}", "%7B%20%09%7D");
-		tester.accept("/a{}b", "/a%7B%7Db");
-		tester.accept("/a{ \t}b", "/a%7B%20%09%7Db");
-
-		// nested, matching
-		tester.accept("{foo{}}", "%7Bfoo%7B%7D%7D");
-		tester.accept("{foo{bar}baz}", "%7Bfoo%7Bbar%7Dbaz%7D");
-		tester.accept("/a{foo{}}b", "/a%7Bfoo%7B%7D%7Db");
-		tester.accept("/a{foo{bar}baz}b", "/a%7Bfoo%7Bbar%7Dbaz%7Db");
-
-		// mismatched
-		tester.accept("{foo{{}", "%7Bfoo%7B%7B%7D");
-		tester.accept("{foo}}", "{foo}%7D");
-		tester.accept("/a{foo{{}bar", "/a%7Bfoo%7B%7B%7Dbar");
-		tester.accept("/a{foo}}b", "/a{foo}%7Db");
-
-		// variable with regex
-		tester.accept("{year:\\d{1,4}}", "{year:\\d{1,4}}");
-		tester.accept("/a{year:\\d{1,4}}b", "/a{year:\\d{1,4}}b");
+		assertThat(result1.getSchemeSpecificPart()).isEqualTo(null);
 	}
 
 	@Test  // SPR-11856
@@ -1289,47 +1177,6 @@ class UriComponentsBuilderTests {
 	@Test  // SPR-17630
 	void toUriStringWithCurlyBraces() {
 		assertThat(UriComponentsBuilder.fromUriString("/path?q={asa}asa").toUriString()).isEqualTo("/path?q=%7Basa%7Dasa");
-	}
-
-	@Test  // gh-26012
-	void verifyDoubleSlashReplacedWithSingleOne() {
-		String path = UriComponentsBuilder.fromPath("/home/").path("/path").build().getPath();
-		assertThat(path).isEqualTo("/home/path");
-	}
-
-	@Test
-	void validPort() {
-		UriComponents uriComponents = UriComponentsBuilder.fromUriString("http://localhost:52567/path").build();
-		assertThat(uriComponents.getPort()).isEqualTo(52567);
-		assertThat(uriComponents.getPath()).isEqualTo("/path");
-
-		uriComponents = UriComponentsBuilder.fromUriString("http://localhost:52567?trace=false").build();
-		assertThat(uriComponents.getPort()).isEqualTo(52567);
-		assertThat(uriComponents.getQuery()).isEqualTo("trace=false");
-
-		uriComponents = UriComponentsBuilder.fromUriString("http://localhost:52567#fragment").build();
-		assertThat(uriComponents.getPort()).isEqualTo(52567);
-		assertThat(uriComponents.getFragment()).isEqualTo("fragment");
-	}
-
-	@Test
-	void verifyInvalidPort() {
-		String url = "http://localhost:XXX/path";
-		assertThatIllegalStateException()
-				.isThrownBy(() -> UriComponentsBuilder.fromUriString(url).build().toUri())
-				.withMessage("The port must be an integer: XXX");
-		assertThatIllegalStateException()
-				.isThrownBy(() -> UriComponentsBuilder.fromHttpUrl(url).build().toUri())
-				.withMessage("The port must be an integer: XXX");
-	}
-
-	@Test  // gh-27039
-	void expandPortAndPathWithoutSeparator() {
-		URI uri = UriComponentsBuilder
-				.fromUriString("ws://localhost:{port}{path}")
-				.buildAndExpand(7777, "/test")
-				.toUri();
-		assertThat(uri.toString()).isEqualTo("ws://localhost:7777/test");
 	}
 
 }

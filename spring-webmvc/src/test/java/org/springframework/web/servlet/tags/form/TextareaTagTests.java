@@ -136,7 +136,7 @@ public class TextareaTagTests extends AbstractFormTagTests {
 		// set up test data
 		this.rob = new TestBean();
 		rob.setName("Rob");
-		rob.setMyFloat(12.34f);
+		rob.setMyFloat(new Float(12.34));
 
 		TestBean sally = new TestBean();
 		sally.setName("Sally");

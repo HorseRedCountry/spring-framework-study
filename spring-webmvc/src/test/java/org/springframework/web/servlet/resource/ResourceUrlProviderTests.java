@@ -151,7 +151,6 @@ public class ResourceUrlProviderTests {
 	}
 
 	@Test
-	@SuppressWarnings("resource")
 	void initializeOnCurrentContext() {
 		AnnotationConfigWebApplicationContext parentContext = new AnnotationConfigWebApplicationContext();
 		parentContext.setServletContext(new MockServletContext());

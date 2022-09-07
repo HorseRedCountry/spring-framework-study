@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,10 +54,8 @@ public class PathPatternTests {
 	public void hasPatternSyntax() {
 		PathPatternParser parser = new PathPatternParser();
 		assertThat(parser.parse("/foo/*").hasPatternSyntax()).isTrue();
-		assertThat(parser.parse("/foo/**").hasPatternSyntax()).isTrue();
-		assertThat(parser.parse("/foo/{*elem}").hasPatternSyntax()).isTrue();
+		assertThat(parser.parse("/foo/**/bar").hasPatternSyntax()).isTrue();
 		assertThat(parser.parse("/f?o").hasPatternSyntax()).isTrue();
-		assertThat(parser.parse("/f*").hasPatternSyntax()).isTrue();
 		assertThat(parser.parse("/foo/{bar}/baz").hasPatternSyntax()).isTrue();
 		assertThat(parser.parse("/foo/bar").hasPatternSyntax()).isFalse();
 	}
@@ -300,7 +298,6 @@ public class PathPatternTests {
 		checkCapture("{var:f o}","f%20o","var","f o"); // constraint is expressed in non encoded form
 		checkCapture("{var:f.o}","f%20o","var","f o");
 		checkCapture("{var:f\\|o}","f%7co","var","f|o");
-		checkCapture("{var:.*}","x\ny","var","x\ny");
 	}
 
 	@Test
@@ -320,8 +317,6 @@ public class PathPatternTests {
 		checkCapture("/{var1}_ _{var2}","/f%20o_%20_f%7co","var1","f o","var2","f|o");
 		checkCapture("/{var1}_ _{var2:f\\|o}","/f%20o_%20_f%7co","var1","f o","var2","f|o");
 		checkCapture("/{var1:f o}_ _{var2:f\\|o}","/f%20o_%20_f%7co","var1","f o","var2","f|o");
-		checkCapture("/{var1:f o}_ _{var2:f\\|o}","/f%20o_%20_f%7co","var1","f o","var2","f|o");
-		checkCapture("/{var1}_{var2}","/f\noo_foo","var1","f\noo","var2","foo");
 	}
 
 	@Test
@@ -560,7 +555,6 @@ public class PathPatternTests {
 		pp = parse("/{this}/{one}/{here}");
 		pri = getPathRemaining(pp, "/foo/bar/goo/boo");
 		assertThat(pri.getPathRemaining().value()).isEqualTo("/boo");
-		assertThat(pri.getPathMatched().value()).isEqualTo("/foo/bar/goo");
 		assertThat(pri.getUriVariables().get("this")).isEqualTo("foo");
 		assertThat(pri.getUriVariables().get("one")).isEqualTo("bar");
 		assertThat(pri.getUriVariables().get("here")).isEqualTo("goo");
@@ -568,13 +562,11 @@ public class PathPatternTests {
 		pp = parse("/aaa/{foo}");
 		pri = getPathRemaining(pp, "/aaa/bbb");
 		assertThat(pri.getPathRemaining().value()).isEqualTo("");
-		assertThat(pri.getPathMatched().value()).isEqualTo("/aaa/bbb");
 		assertThat(pri.getUriVariables().get("foo")).isEqualTo("bbb");
 
 		pp = parse("/aaa/bbb");
 		pri = getPathRemaining(pp, "/aaa/bbb");
 		assertThat(pri.getPathRemaining().value()).isEqualTo("");
-		assertThat(pri.getPathMatched().value()).isEqualTo("/aaa/bbb");
 		assertThat(pri.getUriVariables().size()).isEqualTo(0);
 
 		pp = parse("/*/{foo}/b*");
@@ -875,10 +867,13 @@ public class PathPatternTests {
 		assertThat(pathMatcher.combine("", "/hotels")).isEqualTo("/hotels");
 		assertThat(pathMatcher.combine("/hotels/*", "booking")).isEqualTo("/hotels/booking");
 		assertThat(pathMatcher.combine("/hotels/*", "/booking")).isEqualTo("/hotels/booking");
+		assertThat(pathMatcher.combine("/hotels/**", "booking")).isEqualTo("/hotels/**/booking");
+		assertThat(pathMatcher.combine("/hotels/**", "/booking")).isEqualTo("/hotels/**/booking");
 		assertThat(pathMatcher.combine("/hotels", "/booking")).isEqualTo("/hotels/booking");
 		assertThat(pathMatcher.combine("/hotels", "booking")).isEqualTo("/hotels/booking");
 		assertThat(pathMatcher.combine("/hotels/", "booking")).isEqualTo("/hotels/booking");
 		assertThat(pathMatcher.combine("/hotels/*", "{hotel}")).isEqualTo("/hotels/{hotel}");
+		assertThat(pathMatcher.combine("/hotels/**", "{hotel}")).isEqualTo("/hotels/**/{hotel}");
 		assertThat(pathMatcher.combine("/hotels", "{hotel}")).isEqualTo("/hotels/{hotel}");
 		assertThat(pathMatcher.combine("/hotels", "{hotel}.*")).isEqualTo("/hotels/{hotel}.*");
 		assertThat(pathMatcher.combine("/hotels/*/booking", "{booking}")).isEqualTo("/hotels/*/booking/{booking}");
@@ -1213,7 +1208,7 @@ public class PathPatternTests {
 	private String elementsToString(List<Element> elements) {
 		StringBuilder s = new StringBuilder();
 		for (Element element: elements) {
-			s.append('[').append(element.value()).append(']');
+			s.append("[").append(element.value()).append("]");
 		}
 		return s.toString();
 	}

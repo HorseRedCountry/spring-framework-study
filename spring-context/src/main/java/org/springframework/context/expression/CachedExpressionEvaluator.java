@@ -75,7 +75,7 @@ public abstract class CachedExpressionEvaluator {
 
 	/**
 	 * Return the {@link Expression} for the specified SpEL value
-	 * <p>{@link #parseExpression(String) Parse the expression} if it hasn't been already.
+	 * <p>Parse the expression if it hasn't been already.
 	 * @param cache the cache to use
 	 * @param elementKey the element on which the expression is defined
 	 * @param expression the expression to parse
@@ -86,19 +86,10 @@ public abstract class CachedExpressionEvaluator {
 		ExpressionKey expressionKey = createKey(elementKey, expression);
 		Expression expr = cache.get(expressionKey);
 		if (expr == null) {
-			expr = parseExpression(expression);
+			expr = getParser().parseExpression(expression);
 			cache.put(expressionKey, expr);
 		}
 		return expr;
-	}
-
-	/**
-	 * Parse the specified {@code expression}.
-	 * @param expression the expression to parse
-	 * @since 5.3.13
-	 */
-	protected Expression parseExpression(String expression) {
-		return getParser().parseExpression(expression);
 	}
 
 	private ExpressionKey createKey(AnnotatedElementKey elementKey, String expression) {

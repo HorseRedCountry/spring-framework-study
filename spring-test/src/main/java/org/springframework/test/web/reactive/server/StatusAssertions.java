@@ -202,7 +202,7 @@ public class StatusAssertions {
 	 * @param matcher the matcher to use
 	 * @since 5.1
 	 */
-	public WebTestClient.ResponseSpec value(Matcher<? super Integer> matcher) {
+	public WebTestClient.ResponseSpec value(Matcher<Integer> matcher) {
 		int actual = this.exchangeResult.getRawStatusCode();
 		this.exchangeResult.assertWithDiagnostics(() -> MatcherAssert.assertThat("Response status", actual, matcher));
 		return this.responseSpec;

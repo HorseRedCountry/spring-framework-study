@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,6 @@ import java.util.concurrent.Callable;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.springframework.context.MessageSource;
-import org.springframework.core.KotlinDetector;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.ResolvableType;
 import org.springframework.http.HttpHeaders;
@@ -75,16 +73,6 @@ public class ServletInvocableHandlerMethod extends InvocableHandlerMethod {
 	 */
 	public ServletInvocableHandlerMethod(Object handler, Method method) {
 		super(handler, method);
-	}
-
-	/**
-	 * Variant of {@link #ServletInvocableHandlerMethod(Object, Method)} that
-	 * also accepts a {@link MessageSource}, e.g. to resolve
-	 * {@code @ResponseStatus} messages with.
-	 * @since 5.3.10
-	 */
-	public ServletInvocableHandlerMethod(Object handler, Method method, @Nullable MessageSource messageSource) {
-		super(handler, method, messageSource);
 	}
 
 	/**
@@ -195,7 +183,7 @@ public class ServletInvocableHandlerMethod extends InvocableHandlerMethod {
 
 	/**
 	 * Create a nested ServletInvocableHandlerMethod subclass that returns the
-	 * given value (or raises an Exception if the value is one) rather than
+	 * the given value (or raises an Exception if the value is one) rather than
 	 * actually invoking the controller method. This is useful when processing
 	 * async return values (e.g. Callable, DeferredResult, ListenableFuture).
 	 */
@@ -283,8 +271,6 @@ public class ServletInvocableHandlerMethod extends InvocableHandlerMethod {
 			this.returnValue = returnValue;
 			this.returnType = (returnValue instanceof ReactiveTypeHandler.CollectedValuesList ?
 					((ReactiveTypeHandler.CollectedValuesList) returnValue).getReturnType() :
-					KotlinDetector.isSuspendingFunction(super.getMethod()) ?
-					ResolvableType.forMethodParameter(getReturnType()) :
 					ResolvableType.forType(super.getGenericParameterType()).getGeneric());
 		}
 

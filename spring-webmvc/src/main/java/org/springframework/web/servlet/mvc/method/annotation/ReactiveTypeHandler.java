@@ -19,7 +19,6 @@ package org.springframework.web.servlet.mvc.method.annotation;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -74,12 +73,8 @@ class ReactiveTypeHandler {
 
 	private static final long STREAMING_TIMEOUT_VALUE = -1;
 
-	@SuppressWarnings("deprecation")
-	private static final List<MediaType> JSON_STREAMING_MEDIA_TYPES =
-			Arrays.asList(MediaType.APPLICATION_NDJSON, MediaType.APPLICATION_STREAM_JSON);
 
-	private static final Log logger = LogFactory.getLog(ReactiveTypeHandler.class);
-
+	private static Log logger = LogFactory.getLog(ReactiveTypeHandler.class);
 
 	private final ReactiveAdapterRegistry adapterRegistry;
 
@@ -149,15 +144,11 @@ class ReactiveTypeHandler {
 				new TextEmitterSubscriber(emitter, this.taskExecutor).connect(adapter, returnValue);
 				return emitter;
 			}
-			for (MediaType type : mediaTypes) {
-				for (MediaType streamingType : JSON_STREAMING_MEDIA_TYPES) {
-					if (streamingType.includes(type)) {
-						logExecutorWarning(returnType);
-						ResponseBodyEmitter emitter = getEmitter(streamingType);
-						new JsonEmitterSubscriber(emitter, this.taskExecutor).connect(adapter, returnValue);
-						return emitter;
-					}
-				}
+			if (mediaTypes.stream().anyMatch(MediaType.APPLICATION_STREAM_JSON::includes)) {
+				logExecutorWarning(returnType);
+				ResponseBodyEmitter emitter = getEmitter(MediaType.APPLICATION_STREAM_JSON);
+				new JsonEmitterSubscriber(emitter, this.taskExecutor).connect(adapter, returnValue);
+				return emitter;
 			}
 		}
 

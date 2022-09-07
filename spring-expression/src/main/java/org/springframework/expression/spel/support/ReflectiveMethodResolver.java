@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -176,7 +176,7 @@ public class ReflectiveMethodResolver implements MethodResolver {
 					}
 					if (matchInfo != null) {
 						if (matchInfo.isExactMatch()) {
-							return new ReflectiveMethodExecutor(method, type);
+							return new ReflectiveMethodExecutor(method);
 						}
 						else if (matchInfo.isCloseMatch()) {
 							if (this.useDistance) {
@@ -204,13 +204,13 @@ public class ReflectiveMethodResolver implements MethodResolver {
 				}
 			}
 			if (closeMatch != null) {
-				return new ReflectiveMethodExecutor(closeMatch, type);
+				return new ReflectiveMethodExecutor(closeMatch);
 			}
 			else if (matchRequiringConversion != null) {
 				if (multipleOptions) {
 					throw new SpelEvaluationException(SpelMessage.MULTIPLE_POSSIBLE_METHODS, name);
 				}
-				return new ReflectiveMethodExecutor(matchRequiringConversion, type);
+				return new ReflectiveMethodExecutor(matchRequiringConversion);
 			}
 			else {
 				return null;

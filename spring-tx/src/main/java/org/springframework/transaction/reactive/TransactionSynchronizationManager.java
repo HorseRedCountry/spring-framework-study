@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import reactor.core.publisher.Mono;
 
 import org.springframework.core.annotation.AnnotationAwareOrderComparator;
@@ -69,6 +71,8 @@ import org.springframework.util.Assert;
  */
 public class TransactionSynchronizationManager {
 
+	private static final Log logger = LogFactory.getLog(TransactionSynchronizationManager.class);
+
 	private final TransactionContext transactionContext;
 
 
@@ -108,7 +112,12 @@ public class TransactionSynchronizationManager {
 	@Nullable
 	public Object getResource(Object key) {
 		Object actualKey = TransactionSynchronizationUtils.unwrapResourceIfNecessary(key);
-		return doGetResource(actualKey);
+		Object value = doGetResource(actualKey);
+		if (value != null && logger.isTraceEnabled()) {
+			logger.trace("Retrieved value [" + value + "] for key [" + actualKey + "] bound to context [" +
+					this.transactionContext.getName() + "]");
+		}
+		return value;
 	}
 
 	/**
@@ -131,8 +140,12 @@ public class TransactionSynchronizationManager {
 		Map<Object, Object> map = this.transactionContext.getResources();
 		Object oldValue = map.put(actualKey, value);
 		if (oldValue != null) {
-			throw new IllegalStateException(
-					"Already value [" + oldValue + "] for key [" + actualKey + "] bound to context");
+			throw new IllegalStateException("Already value [" + oldValue + "] for key [" +
+					actualKey + "] bound to context [" + this.transactionContext.getName() + "]");
+		}
+		if (logger.isTraceEnabled()) {
+			logger.trace("Bound value [" + value + "] for key [" + actualKey + "] to context [" +
+					this.transactionContext.getName() + "]");
 		}
 	}
 
@@ -146,7 +159,8 @@ public class TransactionSynchronizationManager {
 		Object actualKey = TransactionSynchronizationUtils.unwrapResourceIfNecessary(key);
 		Object value = doUnbindResource(actualKey);
 		if (value == null) {
-			throw new IllegalStateException("No value for key [" + actualKey + "] bound to context");
+			throw new IllegalStateException(
+					"No value for key [" + actualKey + "] bound to context [" + this.transactionContext.getName() + "]");
 		}
 		return value;
 	}
@@ -168,7 +182,12 @@ public class TransactionSynchronizationManager {
 	@Nullable
 	private Object doUnbindResource(Object actualKey) {
 		Map<Object, Object> map = this.transactionContext.getResources();
-		return map.remove(actualKey);
+		Object value = map.remove(actualKey);
+		if (value != null && logger.isTraceEnabled()) {
+			logger.trace("Removed value [" + value + "] for key [" + actualKey + "] from context [" +
+					this.transactionContext.getName() + "]");
+		}
+		return value;
 	}
 
 
@@ -194,6 +213,7 @@ public class TransactionSynchronizationManager {
 		if (isSynchronizationActive()) {
 			throw new IllegalStateException("Cannot activate transaction synchronization - already active");
 		}
+		logger.trace("Initializing transaction synchronization");
 		this.transactionContext.setSynchronizations(new LinkedHashSet<>());
 	}
 
@@ -253,6 +273,7 @@ public class TransactionSynchronizationManager {
 		if (!isSynchronizationActive()) {
 			throw new IllegalStateException("Cannot deactivate transaction synchronization - not active");
 		}
+		logger.trace("Clearing transaction synchronization");
 		this.transactionContext.setSynchronizations(null);
 	}
 

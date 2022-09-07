@@ -29,7 +29,6 @@ import org.springframework.core.io.UrlResource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.assertj.core.api.Assertions.assertThatNoException;
 
 /**
  * Specific {@link BeanWrapperImpl} tests.
@@ -41,7 +40,7 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
  * @author Chris Beams
  * @author Dave Syer
  */
-class BeanWrapperTests extends AbstractPropertyAccessorTests {
+public class BeanWrapperTests extends AbstractPropertyAccessorTests {
 
 	@Override
 	protected BeanWrapperImpl createAccessor(Object target) {
@@ -50,7 +49,7 @@ class BeanWrapperTests extends AbstractPropertyAccessorTests {
 
 
 	@Test
-	void setterDoesNotCallGetter() {
+	public void setterDoesNotCallGetter() {
 		GetterBean target = new GetterBean();
 		BeanWrapper accessor = createAccessor(target);
 		accessor.setPropertyValue("name", "tom");
@@ -59,7 +58,7 @@ class BeanWrapperTests extends AbstractPropertyAccessorTests {
 	}
 
 	@Test
-	void getterSilentlyFailWithOldValueExtraction() {
+	public void getterSilentlyFailWithOldValueExtraction() {
 		GetterBean target = new GetterBean();
 		BeanWrapper accessor = createAccessor(target);
 		accessor.setExtractOldValueForEditor(true); // This will call the getter
@@ -69,7 +68,7 @@ class BeanWrapperTests extends AbstractPropertyAccessorTests {
 	}
 
 	@Test
-	void aliasedSetterThroughDefaultMethod() {
+	public void aliasedSetterThroughDefaultMethod() {
 		GetterBean target = new GetterBean();
 		BeanWrapper accessor = createAccessor(target);
 		accessor.setPropertyValue("aliasedName", "tom");
@@ -78,7 +77,7 @@ class BeanWrapperTests extends AbstractPropertyAccessorTests {
 	}
 
 	@Test
-	void setValidAndInvalidPropertyValuesShouldContainExceptionDetails() {
+	public void setValidAndInvalidPropertyValuesShouldContainExceptionDetails() {
 		TestBean target = new TestBean();
 		String newName = "tony";
 		String invalidTouchy = ".valid";
@@ -95,12 +94,12 @@ class BeanWrapperTests extends AbstractPropertyAccessorTests {
 						.getNewValue()).isEqualTo(invalidTouchy);
 			});
 		// Test validly set property matches
-		assertThat(target.getName()).as("Valid set property must stick").isEqualTo(newName);
-		assertThat(target.getAge()).as("Invalid set property must retain old value").isEqualTo(0);
+		assertThat(target.getName().equals(newName)).as("Valid set property must stick").isTrue();
+		assertThat(target.getAge() == 0).as("Invalid set property must retain old value").isTrue();
 	}
 
 	@Test
-	void checkNotWritablePropertyHoldPossibleMatches() {
+	public void checkNotWritablePropertyHoldPossibleMatches() {
 		TestBean target = new TestBean();
 		BeanWrapper accessor = createAccessor(target);
 		assertThatExceptionOfType(NotWritablePropertyException.class).isThrownBy(() ->
@@ -109,15 +108,15 @@ class BeanWrapperTests extends AbstractPropertyAccessorTests {
 	}
 
 	@Test  // Can't be shared; there is no such thing as a read-only field
-	void setReadOnlyMapProperty() {
+	public void setReadOnlyMapProperty() {
 		TypedReadOnlyMap map = new TypedReadOnlyMap(Collections.singletonMap("key", new TestBean()));
 		TypedReadOnlyMapClient target = new TypedReadOnlyMapClient();
 		BeanWrapper accessor = createAccessor(target);
-		assertThatNoException().isThrownBy(() -> accessor.setPropertyValue("map", map));
+		accessor.setPropertyValue("map", map);
 	}
 
 	@Test
-	void notWritablePropertyExceptionContainsAlternativeMatch() {
+	public void notWritablePropertyExceptionContainsAlternativeMatch() {
 		IntelliBean target = new IntelliBean();
 		BeanWrapper bw = createAccessor(target);
 		try {
@@ -125,12 +124,12 @@ class BeanWrapperTests extends AbstractPropertyAccessorTests {
 		}
 		catch (NotWritablePropertyException ex) {
 			assertThat(ex.getPossibleMatches()).as("Possible matches not determined").isNotNull();
-			assertThat(ex.getPossibleMatches()).as("Invalid amount of alternatives").hasSize(1);
+			assertThat(ex.getPossibleMatches().length).as("Invalid amount of alternatives").isEqualTo(1);
 		}
 	}
 
 	@Test
-	void notWritablePropertyExceptionContainsAlternativeMatches() {
+	public void notWritablePropertyExceptionContainsAlternativeMatches() {
 		IntelliBean target = new IntelliBean();
 		BeanWrapper bw = createAccessor(target);
 		try {
@@ -138,23 +137,23 @@ class BeanWrapperTests extends AbstractPropertyAccessorTests {
 		}
 		catch (NotWritablePropertyException ex) {
 			assertThat(ex.getPossibleMatches()).as("Possible matches not determined").isNotNull();
-			assertThat(ex.getPossibleMatches()).as("Invalid amount of alternatives").hasSize(3);
+			assertThat(ex.getPossibleMatches().length).as("Invalid amount of alternatives").isEqualTo(3);
 		}
 	}
 
 	@Override
 	@Test  // Can't be shared: no type mismatch with a field
-	void setPropertyTypeMismatch() {
+	public void setPropertyTypeMismatch() {
 		PropertyTypeMismatch target = new PropertyTypeMismatch();
 		BeanWrapper accessor = createAccessor(target);
 		accessor.setPropertyValue("object", "a String");
 		assertThat(target.value).isEqualTo("a String");
-		assertThat(target.getObject()).isEqualTo(8);
+		assertThat(target.getObject() == 8).isTrue();
 		assertThat(accessor.getPropertyValue("object")).isEqualTo(8);
 	}
 
 	@Test
-	void propertyDescriptors() throws Exception {
+	public void propertyDescriptors() throws Exception {
 		TestBean target = new TestBean();
 		target.setSpouse(new TestBean());
 		BeanWrapper accessor = createAccessor(target);
@@ -210,7 +209,7 @@ class BeanWrapperTests extends AbstractPropertyAccessorTests {
 
 	@Test
 	@SuppressWarnings("unchecked")
-	void getPropertyWithOptional() {
+	public void getPropertyWithOptional() {
 		GetterWithOptional target = new GetterWithOptional();
 		TestBean tb = new TestBean("x");
 		BeanWrapper accessor = createAccessor(target);
@@ -233,7 +232,7 @@ class BeanWrapperTests extends AbstractPropertyAccessorTests {
 	}
 
 	@Test
-	void getPropertyWithOptionalAndAutoGrow() {
+	public void getPropertyWithOptionalAndAutoGrow() {
 		GetterWithOptional target = new GetterWithOptional();
 		BeanWrapper accessor = createAccessor(target);
 		accessor.setAutoGrowNestedPaths(true);
@@ -245,7 +244,7 @@ class BeanWrapperTests extends AbstractPropertyAccessorTests {
 	}
 
 	@Test
-	void incompletelyQuotedKeyLeadsToPropertyException() {
+	public void incompletelyQuotedKeyLeadsToPropertyException() {
 		TestBean target = new TestBean();
 		BeanWrapper accessor = createAccessor(target);
 		assertThatExceptionOfType(NotWritablePropertyException.class).isThrownBy(() ->

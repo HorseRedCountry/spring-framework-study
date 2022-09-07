@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,13 +37,12 @@ import static org.springframework.web.testfixture.http.server.reactive.MockServe
  * @author Rossen Stoyanchev
  * @author Brian Clozel
  */
-@SuppressWarnings("deprecation")
 public class AppCacheManifestTransformerTests {
 
 	private static final Duration TIMEOUT = Duration.ofSeconds(5);
 
 
-	private final AppCacheManifestTransformer transformer = new AppCacheManifestTransformer();
+	private AppCacheManifestTransformer transformer;
 
 	private ResourceTransformerChain chain;
 
@@ -58,6 +57,7 @@ public class AppCacheManifestTransformerTests {
 		ResourceResolverChain resolverChain = new DefaultResourceResolverChain(resolvers);
 
 		this.chain = new DefaultResourceTransformerChain(resolverChain, Collections.emptyList());
+		this.transformer = new AppCacheManifestTransformer();
 		this.transformer.setResourceUrlProvider(createUrlProvider(resolvers));
 	}
 

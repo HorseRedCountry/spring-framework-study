@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.jetty.websocket.api.WebSocketPolicy;
 import org.eclipse.jetty.websocket.api.extensions.ExtensionConfig;
+import org.eclipse.jetty.websocket.server.HandshakeRFC6455;
 import org.eclipse.jetty.websocket.server.WebSocketServerFactory;
 
 import org.springframework.context.Lifecycle;
@@ -77,7 +78,7 @@ public class JettyRequestUpgradeStrategy implements RequestUpgradeStrategy, Serv
 	@Nullable
 	private ServletContext servletContext;
 
-	private volatile boolean running;
+	private volatile boolean running = false;
 
 	@Nullable
 	private volatile List<WebSocketExtension> supportedExtensions;
@@ -167,7 +168,7 @@ public class JettyRequestUpgradeStrategy implements RequestUpgradeStrategy, Serv
 
 	@Override
 	public String[] getSupportedVersions() {
-		return new String[] { String.valueOf(13) };
+		return new String[] { String.valueOf(HandshakeRFC6455.VERSION) };
 	}
 
 	@Override

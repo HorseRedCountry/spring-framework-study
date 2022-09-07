@@ -36,7 +36,6 @@ import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.HierarchyMode;
-import org.springframework.test.context.TestContextAnnotationUtils;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -140,11 +139,10 @@ abstract class AbstractExpressionEvaluatingCondition implements ExecutionConditi
 		// See https://github.com/spring-projects/spring-framework/issues/26694
 		if (loadContext && result.isDisabled() && element instanceof Class) {
 			Class<?> testClass = (Class<?>) element;
-			DirtiesContext dirtiesContext = TestContextAnnotationUtils.findMergedAnnotation(testClass, DirtiesContext.class);
-			if (dirtiesContext != null) {
+			findMergedAnnotation(testClass, DirtiesContext.class).ifPresent(dirtiesContext -> {
 				HierarchyMode hierarchyMode = dirtiesContext.hierarchyMode();
 				SpringExtension.getTestContextManager(context).getTestContext().markApplicationContextDirty(hierarchyMode);
-			}
+			});
 		}
 
 		return result;

@@ -34,7 +34,7 @@ import org.springframework.lang.Nullable;
  * @author Stephane Nicoll
  * @since 2.0.5
  */
-public class SourceFilteringListener implements GenericApplicationListener {
+public class SourceFilteringListener implements GenericApplicationListener, SmartApplicationListener {
 
 	private final Object source;
 
@@ -80,6 +80,11 @@ public class SourceFilteringListener implements GenericApplicationListener {
 	}
 
 	@Override
+	public boolean supportsEventType(Class<? extends ApplicationEvent> eventType) {
+		return supportsEventType(ResolvableType.forClass(eventType));
+	}
+
+	@Override
 	public boolean supportsSourceType(@Nullable Class<?> sourceType) {
 		return (sourceType != null && sourceType.isInstance(this.source));
 	}
@@ -87,11 +92,6 @@ public class SourceFilteringListener implements GenericApplicationListener {
 	@Override
 	public int getOrder() {
 		return (this.delegate != null ? this.delegate.getOrder() : Ordered.LOWEST_PRECEDENCE);
-	}
-
-	@Override
-	public String getListenerId() {
-		return (this.delegate != null ? this.delegate.getListenerId() : "");
 	}
 
 

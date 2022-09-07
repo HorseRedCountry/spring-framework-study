@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import org.springframework.asm.AnnotationVisitor;
 import org.springframework.asm.SpringAsmInfo;
@@ -120,7 +121,7 @@ class MergedAnnotationReadingVisitor<A extends Annotation> extends AnnotationVis
 	@SuppressWarnings("unchecked")
 	@Nullable
 	static <A extends Annotation> AnnotationVisitor get(@Nullable ClassLoader classLoader,
-			@Nullable Object source, String descriptor, boolean visible,
+			@Nullable Supplier<Object> sourceSupplier, String descriptor, boolean visible,
 			Consumer<MergedAnnotation<A>> consumer) {
 
 		if (!visible) {
@@ -132,6 +133,7 @@ class MergedAnnotationReadingVisitor<A extends Annotation> extends AnnotationVis
 			return null;
 		}
 
+		Object source = (sourceSupplier != null ? sourceSupplier.get() : null);
 		try {
 			Class<A> annotationType = (Class<A>) ClassUtils.forName(typeName, classLoader);
 			return new MergedAnnotationReadingVisitor<>(classLoader, source, annotationType, consumer);

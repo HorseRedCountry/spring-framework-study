@@ -78,7 +78,7 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 /**
- * Handwritten SpEL parser. Instances are reusable but are not thread-safe.
+ * Hand-written SpEL parser. Instances are reusable but are not thread-safe.
  *
  * @author Andy Clement
  * @author Juergen Hoeller

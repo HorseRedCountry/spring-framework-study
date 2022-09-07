@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.messaging.handler.invocation.reactive;
 
 import java.util.List;
@@ -66,5 +65,4 @@ public class TestEncoderMethodReturnValueHandler extends AbstractEncoderMethodRe
 		this.encodedContent = Flux.empty();
 		return Mono.empty();
 	}
-
 }

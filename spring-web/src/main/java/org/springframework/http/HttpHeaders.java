@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,12 +99,6 @@ public class HttpHeaders implements MultiValueMap<String, String>, Serializable 
 	 * @see <a href="https://tools.ietf.org/html/rfc7231#section-5.3.5">Section 5.3.5 of RFC 7231</a>
 	 */
 	public static final String ACCEPT_LANGUAGE = "Accept-Language";
-	/**
-	 * The HTTP {@code Accept-Patch} header field name.
-	 * @since 5.3.6
-	 * @see <a href="https://tools.ietf.org/html/rfc5789#section-3.1">Section 3.1 of RFC 5789</a>
-	 */
-	public static final String ACCEPT_PATCH = "Accept-Patch";
 	/**
 	 * The HTTP {@code Accept-Ranges} header field name.
 	 * @see <a href="https://tools.ietf.org/html/rfc7233#section-2.3">Section 5.3.5 of RFC 7233</a>
@@ -532,25 +526,6 @@ public class HttpHeaders implements MultiValueMap<String, String>, Serializable 
 	}
 
 	/**
-	 * Set the list of acceptable {@linkplain MediaType media types} for
-	 * {@code PATCH} methods, as specified by the {@code Accept-Patch} header.
-	 * @since 5.3.6
-	 */
-	public void setAcceptPatch(List<MediaType> mediaTypes) {
-		set(ACCEPT_PATCH, MediaType.toString(mediaTypes));
-	}
-
-	/**
-	 * Return the list of acceptable {@linkplain MediaType media types} for
-	 * {@code PATCH} methods, as specified by the {@code Accept-Patch} header.
-	 * <p>Returns an empty list when the acceptable media types are unspecified.
-	 * @since 5.3.6
-	 */
-	public List<MediaType> getAcceptPatch() {
-		return MediaType.parseMediaTypes(get(ACCEPT_PATCH));
-	}
-
-	/**
 	 * Set the (new) value of the {@code Access-Control-Allow-Credentials} response header.
 	 */
 	public void setAccessControlAllowCredentials(boolean allowCredentials) {
@@ -885,7 +860,7 @@ public class HttpHeaders implements MultiValueMap<String, String>, Serializable 
 	 */
 	public void setContentDispositionFormData(String name, @Nullable String filename) {
 		Assert.notNull(name, "Name must not be null");
-		ContentDisposition.Builder disposition = ContentDisposition.formData().name(name);
+		ContentDisposition.Builder disposition = ContentDisposition.builder("form-data").name(name);
 		if (StringUtils.hasText(filename)) {
 			disposition.filename(filename);
 		}
@@ -1600,7 +1575,7 @@ public class HttpHeaders implements MultiValueMap<String, String>, Serializable 
 	}
 
 	/**
-	 * Retrieve a combined result from the field values of multivalued headers.
+	 * Retrieve a combined result from the field values of multi-valued headers.
 	 * @param headerName the header name
 	 * @return the combined result
 	 * @since 4.3
@@ -1795,21 +1770,8 @@ public class HttpHeaders implements MultiValueMap<String, String>, Serializable 
 
 
 	/**
-	 * Apply a read-only {@code HttpHeaders} wrapper around the given headers, if necessary.
-	 * <p>Also caches the parsed representations of the "Accept" and "Content-Type" headers.
-	 * @param headers the headers to expose
-	 * @return a read-only variant of the headers, or the original headers as-is
-	 * (in case it happens to be a read-only {@code HttpHeaders} instance already)
-	 * @since 5.3
-	 */
-	public static HttpHeaders readOnlyHttpHeaders(MultiValueMap<String, String> headers) {
-		return (headers instanceof HttpHeaders ?
-				readOnlyHttpHeaders((HttpHeaders) headers) : new ReadOnlyHttpHeaders(headers));
-	}
-
-	/**
-	 * Apply a read-only {@code HttpHeaders} wrapper around the given headers, if necessary.
-	 * <p>Also caches the parsed representations of the "Accept" and "Content-Type" headers.
+	 * Apply a read-only {@code HttpHeaders} wrapper around the given headers,
+	 * if necessary.
 	 * @param headers the headers to expose
 	 * @return a read-only variant of the headers, or the original headers as-is
 	 */

@@ -29,7 +29,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpMethod;
@@ -39,7 +38,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.accept.ContentNegotiationManager;
 import org.springframework.web.accept.ContentNegotiationManagerFactoryBean;
-import org.springframework.web.context.support.StaticWebApplicationContext;
 import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.testfixture.servlet.MockHttpServletRequest;
 import org.springframework.web.testfixture.servlet.MockHttpServletResponse;
@@ -155,7 +153,7 @@ public class ResourceHttpRequestHandlerTests {
 		this.request.setAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE, "versionString/foo.css");
 		this.handler.handleRequest(this.request, this.response);
 
-		assertThat(this.response.getHeader("ETag")).isEqualTo("W/\"versionString\"");
+		assertThat(this.response.getHeader("ETag")).isEqualTo("\"versionString\"");
 		assertThat(this.response.getHeader("Accept-Ranges")).isEqualTo("bytes");
 		assertThat(this.response.getHeaders("Accept-Ranges").size()).isEqualTo(1);
 	}
@@ -245,7 +243,6 @@ public class ResourceHttpRequestHandlerTests {
 	}
 
 	@Test  // SPR-13658
-	@SuppressWarnings("deprecation")
 	public void getResourceWithRegisteredMediaType() throws Exception {
 		ContentNegotiationManagerFactoryBean factory = new ContentNegotiationManagerFactoryBean();
 		factory.addMediaType("bar", new MediaType("foo", "bar"));
@@ -267,7 +264,6 @@ public class ResourceHttpRequestHandlerTests {
 	}
 
 	@Test  // SPR-14577
-	@SuppressWarnings("deprecation")
 	public void getMediaTypeWithFavorPathExtensionOff() throws Exception {
 		ContentNegotiationManagerFactoryBean factory = new ContentNegotiationManagerFactoryBean();
 		factory.setFavorPathExtension(false);
@@ -309,25 +305,6 @@ public class ResourceHttpRequestHandlerTests {
 
 		assertThat(this.response.getContentType()).isEqualTo("foo/bar");
 		assertThat(this.response.getContentAsString()).isEqualTo("h1 { color:red; }");
-	}
-
-	@Test  // gh-27538, gh-27624
-	public void filterNonExistingLocations() throws Exception {
-		List<Resource> inputLocations = Arrays.asList(
-				new ClassPathResource("test/", getClass()),
-				new ClassPathResource("testalternatepath/", getClass()),
-				new ClassPathResource("nosuchpath/", getClass()));
-
-		ResourceHttpRequestHandler handler = new ResourceHttpRequestHandler();
-		handler.setServletContext(new MockServletContext());
-		handler.setLocations(inputLocations);
-		handler.setOptimizeLocations(true);
-		handler.afterPropertiesSet();
-
-		List<Resource> actual = handler.getLocations();
-		assertThat(actual).hasSize(2);
-		assertThat(actual.get(0).getURL().toString()).endsWith("test/");
-		assertThat(actual.get(1).getURL().toString()).endsWith("testalternatepath/");
 	}
 
 	@Test
@@ -728,37 +705,6 @@ public class ResourceHttpRequestHandlerTests {
 		this.handler.handleRequest(this.request, this.response);
 
 		assertThat(this.response.getHeader("Cache-Control")).isEqualTo("max-age=3600");
-	}
-
-	@Test
-	public void ignoreLastModified() throws Exception {
-		this.request.setAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE, "foo.css");
-		this.handler.setUseLastModified(false);
-		this.handler.handleRequest(this.request, this.response);
-
-		assertThat(this.response.getContentType()).isEqualTo("text/css");
-		assertThat(this.response.getContentLength()).isEqualTo(17);
-		assertThat(this.response.containsHeader("Last-Modified")).isFalse();
-		assertThat(this.response.getContentAsString()).isEqualTo("h1 { color:red; }");
-	}
-
-	@Test
-	public void servletContextRootValidation() {
-		StaticWebApplicationContext context = new StaticWebApplicationContext() {
-			@Override
-			public Resource getResource(String location) {
-				return new FileSystemResource("/");
-			}
-		};
-
-		ResourceHttpRequestHandler handler = new ResourceHttpRequestHandler();
-		handler.setLocationValues(Collections.singletonList("/"));
-		handler.setApplicationContext(context);
-
-		assertThatIllegalStateException().isThrownBy(handler::afterPropertiesSet)
-				.withMessage("The String-based location \"/\" should be relative to the web application root but " +
-						"resolved to a Resource of type: class org.springframework.core.io.FileSystemResource. " +
-						"If this is intentional, please pass it as a pre-configured Resource via setLocations.");
 	}
 
 

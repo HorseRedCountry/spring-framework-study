@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,7 +101,10 @@ public class JCacheJavaConfigTests extends AbstractJCacheAnnotationTests {
 
 	@Test
 	public void exceptionCacheResolverLazilyRequired() {
-		try (ConfigurableApplicationContext context = new AnnotationConfigApplicationContext(NoExceptionCacheResolverConfig.class)) {
+		ConfigurableApplicationContext context =
+				new AnnotationConfigApplicationContext(NoExceptionCacheResolverConfig.class);
+
+		try {
 			DefaultJCacheOperationSource cos = context.getBean(DefaultJCacheOperationSource.class);
 			assertThat(cos.getCacheResolver()).isSameAs(context.getBean("cacheResolver"));
 
@@ -111,6 +114,9 @@ public class JCacheJavaConfigTests extends AbstractJCacheAnnotationTests {
 			// This call requires the cache manager to be set
 			assertThatIllegalStateException().isThrownBy(() ->
 					service.cacheWithException("test", false));
+		}
+		finally {
+			context.close();
 		}
 	}
 
@@ -180,7 +186,7 @@ public class JCacheJavaConfigTests extends AbstractJCacheAnnotationTests {
 
 	@Configuration
 	@EnableCaching
-	public static class EmptyConfigSupportConfig implements JCacheConfigurer {
+	public static class EmptyConfigSupportConfig extends JCacheConfigurerSupport {
 		@Bean
 		public CacheManager cm() {
 			return new NoOpCacheManager();
@@ -190,7 +196,7 @@ public class JCacheJavaConfigTests extends AbstractJCacheAnnotationTests {
 
 	@Configuration
 	@EnableCaching
-	static class FullCachingConfigSupport implements JCacheConfigurer {
+	static class FullCachingConfigSupport extends JCacheConfigurerSupport {
 
 		@Override
 		@Bean
@@ -220,7 +226,7 @@ public class JCacheJavaConfigTests extends AbstractJCacheAnnotationTests {
 
 	@Configuration
 	@EnableCaching
-	static class NoExceptionCacheResolverConfig implements JCacheConfigurer {
+	static class NoExceptionCacheResolverConfig extends JCacheConfigurerSupport {
 
 		@Override
 		@Bean

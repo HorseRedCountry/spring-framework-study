@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,6 @@ import static org.springframework.test.util.MetaAnnotationUtils.findAnnotationDe
  * @since 4.0
  * @see MetaAnnotationUtilsTests
  */
-@SuppressWarnings("deprecation")
 class OverriddenMetaAnnotationAttributesTests {
 
 	@Test
@@ -125,7 +124,7 @@ class OverriddenMetaAnnotationAttributesTests {
 
 	@ContextConfiguration("foo.xml")
 	@Retention(RetentionPolicy.RUNTIME)
-	@interface MetaValueConfig {
+	static @interface MetaValueConfig {
 
 		String[] value() default {};
 	}
@@ -140,7 +139,7 @@ class OverriddenMetaAnnotationAttributesTests {
 
 	@ContextConfiguration(locations = "foo.xml", inheritLocations = false)
 	@Retention(RetentionPolicy.RUNTIME)
-	@interface MetaLocationsConfig {
+	static @interface MetaLocationsConfig {
 
 		String[] locations() default {};
 

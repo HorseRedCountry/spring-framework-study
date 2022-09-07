@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,7 +132,8 @@ class TypeMappedAnnotationTests {
 
 	private AnnotationTypeMapping getMapping(Annotation annotation,
 			Class<? extends Annotation> mappedAnnotationType) {
-		AnnotationTypeMappings mappings = AnnotationTypeMappings.forAnnotationType(annotation.annotationType());
+		AnnotationTypeMappings mappings = AnnotationTypeMappings.forAnnotationType(
+				annotation.annotationType());
 		for (int i = 0; i < mappings.size(); i++) {
 			AnnotationTypeMapping candidate = mappings.get(i);
 			if (candidate.getAnnotationType().equals(mappedAnnotationType)) {
@@ -144,66 +145,75 @@ class TypeMappedAnnotationTests {
 	}
 
 	@Retention(RetentionPolicy.RUNTIME)
-	@interface ExplicitMirror {
+	static @interface ExplicitMirror {
 
 		@AliasFor("b")
 		String a() default "";
 
 		@AliasFor("a")
 		String b() default "";
+
 	}
 
 	@ExplicitMirror(a = "test")
 	static class WithExplicitMirrorA {
+
 	}
 
 	@ExplicitMirror(b = "test")
 	static class WithExplicitMirrorB {
+
 	}
 
 	@Retention(RetentionPolicy.RUNTIME)
 	@ExplicitAliasMetaAnnotationTarget(nonAliased = "nonAliased")
-	@interface ExplicitAliasToMetaAnnotation {
+	static @interface ExplicitAliasToMetaAnnotation {
 
 		@AliasFor(annotation = ExplicitAliasMetaAnnotationTarget.class)
 		String aliased() default "";
+
 	}
 
 	@Retention(RetentionPolicy.RUNTIME)
-	@interface ExplicitAliasMetaAnnotationTarget {
+	static @interface ExplicitAliasMetaAnnotationTarget {
 
 		String aliased() default "";
 
 		String nonAliased() default "";
+
 	}
 
 	@ExplicitAliasToMetaAnnotation(aliased = "aliased")
 	private static class WithExplicitAliasToMetaAnnotation {
+
 	}
 
 	@Retention(RetentionPolicy.RUNTIME)
 	@ConventionAliasMetaAnnotationTarget
-	@interface ConventionAliasToMetaAnnotation {
+	static @interface ConventionAliasToMetaAnnotation {
 
 		String value() default "";
 
 		String convention() default "";
+
 	}
 
 	@Retention(RetentionPolicy.RUNTIME)
-	@interface ConventionAliasMetaAnnotationTarget {
+	static @interface ConventionAliasMetaAnnotationTarget {
 
 		String value() default "";
 
 		String convention() default "";
+
 	}
 
 	@ConventionAliasToMetaAnnotation(value = "value", convention = "convention")
 	private static class WithConventionAliasToMetaAnnotation {
+
 	}
 
 	@Retention(RetentionPolicy.RUNTIME)
-	@interface ArrayTypes {
+	static @interface ArrayTypes {
 
 		String[] stringValue();
 
@@ -228,30 +238,32 @@ class TypeMappedAnnotationTests {
 		ExplicitMirror[] annotationValue();
 
 		ExampleEnum[] enumValue();
+
 	}
 
-	enum ExampleEnum {
-		ONE, TWO, THREE
-	}
+	enum ExampleEnum {ONE,TWO,THREE}
 
 	@Retention(RetentionPolicy.RUNTIME)
-	@interface NestedContainer {
+	static @interface NestedContainer {
 
 		Nested value();
+
 	}
 
 	@Retention(RetentionPolicy.RUNTIME)
-	@interface Nested {
+	static @interface Nested {
 
 		String value() default "";
+
 	}
 
 	@Retention(RetentionPolicy.RUNTIME)
-	@interface ClassAttributes {
+	static @interface ClassAttributes {
 
 		Class<?> classValue();
 
 		Class<?>[] classArrayValue();
+
 	}
 
 }

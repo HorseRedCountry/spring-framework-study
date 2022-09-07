@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package org.springframework.web.reactive.function.server;
 
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 
 import org.junit.jupiter.api.Test;
@@ -24,6 +23,7 @@ import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
 import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferFactory;
 import org.springframework.core.io.buffer.DefaultDataBufferFactory;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseCookie;
@@ -42,6 +42,9 @@ import static org.assertj.core.api.Assertions.entry;
  */
 public class DefaultServerRequestBuilderTests {
 
+	private final DataBufferFactory dataBufferFactory = new DefaultDataBufferFactory();
+
+
 	@Test
 	public void from() {
 		MockServerHttpRequest request = MockServerHttpRequest.post("https://example.com")
@@ -55,13 +58,10 @@ public class DefaultServerRequestBuilderTests {
 
 		Flux<DataBuffer> body = Flux.just("baz")
 				.map(s -> s.getBytes(StandardCharsets.UTF_8))
-				.map(DefaultDataBufferFactory.sharedInstance::wrap);
+				.map(dataBufferFactory::wrap);
 
-		URI uri = URI.create("https://example2.com/foo/bar");
 		ServerRequest result = ServerRequest.from(other)
 				.method(HttpMethod.HEAD)
-				.uri(uri)
-				.contextPath("/foo")
 				.headers(httpHeaders -> httpHeaders.set("foo", "baar"))
 				.cookies(cookies -> cookies.set("baz", ResponseCookie.from("baz", "quux").build()))
 				.attribute("attr2", "value2")
@@ -70,9 +70,6 @@ public class DefaultServerRequestBuilderTests {
 				.build();
 
 		assertThat(result.method()).isEqualTo(HttpMethod.HEAD);
-		assertThat(result.uri()).isEqualTo(uri);
-		assertThat(result.requestPath().pathWithinApplication().value()).isEqualTo("/bar");
-		assertThat(result.requestPath().contextPath().value()).isEqualTo("/foo");
 		assertThat(result.headers().asHttpHeaders()).hasSize(1);
 		assertThat(result.headers().asHttpHeaders().getFirst("foo")).isEqualTo("baar");
 		assertThat(result.cookies()).hasSize(1);

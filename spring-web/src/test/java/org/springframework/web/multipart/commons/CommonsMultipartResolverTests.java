@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,6 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.MutablePropertyValues;
-import org.springframework.http.MediaType;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.ServletRequestDataBinder;
 import org.springframework.web.context.WebApplicationContext;
@@ -71,65 +70,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @since 08.10.2003
  */
 public class CommonsMultipartResolverTests {
-
-	@Test
-	public void isMultipartWithDefaultSetting() {
-		CommonsMultipartResolver resolver = new CommonsMultipartResolver();
-
-		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/");
-		assertThat(resolver.isMultipart(request)).isFalse();
-
-		request.setContentType(MediaType.MULTIPART_FORM_DATA_VALUE);
-		assertThat(resolver.isMultipart(request)).isTrue();
-
-		request.setContentType(MediaType.MULTIPART_MIXED_VALUE);
-		assertThat(resolver.isMultipart(request)).isTrue();
-
-		request.setContentType(MediaType.MULTIPART_RELATED_VALUE);
-		assertThat(resolver.isMultipart(request)).isTrue();
-
-		request = new MockHttpServletRequest("PUT", "/");
-		assertThat(resolver.isMultipart(request)).isFalse();
-
-		request.setContentType(MediaType.MULTIPART_FORM_DATA_VALUE);
-		assertThat(resolver.isMultipart(request)).isFalse();
-
-		request.setContentType(MediaType.MULTIPART_MIXED_VALUE);
-		assertThat(resolver.isMultipart(request)).isFalse();
-
-		request.setContentType(MediaType.MULTIPART_RELATED_VALUE);
-		assertThat(resolver.isMultipart(request)).isFalse();
-	}
-
-	@Test
-	public void isMultipartWithSupportedMethods() {
-		CommonsMultipartResolver resolver = new CommonsMultipartResolver();
-		resolver.setSupportedMethods("POST", "PUT");
-
-		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/");
-		assertThat(resolver.isMultipart(request)).isFalse();
-
-		request.setContentType(MediaType.MULTIPART_FORM_DATA_VALUE);
-		assertThat(resolver.isMultipart(request)).isTrue();
-
-		request.setContentType(MediaType.MULTIPART_MIXED_VALUE);
-		assertThat(resolver.isMultipart(request)).isTrue();
-
-		request.setContentType(MediaType.MULTIPART_RELATED_VALUE);
-		assertThat(resolver.isMultipart(request)).isTrue();
-
-		request = new MockHttpServletRequest("PUT", "/");
-		assertThat(resolver.isMultipart(request)).isFalse();
-
-		request.setContentType(MediaType.MULTIPART_FORM_DATA_VALUE);
-		assertThat(resolver.isMultipart(request)).isTrue();
-
-		request.setContentType(MediaType.MULTIPART_MIXED_VALUE);
-		assertThat(resolver.isMultipart(request)).isTrue();
-
-		request.setContentType(MediaType.MULTIPART_RELATED_VALUE);
-		assertThat(resolver.isMultipart(request)).isTrue();
-	}
 
 	@Test
 	public void withApplicationContext() throws Exception {
@@ -287,8 +227,8 @@ public class CommonsMultipartResolverTests {
 			MultipartHttpServletRequest request) throws UnsupportedEncodingException {
 
 		MultipartTestBean1 mtb1 = new MultipartTestBean1();
-		assertThat(mtb1.getField1()).isNull();
-		assertThat(mtb1.getField2()).isNull();
+		assertThat(mtb1.getField1()).isEqualTo(null);
+		assertThat(mtb1.getField2()).isEqualTo(null);
 		ServletRequestDataBinder binder = new ServletRequestDataBinder(mtb1, "mybean");
 		binder.registerCustomEditor(byte[].class, new ByteArrayMultipartFileEditor());
 		binder.bind(request);
@@ -301,8 +241,8 @@ public class CommonsMultipartResolverTests {
 		assertThat(new String(mtb1.getField2())).isEqualTo(new String(file2.getBytes()));
 
 		MultipartTestBean2 mtb2 = new MultipartTestBean2();
-		assertThat(mtb2.getField1()).isNull();
-		assertThat(mtb2.getField2()).isNull();
+		assertThat(mtb2.getField1()).isEqualTo(null);
+		assertThat(mtb2.getField2()).isEqualTo(null);
 		binder = new ServletRequestDataBinder(mtb2, "mybean");
 		binder.registerCustomEditor(String.class, "field1", new StringMultipartFileEditor());
 		binder.registerCustomEditor(String.class, "field2", new StringMultipartFileEditor("UTF-16"));

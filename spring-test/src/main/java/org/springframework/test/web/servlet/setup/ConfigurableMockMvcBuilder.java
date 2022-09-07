@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,8 @@
 
 package org.springframework.test.web.servlet.setup;
 
-import java.nio.charset.Charset;
-
 import javax.servlet.Filter;
 
-import org.springframework.test.web.servlet.DispatcherServletCustomizer;
 import org.springframework.test.web.servlet.MockMvcBuilder;
 import org.springframework.test.web.servlet.RequestBuilder;
 import org.springframework.test.web.servlet.ResultHandler;
@@ -30,7 +27,6 @@ import org.springframework.test.web.servlet.ResultMatcher;
  * Defines common methods for building a {@code MockMvc}.
  *
  * @author Rossen Stoyanchev
- * @author Sam Brannen
  * @since 4.1
  * @param <B> a self reference to the builder type
  */
@@ -41,7 +37,7 @@ public interface ConfigurableMockMvcBuilder<B extends ConfigurableMockMvcBuilder
 	 * <pre class="code">
 	 * mockMvcBuilder.addFilters(springSecurityFilterChain);
 	 * </pre>
-	 * <p>It is the equivalent of the following web.xml configuration:
+	 * <p>is the equivalent of the following web.xml configuration:
 	 * <pre class="code">
 	 * &lt;filter-mapping&gt;
 	 *     &lt;filter-name&gt;springSecurityFilterChain&lt;/filter-name&gt;
@@ -56,9 +52,9 @@ public interface ConfigurableMockMvcBuilder<B extends ConfigurableMockMvcBuilder
 	/**
 	 * Add a filter mapped to a specific set of patterns. For example:
 	 * <pre class="code">
-	 * mockMvcBuilder.addFilter(myResourceFilter, "/resources/*");
+	 * mockMvcBuilder.addFilters(myResourceFilter, "/resources/*");
 	 * </pre>
-	 * <p>It is the equivalent of:
+	 * <p>is the equivalent of:
 	 * <pre class="code">
 	 * &lt;filter-mapping&gt;
 	 *     &lt;filter-name&gt;myResourceFilter&lt;/filter-name&gt;
@@ -85,18 +81,6 @@ public interface ConfigurableMockMvcBuilder<B extends ConfigurableMockMvcBuilder
 	<T extends B> T defaultRequest(RequestBuilder requestBuilder);
 
 	/**
-	 * Define the default character encoding to be applied to every response.
-	 * <p>The default implementation of this method throws an
-	 * {@link UnsupportedOperationException}. Concrete implementations are therefore
-	 * encouraged to override this method.
-	 * @param defaultResponseCharacterEncoding the default response character encoding
-	 * @since 5.3.10
-	 */
-	default <T extends B> T defaultResponseCharacterEncoding(Charset defaultResponseCharacterEncoding) {
-		throw new UnsupportedOperationException("defaultResponseCharacterEncoding is not supported by this MockMvcBuilder");
-	}
-
-	/**
 	 * Define a global expectation that should <em>always</em> be applied to
 	 * every response. For example, status code 200 (OK), content type
 	 * {@code "application/json"}, etc.
@@ -120,14 +104,6 @@ public interface ConfigurableMockMvcBuilder<B extends ConfigurableMockMvcBuilder
 	 * dispatchOptionsRequest} which allows processing of HTTP OPTIONS requests.
 	 */
 	<T extends B> T dispatchOptions(boolean dispatchOptions);
-
-	/**
-	 * A more advanced variant of {@link #dispatchOptions(boolean)} that allows
-	 * customizing any {@link org.springframework.web.servlet.DispatcherServlet}
-	 * property.
-	 * @since 5.3
-	 */
-	<T extends B> T addDispatcherServletCustomizer(DispatcherServletCustomizer customizer);
 
 	/**
 	 * Add a {@code MockMvcConfigurer} that automates MockMvc setup and

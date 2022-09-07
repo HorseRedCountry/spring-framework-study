@@ -46,12 +46,12 @@ import org.springframework.lang.Nullable;
 public abstract class ReflectionUtils {
 
 	/**
-	 * Pre-built {@link MethodFilter} that matches all non-bridge non-synthetic methods
+	 * Pre-built MethodFilter that matches all non-bridge non-synthetic methods
 	 * which are not declared on {@code java.lang.Object}.
 	 * @since 3.0.5
 	 */
 	public static final MethodFilter USER_DECLARED_METHODS =
-			(method -> !method.isBridge() && !method.isSynthetic() && (method.getDeclaringClass() != Object.class));
+			(method -> !method.isBridge() && !method.isSynthetic());
 
 	/**
 	 * Pre-built FieldFilter that matches all non-static, non-final fields.
@@ -354,10 +354,7 @@ public abstract class ReflectionUtils {
 	 * @throws IllegalStateException if introspection fails
 	 */
 	public static void doWithMethods(Class<?> clazz, MethodCallback mc, @Nullable MethodFilter mf) {
-		if (mf == USER_DECLARED_METHODS && clazz == Object.class) {
-			// nothing to introspect
-			return;
-		}
+		// Keep backing up the inheritance hierarchy.
 		Method[] methods = getDeclaredMethods(clazz, false);
 		for (Method method : methods) {
 			if (mf != null && !mf.matches(method)) {
@@ -370,7 +367,6 @@ public abstract class ReflectionUtils {
 				throw new IllegalStateException("Not allowed to access method '" + method.getName() + "': " + ex);
 			}
 		}
-		// Keep backing up the inheritance hierarchy.
 		if (clazz.getSuperclass() != null && (mf != USER_DECLARED_METHODS || clazz.getSuperclass() != Object.class)) {
 			doWithMethods(clazz.getSuperclass(), mc, mf);
 		}
@@ -830,19 +826,6 @@ public abstract class ReflectionUtils {
 		 * @param method the method to check
 		 */
 		boolean matches(Method method);
-
-		/**
-		 * Create a composite filter based on this filter <em>and</em> the provided filter.
-		 * <p>If this filter does not match, the next filter will not be applied.
-		 * @param next the next {@code MethodFilter}
-		 * @return a composite {@code MethodFilter}
-		 * @throws IllegalArgumentException if the MethodFilter argument is {@code null}
-		 * @since 5.3.2
-		 */
-		default MethodFilter and(MethodFilter next) {
-			Assert.notNull(next, "Next MethodFilter must not be null");
-			return method -> matches(method) && next.matches(method);
-		}
 	}
 
 
@@ -871,19 +854,6 @@ public abstract class ReflectionUtils {
 		 * @param field the field to check
 		 */
 		boolean matches(Field field);
-
-		/**
-		 * Create a composite filter based on this filter <em>and</em> the provided filter.
-		 * <p>If this filter does not match, the next filter will not be applied.
-		 * @param next the next {@code FieldFilter}
-		 * @return a composite {@code FieldFilter}
-		 * @throws IllegalArgumentException if the FieldFilter argument is {@code null}
-		 * @since 5.3.2
-		 */
-		default FieldFilter and(FieldFilter next) {
-			Assert.notNull(next, "Next FieldFilter must not be null");
-			return field -> matches(field) && next.matches(field);
-		}
 	}
 
 }

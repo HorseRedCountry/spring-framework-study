@@ -51,8 +51,8 @@ public abstract class MethodVisitor {
   private static final String REQUIRES_ASM5 = "This feature requires ASM5";
 
   /**
-   * The ASM API version implemented by this visitor. The value of this field must be one of the
-   * {@code ASM}<i>x</i> values in {@link Opcodes}.
+   * The ASM API version implemented by this visitor. The value of this field must be one of {@link
+   * Opcodes#ASM4}, {@link Opcodes#ASM5}, {@link Opcodes#ASM6} or {@link Opcodes#ASM7}.
    */
   protected final int api;
 
@@ -64,29 +64,28 @@ public abstract class MethodVisitor {
   /**
    * Constructs a new {@link MethodVisitor}.
    *
-   * @param api the ASM API version implemented by this visitor. Must be one of the {@code
-   *     ASM}<i>x</i> values in {@link Opcodes}.
+   * @param api the ASM API version implemented by this visitor. Must be one of {@link
+   *     Opcodes#ASM4}, {@link Opcodes#ASM5}, {@link Opcodes#ASM6} or {@link Opcodes#ASM7}.
    */
-  protected MethodVisitor(final int api) {
+  public MethodVisitor(final int api) {
     this(api, null);
   }
 
   /**
    * Constructs a new {@link MethodVisitor}.
    *
-   * @param api the ASM API version implemented by this visitor. Must be one of the {@code
-   *     ASM}<i>x</i> values in {@link Opcodes}.
+   * @param api the ASM API version implemented by this visitor. Must be one of {@link
+   *     Opcodes#ASM4}, {@link Opcodes#ASM5}, {@link Opcodes#ASM6} or {@link Opcodes#ASM7}.
    * @param methodVisitor the method visitor to which this visitor must delegate method calls. May
    *     be null.
    */
-  protected MethodVisitor(final int api, final MethodVisitor methodVisitor) {
-    if (api != Opcodes.ASM9
-        && api != Opcodes.ASM8
-        && api != Opcodes.ASM7
+  @SuppressWarnings("deprecation")
+  public MethodVisitor(final int api, final MethodVisitor methodVisitor) {
+    if (api != Opcodes.ASM7
         && api != Opcodes.ASM6
         && api != Opcodes.ASM5
         && api != Opcodes.ASM4
-        && api != Opcodes.ASM10_EXPERIMENTAL) {
+        && api != Opcodes.ASM8_EXPERIMENTAL) {
       throw new IllegalArgumentException("Unsupported api " + api);
     }
     // SPRING PATCH: no preview mode check for ASM experimental
@@ -349,12 +348,12 @@ public abstract class MethodVisitor {
    *
    * @param opcode the opcode of the local variable instruction to be visited. This opcode is either
    *     ILOAD, LLOAD, FLOAD, DLOAD, ALOAD, ISTORE, LSTORE, FSTORE, DSTORE, ASTORE or RET.
-   * @param varIndex the operand of the instruction to be visited. This operand is the index of a
-   *     local variable.
+   * @param var the operand of the instruction to be visited. This operand is the index of a local
+   *     variable.
    */
-  public void visitVarInsn(final int opcode, final int varIndex) {
+  public void visitVarInsn(final int opcode, final int var) {
     if (mv != null) {
-      mv.visitVarInsn(opcode, varIndex);
+      mv.visitVarInsn(opcode, var);
     }
   }
 

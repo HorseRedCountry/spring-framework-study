@@ -61,7 +61,7 @@ public class ConstructorReference extends SpelNodeImpl {
 	/**
 	 * Maximum number of elements permitted in an array declaration, applying
 	 * to one-dimensional as well as multi-dimensional arrays.
-	 * @since 5.3.17
+	 * @since 5.2.20
 	 */
 	private static final int MAX_ARRAY_ELEMENTS = 256 * 1024; // 256K
 
@@ -140,7 +140,7 @@ public class ConstructorReference extends SpelNodeImpl {
 
 				// To determine which situation it is, the AccessException will contain a cause.
 				// If the cause is an InvocationTargetException, a user exception was thrown inside the constructor.
-				// Otherwise, the constructor could not be invoked.
+				// Otherwise the constructor could not be invoked.
 				if (ex.getCause() instanceof InvocationTargetException) {
 					// User exception was the root cause - exit now
 					Throwable rootCause = ex.getCause().getCause();
@@ -271,7 +271,7 @@ public class ConstructorReference extends SpelNodeImpl {
 					newArray = Array.newInstance(componentType, arraySize);
 				}
 				else {
-					// Multidimensional - hold onto your hat!
+					// Multi-dimensional - hold onto your hat!
 					int[] dims = new int[this.dimensions.length];
 					long numElements = 1;
 					for (int d = 0; d < this.dimensions.length; d++) {
@@ -288,7 +288,7 @@ public class ConstructorReference extends SpelNodeImpl {
 		else {
 			// There is an initializer
 			if (this.dimensions == null || this.dimensions.length > 1) {
-				// There is an initializer but this is a multidimensional array (e.g. new int[][]{{1,2},{3,4}})
+				// There is an initializer but this is a multi-dimensional array (e.g. new int[][]{{1,2},{3,4}})
 				// - this is not currently supported
 				throw new SpelEvaluationException(getStartPosition(),
 						SpelMessage.MULTIDIM_ARRAY_INITIALIZER_NOT_SUPPORTED);

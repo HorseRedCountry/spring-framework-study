@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public class TransactionAttributeEditor extends PropertyEditorSupport {
 
 	/**
 	 * Format is PROPAGATION_NAME,ISOLATION_NAME,readOnly,timeout_NNNN,+Exception1,-Exception2.
-	 * Null or the empty string means that the method is non-transactional.
+	 * Null or the empty string means that the method is non transactional.
 	 */
 	@Override
 	public void setAsText(String text) throws IllegalArgumentException {
@@ -69,7 +69,7 @@ public class TransactionAttributeEditor extends PropertyEditorSupport {
 				}
 				else if (trimmedToken.startsWith(RuleBasedTransactionAttribute.PREFIX_TIMEOUT)) {
 					String value = trimmedToken.substring(DefaultTransactionAttribute.PREFIX_TIMEOUT.length());
-					attr.setTimeoutString(value);
+					attr.setTimeout(Integer.parseInt(value));
 				}
 				else if (trimmedToken.equals(RuleBasedTransactionAttribute.READ_ONLY_MARKER)) {
 					attr.setReadOnly(true);
@@ -84,7 +84,6 @@ public class TransactionAttributeEditor extends PropertyEditorSupport {
 					throw new IllegalArgumentException("Invalid transaction attribute token: [" + trimmedToken + "]");
 				}
 			}
-			attr.resolveAttributeStrings(null);  // placeholders expected to be pre-resolved
 			setValue(attr);
 		}
 		else {

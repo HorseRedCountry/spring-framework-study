@@ -14,23 +14,18 @@ rm -rf /var/lib/apt/lists/*
 
 curl https://raw.githubusercontent.com/spring-io/concourse-java-scripts/v0.0.4/concourse-java.sh > /opt/concourse-java.sh
 
+curl --output /opt/concourse-release-scripts.jar https://repo.spring.io/release/io/spring/concourse/releasescripts/concourse-release-scripts/0.3.2/concourse-release-scripts-0.3.2.jar
+
 ###########################################################
 # JAVA
 ###########################################################
+JDK_URL=$( ./get-jdk-url.sh $1 )
 
 mkdir -p /opt/openjdk
-pushd /opt/openjdk > /dev/null
-for jdk in java8 java11 java17
-do
-  JDK_URL=$( /get-jdk-url.sh $jdk )
-  mkdir $jdk
-  pushd $jdk > /dev/null
-  curl -L ${JDK_URL} | tar zx --strip-components=1
-  test -f bin/java
-  test -f bin/javac
-  popd > /dev/null
-done
-popd
+cd /opt/openjdk
+curl -L ${JDK_URL} | tar zx --strip-components=1
+test -f /opt/openjdk/bin/java
+test -f /opt/openjdk/bin/javac
 
 ###########################################################
 # GRADLE ENTERPRISE

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,16 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+import org.springframework.web.reactive.function.BodyExtractors;
 
 /**
  * Static factory methods providing access to built-in implementations of
@@ -61,17 +64,18 @@ public abstract class ExchangeFilterFunctions {
 	 */
 	public static ExchangeFilterFunction limitResponseSize(long maxByteCount) {
 		return (request, next) ->
-				next.exchange(request).map(response ->
-						response.mutate()
-								.body(body -> DataBufferUtils.takeUntilByteCount(body, maxByteCount))
-								.build());
+				next.exchange(request).map(response -> {
+					Flux<DataBuffer> body = response.body(BodyExtractors.toDataBuffers());
+					body = DataBufferUtils.takeUntilByteCount(body, maxByteCount);
+					return ClientResponse.from(response).body(body).build();
+				});
 	}
 
 	/**
 	 * Return a filter that generates an error signal when the given
 	 * {@link HttpStatus} predicate matches.
 	 * @param statusPredicate the predicate to check the HTTP status with
-	 * @param exceptionFunction the function to create the exception
+	 * @param exceptionFunction the function that to create the exception
 	 * @return the filter to generate an error signal
 	 */
 	public static ExchangeFilterFunction statusError(Predicate<HttpStatus> statusPredicate,

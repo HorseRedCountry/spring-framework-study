@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.task.AsyncListenableTaskExecutor;
 import org.springframework.core.task.TaskDecorator;
 import org.springframework.core.task.TaskRejectedException;
+import org.springframework.core.task.TaskTimeoutException;
 import org.springframework.jca.context.BootstrapContextAware;
 import org.springframework.jndi.JndiLocatorSupport;
 import org.springframework.lang.Nullable;
@@ -217,13 +218,11 @@ public class WorkManagerTaskExecutor extends JndiLocatorSupport
 	// Implementation of the Spring SchedulingTaskExecutor interface
 	//-------------------------------------------------------------------------
 
-	@SuppressWarnings("deprecation")
 	@Override
 	public void execute(Runnable task) {
 		execute(task, TIMEOUT_INDEFINITE);
 	}
 
-	@Deprecated
 	@Override
 	public void execute(Runnable task, long startTimeout) {
 		Work work = new DelegatingWork(this.taskDecorator != null ? this.taskDecorator.decorate(task) : task);
@@ -255,8 +254,7 @@ public class WorkManagerTaskExecutor extends JndiLocatorSupport
 		}
 		catch (WorkRejectedException ex) {
 			if (WorkException.START_TIMED_OUT.equals(ex.getErrorCode())) {
-				throw new org.springframework.core.task.TaskTimeoutException(
-						"JCA WorkManager rejected task because of timeout: " + task, ex);
+				throw new TaskTimeoutException("JCA WorkManager rejected task because of timeout: " + task, ex);
 			}
 			else {
 				throw new TaskRejectedException("JCA WorkManager rejected task: " + task, ex);
@@ -267,7 +265,6 @@ public class WorkManagerTaskExecutor extends JndiLocatorSupport
 		}
 	}
 
-	@SuppressWarnings("deprecation")
 	@Override
 	public Future<?> submit(Runnable task) {
 		FutureTask<Object> future = new FutureTask<>(task, null);
@@ -275,7 +272,6 @@ public class WorkManagerTaskExecutor extends JndiLocatorSupport
 		return future;
 	}
 
-	@SuppressWarnings("deprecation")
 	@Override
 	public <T> Future<T> submit(Callable<T> task) {
 		FutureTask<T> future = new FutureTask<>(task);
@@ -283,7 +279,6 @@ public class WorkManagerTaskExecutor extends JndiLocatorSupport
 		return future;
 	}
 
-	@SuppressWarnings("deprecation")
 	@Override
 	public ListenableFuture<?> submitListenable(Runnable task) {
 		ListenableFutureTask<Object> future = new ListenableFutureTask<>(task, null);
@@ -291,7 +286,6 @@ public class WorkManagerTaskExecutor extends JndiLocatorSupport
 		return future;
 	}
 
-	@SuppressWarnings("deprecation")
 	@Override
 	public <T> ListenableFuture<T> submitListenable(Callable<T> task) {
 		ListenableFutureTask<T> future = new ListenableFutureTask<>(task);

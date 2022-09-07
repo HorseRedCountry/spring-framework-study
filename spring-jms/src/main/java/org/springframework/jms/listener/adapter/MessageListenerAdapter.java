@@ -36,7 +36,7 @@ import org.springframework.util.ObjectUtils;
  * Message listener adapter that delegates the handling of messages to target
  * listener methods via reflection, with flexible message type conversion.
  * Allows listener methods to operate on message content types, completely
- * independent of the JMS API.
+ * independent from the JMS API.
  *
  * <p>By default, the content of incoming JMS messages gets extracted before
  * being passed into the target listener method, to let the target method

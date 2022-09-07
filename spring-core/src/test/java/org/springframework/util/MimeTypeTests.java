@@ -321,25 +321,6 @@ class MimeTypeTests {
 		testWithQuotedParameters("foo/bar;param=\"\\,\\\"");
 	}
 
-	@Test
-	void parseSubtypeSuffix() {
-		MimeType type = new MimeType("application", "vdn.something+json");
-		assertThat(type.getSubtypeSuffix()).isEqualTo("json");
-		type = new MimeType("application", "vdn.something");
-		assertThat(type.getSubtypeSuffix()).isNull();
-		type = new MimeType("application", "vdn.something+");
-		assertThat(type.getSubtypeSuffix()).isEqualTo("");
-		type = new MimeType("application", "vdn.some+thing+json");
-		assertThat(type.getSubtypeSuffix()).isEqualTo("json");
-	}
-
-	@Test  // gh-25350
-	void wildcardSubtypeCompatibleWithSuffix() {
-		MimeType applicationStar = new MimeType("application", "*");
-		MimeType applicationVndJson = new MimeType("application", "vnd.something+json");
-		assertThat(applicationStar.isCompatibleWith(applicationVndJson)).isTrue();
-	}
-
 	private void testWithQuotedParameters(String... mimeTypes) {
 		String s = String.join(",", mimeTypes);
 		List<MimeType> actual = MimeTypeUtils.parseMimeTypes(s);
@@ -415,7 +396,7 @@ class MimeTypeTests {
 	@Test  // gh-26127
 	void serialize() throws Exception {
 		MimeType original = new MimeType("text", "plain", StandardCharsets.UTF_8);
-		MimeType deserialized = SerializationTestUtils.serializeAndDeserialize(original);
+		MimeType deserialized = (MimeType) SerializationTestUtils.serializeAndDeserialize(original);
 		assertThat(deserialized).isEqualTo(original);
 		assertThat(original).isEqualTo(deserialized);
 	}

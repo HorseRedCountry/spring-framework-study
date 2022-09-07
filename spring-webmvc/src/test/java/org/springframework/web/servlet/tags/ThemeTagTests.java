@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,13 +37,13 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Juergen Hoeller
  * @author Alef Arendsen
  */
-class ThemeTagTests extends AbstractTagTests {
+public class ThemeTagTests extends AbstractTagTests {
 
 	@Test
 	@SuppressWarnings("serial")
-	void themeTag() throws JspException {
+	public void themeTag() throws JspException {
 		PageContext pc = createPageContext();
-		final StringBuilder message = new StringBuilder();
+		final StringBuffer message = new StringBuffer();
 		ThemeTag tag = new ThemeTag() {
 			@Override
 			protected void writeMessage(String msg) {
@@ -59,7 +59,7 @@ class ThemeTagTests extends AbstractTagTests {
 
 	@Test
 	@SuppressWarnings("rawtypes")
-	void requestContext() throws ServletException {
+	public void requestContext() throws ServletException {
 		PageContext pc = createPageContext();
 		RequestContext rc = new RequestContext((HttpServletRequest) pc.getRequest());
 		assertThat(rc.getThemeMessage("themetest")).isEqualTo("theme test message");

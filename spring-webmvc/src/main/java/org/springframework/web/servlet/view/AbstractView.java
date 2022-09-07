@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -190,10 +190,10 @@ public abstract class AbstractView extends WebApplicationObjectSupport implement
 	}
 
 	/**
-	 * Allow {@code Map} access to the static attributes of this view,
+	 * Allow Map access to the static attributes of this view,
 	 * with the option to add or override specific entries.
 	 * <p>Useful for specifying entries directly, for example via
-	 * {@code attributesMap[myKey]}. This is particularly useful for
+	 * "attributesMap[myKey]". This is particularly useful for
 	 * adding or overriding entries in child view definitions.
 	 */
 	public Map<String, Object> getAttributesMap() {
@@ -227,7 +227,7 @@ public abstract class AbstractView extends WebApplicationObjectSupport implement
 	/**
 	 * Specify whether to add path variables to the model or not.
 	 * <p>Path variables are commonly bound to URI template variables through the {@code @PathVariable}
-	 * annotation. They are effectively URI template variables with type conversion applied to
+	 * annotation. They're are effectively URI template variables with type conversion applied to
 	 * them to derive typed Object values. Such values are frequently needed in views for
 	 * constructing links to the same and other URLs.
 	 * <p>Path variables added to the model override static attributes (see {@link #setAttributes(Properties)})
@@ -332,7 +332,7 @@ public abstract class AbstractView extends WebApplicationObjectSupport implement
 		size += (model != null ? model.size() : 0);
 		size += (pathVars != null ? pathVars.size() : 0);
 
-		Map<String, Object> mergedModel = CollectionUtils.newLinkedHashMap(size);
+		Map<String, Object> mergedModel = new LinkedHashMap<>(size);
 		mergedModel.putAll(this.staticAttributes);
 		if (pathVars != null) {
 			mergedModel.putAll(pathVars);

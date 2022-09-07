@@ -18,10 +18,10 @@ package org.springframework.http.server.reactive;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
+import org.apache.commons.logging.Log;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -31,6 +31,7 @@ import org.springframework.core.io.buffer.DataBufferFactory;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.core.io.buffer.PooledDataBuffer;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpLogging;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.lang.Nullable;
@@ -56,7 +57,9 @@ public abstract class AbstractServerHttpResponse implements ServerHttpResponse {
 	 * response during which time pre-commit actions can still make changes to
 	 * the response status and headers.
 	 */
-	private enum State {NEW, COMMITTING, COMMIT_ACTION_FAILED, COMMITTED}
+	private enum State {NEW, COMMITTING, COMMITTED}
+
+	protected final Log logger = HttpLogging.forLogName(getClass());
 
 
 	private final DataBufferFactory dataBufferFactory;
@@ -71,9 +74,6 @@ public abstract class AbstractServerHttpResponse implements ServerHttpResponse {
 	private final AtomicReference<State> state = new AtomicReference<>(State.NEW);
 
 	private final List<Supplier<? extends Mono<Void>>> commitActions = new ArrayList<>(4);
-
-	@Nullable
-	private HttpHeaders readOnlyHeaders;
 
 
 	public AbstractServerHttpResponse(DataBufferFactory dataBufferFactory) {
@@ -155,16 +155,8 @@ public abstract class AbstractServerHttpResponse implements ServerHttpResponse {
 
 	@Override
 	public HttpHeaders getHeaders() {
-		if (this.readOnlyHeaders != null) {
-			return this.readOnlyHeaders;
-		}
-		else if (this.state.get() == State.COMMITTED) {
-			this.readOnlyHeaders = HttpHeaders.readOnlyHttpHeaders(this.headers);
-			return this.readOnlyHeaders;
-		}
-		else {
-			return this.headers;
-		}
+		return (this.state.get() == State.COMMITTED ?
+				HttpHeaders.readOnlyHttpHeaders(this.headers) : this.headers);
 	}
 
 	@Override
@@ -201,8 +193,7 @@ public abstract class AbstractServerHttpResponse implements ServerHttpResponse {
 
 	@Override
 	public boolean isCommitted() {
-		State state = this.state.get();
-		return (state != State.NEW && state != State.COMMIT_ACTION_FAILED);
+		return this.state.get() != State.NEW;
 	}
 
 	@Override
@@ -213,8 +204,7 @@ public abstract class AbstractServerHttpResponse implements ServerHttpResponse {
 		if (body instanceof Mono) {
 			return ((Mono<? extends DataBuffer>) body)
 					.flatMap(buffer -> {
-						touchDataBuffer(buffer);
-						AtomicBoolean subscribed = new AtomicBoolean();
+						AtomicReference<Boolean> subscribed = new AtomicReference<>(false);
 						return doCommit(
 								() -> {
 									try {
@@ -254,7 +244,7 @@ public abstract class AbstractServerHttpResponse implements ServerHttpResponse {
 	}
 
 	/**
-	 * A variant of {@link #doCommit(Supplier)} for a response without a body.
+	 * A variant of {@link #doCommit(Supplier)} for a response without no body.
 	 * @return a completion publisher
 	 */
 	protected Mono<Void> doCommit() {
@@ -268,22 +258,19 @@ public abstract class AbstractServerHttpResponse implements ServerHttpResponse {
 	 * @return a completion publisher
 	 */
 	protected Mono<Void> doCommit(@Nullable Supplier<? extends Mono<Void>> writeAction) {
-		Flux<Void> allActions = Flux.empty();
-		if (this.state.compareAndSet(State.NEW, State.COMMITTING)) {
-			if (!this.commitActions.isEmpty()) {
-				allActions = Flux.concat(Flux.fromIterable(this.commitActions).map(Supplier::get))
-						.doOnError(ex -> {
-							if (this.state.compareAndSet(State.COMMITTING, State.COMMIT_ACTION_FAILED)) {
-								getHeaders().clearContentHeaders();
-							}
-						});
-			}
-		}
-		else if (this.state.compareAndSet(State.COMMIT_ACTION_FAILED, State.COMMITTING)) {
-			// Skip commit actions
-		}
-		else {
+		if (!this.state.compareAndSet(State.NEW, State.COMMITTING)) {
 			return Mono.empty();
+		}
+
+		Flux<Void> allActions = Flux.empty();
+
+		if (!this.commitActions.isEmpty()) {
+			allActions = Flux.concat(Flux.fromIterable(this.commitActions).map(Supplier::get))
+					.doOnError(ex -> {
+						if (this.state.compareAndSet(State.COMMITTING, State.NEW)) {
+							getHeaders().clearContentHeaders();
+						}
+					});
 		}
 
 		allActions = allActions.concatWith(Mono.fromRunnable(() -> {
@@ -320,9 +307,9 @@ public abstract class AbstractServerHttpResponse implements ServerHttpResponse {
 	protected abstract void applyStatusCode();
 
 	/**
-	 * Invoked when the response is getting committed allowing subclasses to
+	 * Invoked when the response is getting committed allowing sub-classes to
 	 * make apply header values to the underlying response.
-	 * <p>Note that most subclasses use an {@link HttpHeaders} instance that
+	 * <p>Note that most sub-classes use an {@link HttpHeaders} instance that
 	 * wraps an adapter to the native response headers such that changes are
 	 * propagated to the underlying response on the go. That means this callback
 	 * is typically not used other than for specialized updates such as setting
@@ -335,14 +322,5 @@ public abstract class AbstractServerHttpResponse implements ServerHttpResponse {
 	 * This method is called once only.
 	 */
 	protected abstract void applyCookies();
-
-	/**
-	 * Allow subclasses to associate a hint with the data buffer if it is a
-	 * pooled buffer and supports leak tracking.
-	 * @param buffer the buffer to attach a hint to
-	 * @since 5.3.2
-	 */
-	protected void touchDataBuffer(DataBuffer buffer) {
-	}
 
 }

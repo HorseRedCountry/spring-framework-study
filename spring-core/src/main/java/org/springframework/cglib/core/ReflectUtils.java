@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.springframework.asm.Attribute;
 import org.springframework.asm.Type;
 
 /**
@@ -62,9 +63,9 @@ public class ReflectUtils {
 
 	private static final Method classLoaderDefineClassMethod;
 
-	private static final Throwable THROWABLE;
-
 	private static final ProtectionDomain PROTECTION_DOMAIN;
+
+	private static final Throwable THROWABLE;
 
 	private static final List<Method> OBJECT_METHODS = new ArrayList<Method>();
 
@@ -72,6 +73,7 @@ public class ReflectUtils {
 		Method privateLookupIn;
 		Method lookupDefineClass;
 		Method classLoaderDefineClass;
+		ProtectionDomain protectionDomain;
 		Throwable throwable = null;
 		try {
 			privateLookupIn = (Method) AccessController.doPrivileged(new PrivilegedExceptionAction() {
@@ -100,37 +102,39 @@ public class ReflectUtils {
 							String.class, byte[].class, Integer.TYPE, Integer.TYPE, ProtectionDomain.class);
 				}
 			});
+			protectionDomain = getProtectionDomain(ReflectUtils.class);
+			AccessController.doPrivileged(new PrivilegedExceptionAction() {
+				public Object run() throws Exception {
+					Method[] methods = Object.class.getDeclaredMethods();
+					for (Method method : methods) {
+						if ("finalize".equals(method.getName())
+								|| (method.getModifiers() & (Modifier.FINAL | Modifier.STATIC)) > 0) {
+							continue;
+						}
+						OBJECT_METHODS.add(method);
+					}
+					return null;
+				}
+			});
 		}
 		catch (Throwable t) {
 			privateLookupIn = null;
 			lookupDefineClass = null;
 			classLoaderDefineClass = null;
+			protectionDomain = null;
 			throwable = t;
 		}
-
 		privateLookupInMethod = privateLookupIn;
 		lookupDefineClassMethod = lookupDefineClass;
 		classLoaderDefineClassMethod = classLoaderDefineClass;
+		PROTECTION_DOMAIN = protectionDomain;
 		THROWABLE = throwable;
-		PROTECTION_DOMAIN = getProtectionDomain(ReflectUtils.class);
-
-		AccessController.doPrivileged(new PrivilegedAction() {
-			public Object run() {
-				Method[] methods = Object.class.getDeclaredMethods();
-				for (Method method : methods) {
-					if ("finalize".equals(method.getName())
-							|| (method.getModifiers() & (Modifier.FINAL | Modifier.STATIC)) > 0) {
-						continue;
-					}
-					OBJECT_METHODS.add(method);
-				}
-				return null;
-			}
-		});
 	}
 	// SPRING PATCH END
 
-	private static final String[] CGLIB_PACKAGES = {"java.lang"};
+	private static final String[] CGLIB_PACKAGES = {
+			"java.lang",
+	};
 
 	static {
 		primitives.put("byte", Byte.TYPE);
@@ -256,7 +260,7 @@ public class ReflectUtils {
 		while ((index = className.indexOf("[]", index) + 1) > 0) {
 			dimensions++;
 		}
-		StringBuilder brackets = new StringBuilder(className.length() - dimensions);
+		StringBuffer brackets = new StringBuffer(className.length() - dimensions);
 		for (int i = 0; i < dimensions; i++) {
 			brackets.append('[');
 		}
@@ -490,7 +494,7 @@ public class ReflectUtils {
 		return defineClass(className, b, loader, protectionDomain, null);
 	}
 
-	@SuppressWarnings({"deprecation", "serial"})
+	@SuppressWarnings("deprecation")  // on JDK 9
 	public static Class defineClass(String className, byte[] b, ClassLoader loader,
 			ProtectionDomain protectionDomain, Class<?> contextClass) throws Exception {
 
@@ -520,50 +524,28 @@ public class ReflectUtils {
 			}
 		}
 
-		// Direct defineClass attempt on the target Classloader
-		if (c == null) {
+		// Classic option: protected ClassLoader.defineClass method
+		if (c == null && classLoaderDefineClassMethod != null) {
 			if (protectionDomain == null) {
 				protectionDomain = PROTECTION_DOMAIN;
 			}
-
-			// Look for publicDefineClass(String name, byte[] b, ProtectionDomain protectionDomain)
+			Object[] args = new Object[]{className, b, 0, b.length, protectionDomain};
 			try {
-				Method publicDefineClass = loader.getClass().getMethod(
-						"publicDefineClass", String.class, byte[].class, ProtectionDomain.class);
-				c = (Class) publicDefineClass.invoke(loader, className, b, protectionDomain);
+				if (!classLoaderDefineClassMethod.isAccessible()) {
+					classLoaderDefineClassMethod.setAccessible(true);
+				}
+				c = (Class) classLoaderDefineClassMethod.invoke(loader, args);
 			}
 			catch (InvocationTargetException ex) {
-				if (!(ex.getTargetException() instanceof UnsupportedOperationException)) {
-					throw new CodeGenerationException(ex.getTargetException());
-				}
-				// in case of UnsupportedOperationException, fall through
-				t = ex.getTargetException();
+				throw new CodeGenerationException(ex.getTargetException());
 			}
 			catch (Throwable ex) {
-				// publicDefineClass method not available -> fall through
+				// Fall through if setAccessible fails with InaccessibleObjectException on JDK 9+
+				// (on the module path and/or with a JVM bootstrapped with --illegal-access=deny)
+				if (!ex.getClass().getName().endsWith("InaccessibleObjectException")) {
+					throw new CodeGenerationException(ex);
+				}
 				t = ex;
-			}
-
-			// Classic option: protected ClassLoader.defineClass method
-			if (c == null && classLoaderDefineClassMethod != null) {
-				Object[] args = new Object[]{className, b, 0, b.length, protectionDomain};
-				try {
-					if (!classLoaderDefineClassMethod.isAccessible()) {
-						classLoaderDefineClassMethod.setAccessible(true);
-					}
-					c = (Class) classLoaderDefineClassMethod.invoke(loader, args);
-				}
-				catch (InvocationTargetException ex) {
-					throw new CodeGenerationException(ex.getTargetException());
-				}
-				catch (Throwable ex) {
-					// Fall through if setAccessible fails with InaccessibleObjectException on JDK 9+
-					// (on the module path and/or with a JVM bootstrapped with --illegal-access=deny)
-					if (!ex.getClass().getName().endsWith("InaccessibleObjectException")) {
-						throw new CodeGenerationException(ex);
-					}
-					t = ex;
-				}
 			}
 		}
 
@@ -577,16 +559,6 @@ public class ReflectUtils {
 			}
 			catch (InvocationTargetException ex) {
 				throw new CodeGenerationException(ex.getTargetException());
-			}
-			catch (IllegalAccessException ex) {
-				throw new CodeGenerationException(ex) {
-					@Override
-					public String getMessage() {
-						return "ClassLoader mismatch for [" + contextClass.getName() +
-								"]: JVM should be started with --add-opens=java.base/java.lang=ALL-UNNAMED " +
-								"for ClassLoader.defineClass to be accessible on " + loader.getClass().getName();
-					}
-				};
 			}
 			catch (Throwable ex) {
 				throw new CodeGenerationException(ex);
@@ -634,6 +606,10 @@ public class ReflectUtils {
 
 			public Type[] getExceptionTypes() {
 				return ReflectUtils.getExceptionTypes(member);
+			}
+
+			public Attribute getAttribute() {
+				return null;
 			}
 		};
 	}

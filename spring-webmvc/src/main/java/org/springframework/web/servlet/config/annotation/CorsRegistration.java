@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package org.springframework.web.servlet.config.annotation;
 
 import java.util.Arrays;
-import java.util.List;
 
 import org.springframework.web.cors.CorsConfiguration;
 
@@ -36,7 +35,7 @@ public class CorsRegistration {
 
 	private final String pathPattern;
 
-	private CorsConfiguration config;
+	private final CorsConfiguration config;
 
 
 	public CorsRegistration(String pathPattern) {
@@ -47,33 +46,24 @@ public class CorsRegistration {
 
 
 	/**
-	 * Set the origins for which cross-origin requests are allowed from a browser.
-	 * Please, refer to {@link CorsConfiguration#setAllowedOrigins(List)} for
-	 * format details and other considerations.
-	 *
-	 * <p>By default, all origins are allowed, but if
-	 * {@link #allowedOriginPatterns(String...) allowedOriginPatterns} is also
-	 * set, then that takes precedence.
-	 * @see #allowedOriginPatterns(String...)
+	 * The list of allowed origins that be specific origins, e.g.
+	 * {@code "https://domain1.com"}, or {@code "*"} for all origins.
+	 * <p>A matched origin is listed in the {@code Access-Control-Allow-Origin}
+	 * response header of preflight actual CORS requests.
+	 * <p>By default, all origins are allowed.
+	 * <p><strong>Note:</strong> CORS checks use values from "Forwarded"
+	 * (<a href="https://tools.ietf.org/html/rfc7239">RFC 7239</a>),
+	 * "X-Forwarded-Host", "X-Forwarded-Port", and "X-Forwarded-Proto" headers,
+	 * if present, in order to reflect the client-originated address.
+	 * Consider using the {@code ForwardedHeaderFilter} in order to choose from a
+	 * central place whether to extract and use, or to discard such headers.
+	 * See the Spring Framework reference for more on this filter.
 	 */
 	public CorsRegistration allowedOrigins(String... origins) {
 		this.config.setAllowedOrigins(Arrays.asList(origins));
 		return this;
 	}
 
-	/**
-	 * Alternative to {@link #allowedOrigins(String...)} that supports more
-	 * flexible patterns for specifying the origins for which cross-origin
-	 * requests are allowed from a browser. Please, refer to
-	 * {@link CorsConfiguration#setAllowedOriginPatterns(List)} for format
-	 * details and other considerations.
-	 * <p>By default this is not set.
-	 * @since 5.3
-	 */
-	public CorsRegistration allowedOriginPatterns(String... patterns) {
-		this.config.setAllowedOriginPatterns(Arrays.asList(patterns));
-		return this;
-	}
 
 	/**
 	 * Set the HTTP methods to allow, e.g. {@code "GET"}, {@code "POST"}, etc.
@@ -139,18 +129,6 @@ public class CorsRegistration {
 	 */
 	public CorsRegistration maxAge(long maxAge) {
 		this.config.setMaxAge(maxAge);
-		return this;
-	}
-
-	/**
-	 * Apply the given {@code CorsConfiguration} to the one being configured via
-	 * {@link CorsConfiguration#combine(CorsConfiguration)} which in turn has been
-	 * initialized with {@link CorsConfiguration#applyPermitDefaultValues()}.
-	 * @param other the configuration to apply
-	 * @since 5.3
-	 */
-	public CorsRegistration combine(CorsConfiguration other) {
-		this.config = this.config.combine(other);
 		return this;
 	}
 

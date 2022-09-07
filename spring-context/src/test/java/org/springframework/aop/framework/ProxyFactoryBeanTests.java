@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package org.springframework.aop.framework;
 import java.io.FileNotFoundException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.aopalliance.aop.Advice;
@@ -61,7 +61,6 @@ import org.springframework.core.testfixture.io.SerializationTestUtils;
 import org.springframework.lang.Nullable;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatException;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIOException;
 
@@ -139,22 +138,20 @@ public class ProxyFactoryBeanTests {
 	private void testDoubleTargetSourceIsRejected(String name) {
 		DefaultListableBeanFactory bf = new DefaultListableBeanFactory();
 		new XmlBeanDefinitionReader(bf).loadBeanDefinitions(new ClassPathResource(DBL_TARGETSOURCE_CONTEXT, CLASS));
-		assertThatExceptionOfType(BeanCreationException.class).as("Should not allow TargetSource to be specified in interceptorNames as well as targetSource property")
-			.isThrownBy(() -> bf.getBean(name))
-			.havingCause()
-			.isInstanceOf(AopConfigException.class)
-			.withMessageContaining("TargetSource");
+		assertThatExceptionOfType(BeanCreationException.class).as("Should not allow TargetSource to be specified in interceptorNames as well as targetSource property").isThrownBy(() ->
+				bf.getBean(name))
+			.withCauseInstanceOf(AopConfigException.class)
+			.satisfies(ex -> assertThat(ex.getCause().getMessage()).contains("TargetSource"));
 	}
 
 	@Test
 	public void testTargetSourceNotAtEndOfInterceptorNamesIsRejected() {
 		DefaultListableBeanFactory bf = new DefaultListableBeanFactory();
 		new XmlBeanDefinitionReader(bf).loadBeanDefinitions(new ClassPathResource(NOTLAST_TARGETSOURCE_CONTEXT, CLASS));
-		assertThatExceptionOfType(BeanCreationException.class).as("TargetSource or non-advised object must be last in interceptorNames")
-			.isThrownBy(() -> bf.getBean("targetSourceNotLast"))
-			.havingCause()
-			.isInstanceOf(AopConfigException.class)
-			.withMessageContaining("interceptorNames");
+		assertThatExceptionOfType(BeanCreationException.class).as("TargetSource or non-advised object must be last in interceptorNames").isThrownBy(() ->
+				bf.getBean("targetSourceNotLast"))
+			.withCauseInstanceOf(AopConfigException.class)
+			.satisfies(ex -> assertThat(ex.getCause().getMessage()).contains("interceptorNames"));
 	}
 
 	@Test
@@ -305,15 +302,18 @@ public class ProxyFactoryBeanTests {
 
 		final Exception ex = new UnsupportedOperationException("invoke");
 		// Add evil interceptor to head of list
-		config.addAdvice(0, (MethodInterceptor) invocation -> {
-			throw ex;
+		config.addAdvice(0, new MethodInterceptor() {
+			@Override
+			public Object invoke(MethodInvocation invocation) throws Throwable {
+				throw ex;
+			}
 		});
 		assertThat(config.getAdvisors().length).as("Have correct advisor count").isEqualTo(2);
 
 		ITestBean tb1 = (ITestBean) factory.getBean("test1");
-		assertThatException()
-			.isThrownBy(tb1::toString)
-			.isSameAs(ex);
+		assertThatExceptionOfType(Exception.class).isThrownBy(
+				tb1::toString)
+			.satisfies(thrown -> assertThat(thrown).isSameAs(ex));
 	}
 
 	/**
@@ -439,7 +439,8 @@ public class ProxyFactoryBeanTests {
 		assertThat(cba.getCalls()).isEqualTo(2);
 		assertThat(th.getCalls()).isEqualTo(0);
 		Exception expected = new Exception();
-		assertThatException().isThrownBy(() -> echo.echoException(1, expected))
+		assertThatExceptionOfType(Exception.class).isThrownBy(() ->
+				echo.echoException(1, expected))
 			.matches(expected::equals);
 		// No throws handler method: count should still be 0
 		assertThat(th.getCalls()).isEqualTo(0);
@@ -510,7 +511,7 @@ public class ProxyFactoryBeanTests {
 		agi = (AddedGlobalInterface) l;
 		assertThat(agi.globalsAdded() == -1).isTrue();
 
-		assertThat(factory.getBean("test1")).as("Aspect interface shouldn't be implemented without globals")
+		assertThat(factory.getBean("test1")).as("Aspect interface should't be implemeneted without globals")
 				.isNotInstanceOf(AddedGlobalInterface.class);
 	}
 
@@ -520,7 +521,7 @@ public class ProxyFactoryBeanTests {
 		new XmlBeanDefinitionReader(bf).loadBeanDefinitions(new ClassPathResource(SERIALIZATION_CONTEXT, CLASS));
 		Person p = (Person) bf.getBean("serializableSingleton");
 		assertThat(bf.getBean("serializableSingleton")).as("Should be a Singleton").isSameAs(p);
-		Person p2 = SerializationTestUtils.serializeAndDeserialize(p);
+		Person p2 = (Person) SerializationTestUtils.serializeAndDeserialize(p);
 		assertThat(p2).isEqualTo(p);
 		assertThat(p2).isNotSameAs(p);
 		assertThat(p2.getName()).isEqualTo("serializableSingleton");
@@ -543,7 +544,7 @@ public class ProxyFactoryBeanTests {
 		new XmlBeanDefinitionReader(bf).loadBeanDefinitions(new ClassPathResource(SERIALIZATION_CONTEXT, CLASS));
 		Person p = (Person) bf.getBean("serializablePrototype");
 		assertThat(bf.getBean("serializablePrototype")).as("Should not be a Singleton").isNotSameAs(p);
-		Person p2 = SerializationTestUtils.serializeAndDeserialize(p);
+		Person p2 = (Person) SerializationTestUtils.serializeAndDeserialize(p);
 		assertThat(p2).isEqualTo(p);
 		assertThat(p2).isNotSameAs(p);
 		assertThat(p2.getName()).isEqualTo("serializablePrototype");
@@ -555,7 +556,7 @@ public class ProxyFactoryBeanTests {
 		new XmlBeanDefinitionReader(bf).loadBeanDefinitions(new ClassPathResource(SERIALIZATION_CONTEXT, CLASS));
 		Person p = (Person) bf.getBean("serializableSingleton");
 		ProxyFactoryBean pfb = (ProxyFactoryBean) bf.getBean("&serializableSingleton");
-		ProxyFactoryBean pfb2 = SerializationTestUtils.serializeAndDeserialize(pfb);
+		ProxyFactoryBean pfb2 = (ProxyFactoryBean) SerializationTestUtils.serializeAndDeserialize(pfb);
 		Person p2 = (Person) pfb2.getObject();
 		assertThat(p2).isEqualTo(p);
 		assertThat(p2).isNotSameAs(p);
@@ -586,9 +587,10 @@ public class ProxyFactoryBeanTests {
 
 		((Lockable) bean1).lock();
 
-		assertThatExceptionOfType(LockedException.class).isThrownBy(() -> bean1.setAge(5));
+		assertThatExceptionOfType(LockedException.class).isThrownBy(() ->
+				bean1.setAge(5));
 
-		bean2.setAge(6); //do not expect LockedException
+		bean2.setAge(6); //do not expect LockedException"
 	}
 
 	@Test
@@ -606,7 +608,8 @@ public class ProxyFactoryBeanTests {
 
 		((Lockable) bean1).lock();
 
-		assertThatExceptionOfType(LockedException.class).isThrownBy(() -> bean1.setAge(5));
+		assertThatExceptionOfType(LockedException.class).isThrownBy(() ->
+				bean1.setAge(5));
 
 		// do not expect LockedException
 		bean2.setAge(6);
@@ -654,7 +657,7 @@ public class ProxyFactoryBeanTests {
 		fb.setBeanFactory(bf);
 
 		Advised proxy = (Advised) fb.getObject();
-		assertThat(proxy.getAdvisorCount()).isEqualTo(1);
+		assertThat(proxy.getAdvisors().length).isEqualTo(1);
 	}
 
 	@Test
@@ -669,7 +672,7 @@ public class ProxyFactoryBeanTests {
 
 		fb.setInterceptorNames("debug");
 		Advised proxy = (Advised) fb.getObject();
-		assertThat(proxy.getAdvisorCount()).isEqualTo(1);
+		assertThat(proxy.getAdvisors().length).isEqualTo(1);
 	}
 
 
@@ -679,16 +682,19 @@ public class ProxyFactoryBeanTests {
 	@SuppressWarnings("serial")
 	public static class PointcutForVoid extends DefaultPointcutAdvisor {
 
-		public static List<String> methodNames = new ArrayList<>();
+		public static List<String> methodNames = new LinkedList<>();
 
 		public static void reset() {
 			methodNames.clear();
 		}
 
 		public PointcutForVoid() {
-			setAdvice((MethodInterceptor) invocation -> {
-				methodNames.add(invocation.getMethod().getName());
-				return invocation.proceed();
+			setAdvice(new MethodInterceptor() {
+				@Override
+				public Object invoke(MethodInvocation invocation) throws Throwable {
+					methodNames.add(invocation.getMethod().getName());
+					return invocation.proceed();
+				}
 			});
 			setPointcut(new DynamicMethodMatcherPointcut() {
 				@Override

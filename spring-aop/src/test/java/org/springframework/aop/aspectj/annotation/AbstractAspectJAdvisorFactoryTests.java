@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.aspectj.lang.JoinPoint;
@@ -98,7 +99,7 @@ abstract class AbstractAspectJAdvisorFactoryTests {
 	}
 
 	@Test
-	void perTargetAspect() throws Exception {
+	void perTargetAspect() throws SecurityException, NoSuchMethodException {
 		TestBean target = new TestBean();
 		int realAge = 65;
 		target.setAge(realAge);
@@ -130,12 +131,12 @@ abstract class AbstractAspectJAdvisorFactoryTests {
 	}
 
 	@Test
-	void multiplePerTargetAspects() throws Exception {
+	void multiplePerTargetAspects() throws SecurityException, NoSuchMethodException {
 		TestBean target = new TestBean();
 		int realAge = 65;
 		target.setAge(realAge);
 
-		List<Advisor> advisors = new ArrayList<>();
+		List<Advisor> advisors = new LinkedList<>();
 		PerTargetAspect aspect1 = new PerTargetAspect();
 		aspect1.count = 100;
 		aspect1.setOrder(10);
@@ -158,12 +159,12 @@ abstract class AbstractAspectJAdvisorFactoryTests {
 	}
 
 	@Test
-	void multiplePerTargetAspectsWithOrderAnnotation() throws Exception {
+	void multiplePerTargetAspectsWithOrderAnnotation() throws SecurityException, NoSuchMethodException {
 		TestBean target = new TestBean();
 		int realAge = 65;
 		target.setAge(realAge);
 
-		List<Advisor> advisors = new ArrayList<>();
+		List<Advisor> advisors = new LinkedList<>();
 		PerTargetAspectWithOrderAnnotation10 aspect1 = new PerTargetAspectWithOrderAnnotation10();
 		aspect1.count = 100;
 		advisors.addAll(
@@ -184,7 +185,7 @@ abstract class AbstractAspectJAdvisorFactoryTests {
 	}
 
 	@Test
-	void perThisAspect() throws Exception {
+	void perThisAspect() throws SecurityException, NoSuchMethodException {
 		TestBean target = new TestBean();
 		int realAge = 65;
 		target.setAge(realAge);
@@ -220,7 +221,7 @@ abstract class AbstractAspectJAdvisorFactoryTests {
 	}
 
 	@Test
-	void perTypeWithinAspect() throws Exception {
+	void perTypeWithinAspect() throws SecurityException, NoSuchMethodException {
 		TestBean target = new TestBean();
 		int realAge = 65;
 		target.setAge(realAge);
@@ -322,7 +323,7 @@ abstract class AbstractAspectJAdvisorFactoryTests {
 		int b = 12;
 		int c = 25;
 		String d = "d";
-		StringBuilder e = new StringBuilder("stringbuf");
+		StringBuffer e = new StringBuffer("stringbuf");
 		String expectedResult = a + b+ c + d + e;
 		assertThat(mva.mungeArgs(a, b, c, d, e)).isEqualTo(expectedResult);
 	}
@@ -391,7 +392,7 @@ abstract class AbstractAspectJAdvisorFactoryTests {
 
 	@Test
 	void introductionOnTargetExcludedByTypePattern() {
-		ArrayList<Object> target = new ArrayList<>();
+		LinkedList<Object> target = new LinkedList<>();
 		List<?> proxy = (List<?>) createProxy(target,
 				AopUtils.findAdvisorsThatCanApply(
 						getFixture().getAdvisors(new SingletonMetadataAwareAspectInstanceFactory(new MakeLockable(), "someBean")),
@@ -728,12 +729,12 @@ abstract class AbstractAspectJAdvisorFactoryTests {
 	@Aspect
 	static class ManyValuedArgs {
 
-		String mungeArgs(String a, int b, int c, String d, StringBuilder e) {
+		String mungeArgs(String a, int b, int c, String d, StringBuffer e) {
 			return a + b + c + d + e;
 		}
 
 		@Around(value="execution(String mungeArgs(..)) && args(a, b, c, d, e)", argNames="b,c,d,e,a")
-		String reverseAdvice(ProceedingJoinPoint pjp, int b, int c, String d, StringBuilder e, String a) throws Throwable {
+		String reverseAdvice(ProceedingJoinPoint pjp, int b, int c, String d, StringBuffer e, String a) throws Throwable {
 			assertThat(pjp.proceed()).isEqualTo(a + b+ c+ d+ e);
 			return a + b + c + d + e;
 		}
@@ -931,7 +932,7 @@ abstract class AbstractMakeModifiable {
 			return setter.getDeclaringClass().getMethod(getterName);
 		}
 		catch (NoSuchMethodException ex) {
-			// must be write-only
+			// must be write only
 			return null;
 		}
 	}

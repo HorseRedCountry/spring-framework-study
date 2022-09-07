@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,6 @@ import org.springframework.http.codec.HttpMessageReader;
 import org.springframework.http.codec.json.Jackson2CodecSupport;
 import org.springframework.http.codec.multipart.Part;
 import org.springframework.http.server.PathContainer;
-import org.springframework.http.server.RequestPath;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -101,24 +100,14 @@ public interface ServerRequest {
 	 * Get the request path.
 	 */
 	default String path() {
-		return requestPath().pathWithinApplication().value();
+		return uri().getRawPath();
 	}
 
 	/**
 	 * Get the request path as a {@code PathContainer}.
-	 * @deprecated as of 5.3, in favor on {@link #requestPath()}
 	 */
-	@Deprecated
 	default PathContainer pathContainer() {
-		return requestPath();
-	}
-
-	/**
-	 * Get the request path as a {@code PathContainer}.
-	 * @since 5.3
-	 */
-	default RequestPath requestPath() {
-		return exchange().getRequest().getPath();
+		return PathContainer.parsePath(path());
 	}
 
 	/**
@@ -310,7 +299,7 @@ public interface ServerRequest {
 	 * public Mono&lt;ServerResponse&gt; myHandleMethod(ServerRequest request) {
 	 *   Instant lastModified = // application-specific calculation
 	 *	 return request.checkNotModified(lastModified)
-	 *	   .switchIfEmpty(Mono.defer(() -&gt; {
+	 *	   .switchIfEmpty(Mono.defer(() -> {
 	 *	     // further request processing, actually building content
 	 *		 return ServerResponse.ok().body(...);
 	 *	   }));
@@ -319,7 +308,7 @@ public interface ServerRequest {
 	 * also with conditional POST/PUT/DELETE requests.
 	 * <p><strong>Note:</strong> you can use either
 	 * this {@code #checkNotModified(Instant)} method; or
-	 * {@link #checkNotModified(String)}. If you want to enforce both
+	 * {@link #checkNotModified(String)}. If you want enforce both
 	 * a strong entity tag and a Last-Modified value,
 	 * as recommended by the HTTP specification,
 	 * then you should use {@link #checkNotModified(Instant, String)}.
@@ -344,7 +333,7 @@ public interface ServerRequest {
 	 * public Mono&lt;ServerResponse&gt; myHandleMethod(ServerRequest request) {
 	 *   String eTag = // application-specific calculation
 	 *	 return request.checkNotModified(eTag)
-	 *	   .switchIfEmpty(Mono.defer(() -&gt; {
+	 *	   .switchIfEmpty(Mono.defer(() -> {
 	 *	     // further request processing, actually building content
 	 *		 return ServerResponse.ok().body(...);
 	 *	   }));
@@ -381,7 +370,7 @@ public interface ServerRequest {
 	 *   Instant lastModified = // application-specific calculation
 	 *   String eTag = // application-specific calculation
 	 *	 return request.checkNotModified(lastModified, eTag)
-	 *	   .switchIfEmpty(Mono.defer(() -&gt; {
+	 *	   .switchIfEmpty(Mono.defer(() -> {
 	 *	     // further request processing, actually building content
 	 *		 return ServerResponse.ok().body(...);
 	 *	   }));
@@ -526,14 +515,6 @@ public interface ServerRequest {
 		 * @return this builder
 		 */
 		Builder uri(URI uri);
-
-		/**
-		 * Set the context path of the request.
-		 * @param contextPath the new context path
-		 * @return this builder
-		 * @since 5.3.23
-		 */
-		Builder contextPath(@Nullable String contextPath);
 
 		/**
 		 * Add the given header value(s) under the given name.

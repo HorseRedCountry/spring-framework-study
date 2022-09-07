@@ -73,9 +73,9 @@ public class MapDataSourceLookupTests {
 	@Test
 	public void addingDataSourcePermitsOverride() throws Exception {
 		Map<String, DataSource> dataSources = new HashMap<>();
-		StubDataSource overriddenDataSource = new StubDataSource();
+		StubDataSource overridenDataSource = new StubDataSource();
 		StubDataSource expectedDataSource = new StubDataSource();
-		dataSources.put(DATA_SOURCE_NAME, overriddenDataSource);
+		dataSources.put(DATA_SOURCE_NAME, overridenDataSource);
 		MapDataSourceLookup lookup = new MapDataSourceLookup();
 		lookup.setDataSources(dataSources);
 		lookup.addDataSource(DATA_SOURCE_NAME, expectedDataSource); // must override existing entry

@@ -21,10 +21,10 @@ import org.apache.commons.logging.LogFactory;
 
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ActiveProfilesResolver;
-import org.springframework.test.context.TestContextAnnotationUtils.AnnotationDescriptor;
+import org.springframework.test.util.MetaAnnotationUtils.AnnotationDescriptor;
 import org.springframework.util.Assert;
 
-import static org.springframework.test.context.TestContextAnnotationUtils.findAnnotationDescriptor;
+import static org.springframework.test.util.MetaAnnotationUtils.findAnnotationDescriptor;
 
 /**
  * Default implementation of the {@link ActiveProfilesResolver} strategy that
@@ -67,7 +67,7 @@ public class DefaultActiveProfilesResolver implements ActiveProfilesResolver {
 			return EMPTY_STRING_ARRAY;
 		}
 		else {
-			ActiveProfiles annotation = descriptor.getAnnotation();
+			ActiveProfiles annotation = descriptor.synthesizeAnnotation();
 			if (logger.isTraceEnabled()) {
 				logger.trace(String.format("Retrieved @ActiveProfiles [%s] for declaring class [%s].", annotation,
 					descriptor.getDeclaringClass().getName()));

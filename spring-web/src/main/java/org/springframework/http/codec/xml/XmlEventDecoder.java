@@ -34,11 +34,11 @@ import com.fasterxml.aalto.AsyncXMLStreamReader;
 import com.fasterxml.aalto.evt.EventAllocatorImpl;
 import com.fasterxml.aalto.stax.InputFactoryImpl;
 import org.reactivestreams.Publisher;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 
 import org.springframework.core.ResolvableType;
 import org.springframework.core.codec.AbstractDecoder;
-import org.springframework.core.codec.DecodingException;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferLimitException;
 import org.springframework.core.io.buffer.DataBufferUtils;
@@ -55,7 +55,7 @@ import org.springframework.util.xml.StaxUtils;
  * <p>Given the following XML:
  *
  * <pre class="code">
- * &lt;root&gt;
+ * &lt;root>
  *     &lt;child&gt;foo&lt;/child&gt;
  *     &lt;child&gt;bar&lt;/child&gt;
  * &lt;/root&gt;
@@ -143,7 +143,7 @@ public class XmlEventDecoder extends AbstractDecoder<XMLEvent> {
 							return result;
 						}
 						catch (XMLStreamException ex) {
-							throw new DecodingException(ex.getMessage(), ex);
+							throw Exceptions.propagate(ex);
 						}
 						finally {
 							DataBufferUtils.release(buffer);
@@ -204,7 +204,7 @@ public class XmlEventDecoder extends AbstractDecoder<XMLEvent> {
 				return events;
 			}
 			catch (XMLStreamException ex) {
-				throw new DecodingException(ex.getMessage(), ex);
+				throw Exceptions.propagate(ex);
 			}
 			finally {
 				DataBufferUtils.release(dataBuffer);

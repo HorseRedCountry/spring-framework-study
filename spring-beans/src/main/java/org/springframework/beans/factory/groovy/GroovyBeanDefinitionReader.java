@@ -75,18 +75,18 @@ import org.springframework.util.StringUtils;
  *
  * def reader = new GroovyBeanDefinitionReader(myApplicationContext)
  * reader.beans {
- *     dataSource(BasicDataSource) {                  // &lt;--- invokeMethod
+ *     dataSource(BasicDataSource) {                  // <--- invokeMethod
  *         driverClassName = "org.hsqldb.jdbcDriver"
  *         url = "jdbc:hsqldb:mem:grailsDB"
- *         username = "sa"                            // &lt;-- setProperty
+ *         username = "sa"                            // <-- setProperty
  *         password = ""
  *         settings = [mynew:"setting"]
  *     }
  *     sessionFactory(SessionFactory) {
- *         dataSource = dataSource                    // &lt;-- getProperty for retrieving references
+ *         dataSource = dataSource                    // <-- getProperty for retrieving references
  *     }
  *     myService(MyService) {
- *         nestedBean = { AnotherBean bean -&gt;         // &lt;-- setProperty with closure for nested bean
+ *         nestedBean = { AnotherBean bean ->         // <-- setProperty with closure for nested bean
  *             dataSource = dataSource
  *         }
  *     }
@@ -113,7 +113,7 @@ import org.springframework.util.StringUtils;
  *         dataSource = dataSource
  *     }
  *     myService(MyService) {
- *         nestedBean = { AnotherBean bean -&gt;
+ *         nestedBean = { AnotherBean bean ->
  *             dataSource = dataSource
  *         }
  *     }
@@ -489,9 +489,9 @@ public class GroovyBeanDefinitionReader extends AbstractBeanDefinitionReader imp
 						resolveConstructorArguments(args, 2, hasClosureArgument ? args.length - 1 : args.length);
 				this.currentBeanDefinition = new GroovyBeanDefinitionWrapper(beanName, (Class<?>) args[1], constructorArgs);
 				Map<?, ?> namedArgs = (Map<?, ?>) args[0];
-				for (Map.Entry<?, ?> entity : namedArgs.entrySet()) {
-					String propName = (String) entity.getKey();
-					setProperty(propName, entity.getValue());
+				for (Object key : namedArgs.keySet()) {
+					String propName = (String) key;
+					setProperty(propName, namedArgs.get(propName));
 				}
 			}
 			// factory method syntax

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,12 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -201,7 +200,7 @@ class ConstructorResolver {
 			AutowireUtils.sortConstructors(candidates);
 			int minTypeDiffWeight = Integer.MAX_VALUE;
 			Set<Constructor<?>> ambiguousConstructors = null;
-			Deque<UnsatisfiedDependencyException> causes = null;
+			LinkedList<UnsatisfiedDependencyException> causes = null;
 
 			for (Constructor<?> candidate : candidates) {
 				int parameterCount = candidate.getParameterCount();
@@ -235,7 +234,7 @@ class ConstructorResolver {
 						}
 						// Swallow and try next constructor.
 						if (causes == null) {
-							causes = new ArrayDeque<>(1);
+							causes = new LinkedList<>();
 						}
 						causes.add(ex);
 						continue;
@@ -514,7 +513,7 @@ class ConstructorResolver {
 				}
 			}
 
-			Deque<UnsatisfiedDependencyException> causes = null;
+			LinkedList<UnsatisfiedDependencyException> causes = null;
 
 			for (Method candidate : candidates) {
 				int parameterCount = candidate.getParameterCount();
@@ -547,7 +546,7 @@ class ConstructorResolver {
 							}
 							// Swallow and try next overloaded factory method.
 							if (causes == null) {
-								causes = new ArrayDeque<>(1);
+								causes = new LinkedList<>();
 							}
 							causes.add(ex);
 							continue;
@@ -985,7 +984,7 @@ class ConstructorResolver {
 
 
 	/**
-	 * Delegate for checking Java's {@link ConstructorProperties} annotation.
+	 * Delegate for checking Java 6's {@link ConstructorProperties} annotation.
 	 */
 	private static class ConstructorPropertiesChecker {
 

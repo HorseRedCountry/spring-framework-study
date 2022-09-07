@@ -16,6 +16,8 @@
 
 package org.springframework.web.util;
 
+import java.io.UnsupportedEncodingException;
+
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -45,7 +47,7 @@ class UrlPathHelperTests {
 		request.setContextPath("/petclinic");
 		request.setRequestURI("/petclinic/welcome.html");
 
-		assertThat(helper.getPathWithinApplication(request)).isEqualTo("/welcome.html");
+		assertThat(helper.getPathWithinApplication(request)).as("Incorrect path returned").isEqualTo("/welcome.html");
 	}
 
 	@Test
@@ -61,7 +63,7 @@ class UrlPathHelperTests {
 		request.setContextPath("/");
 		request.setRequestURI("/welcome.html");
 
-		assertThat(helper.getPathWithinApplication(request)).isEqualTo("/welcome.html");
+		assertThat(helper.getPathWithinApplication(request)).as("Incorrect path returned").isEqualTo("/welcome.html");
 	}
 
 	@Test
@@ -70,7 +72,7 @@ class UrlPathHelperTests {
 		request.setServletPath("/main");
 		request.setRequestURI("/petclinic/main/welcome.html");
 
-		assertThat(helper.getPathWithinServletMapping(request)).isEqualTo("/welcome.html");
+		assertThat(helper.getPathWithinServletMapping(request)).as("Incorrect path returned").isEqualTo("/welcome.html");
 	}
 
 	@Test
@@ -80,10 +82,12 @@ class UrlPathHelperTests {
 		request.setServletPath("/main");
 		request.setRequestURI("/petclinic/main/welcome.html");
 
-		assertThat(helper.getLookupPathForRequest(request)).isEqualTo("/main/welcome.html");
+		assertThat(helper.getLookupPathForRequest(request)).as("Incorrect path returned").isEqualTo("/main/welcome.html");
 	}
 
-	@Test // SPR-11101
+	// SPR-11101
+
+	@Test
 	void getPathWithinServletWithoutUrlDecoding() {
 		request.setContextPath("/SPR-11101");
 		request.setServletPath("/test_url_decoding/a/b");
@@ -98,30 +102,27 @@ class UrlPathHelperTests {
 	@Test
 	void getRequestUri() {
 		request.setRequestURI("/welcome.html");
-		assertThat(helper.getRequestUri(request)).isEqualTo("/welcome.html");
+		assertThat(helper.getRequestUri(request)).as("Incorrect path returned").isEqualTo("/welcome.html");
 
 		request.setRequestURI("/foo%20bar");
-		assertThat(helper.getRequestUri(request)).isEqualTo("/foo bar");
+		assertThat(helper.getRequestUri(request)).as("Incorrect path returned").isEqualTo("/foo bar");
 
 		request.setRequestURI("/foo+bar");
-		assertThat(helper.getRequestUri(request)).isEqualTo("/foo+bar");
-
-		request.setRequestURI("/home/" + "/path");
-		assertThat(helper.getRequestUri(request)).isEqualTo("/home/path");
+		assertThat(helper.getRequestUri(request)).as("Incorrect path returned").isEqualTo("/foo+bar");
 	}
 
 	@Test
-	void getRequestRemoveSemicolonContent() {
+	void getRequestRemoveSemicolonContent() throws UnsupportedEncodingException {
 		helper.setRemoveSemicolonContent(true);
+
 		request.setRequestURI("/foo;f=F;o=O;o=O/bar;b=B;a=A;r=R");
 		assertThat(helper.getRequestUri(request)).isEqualTo("/foo/bar");
 
-		request.setRequestURI("/foo;f=F;o=O;o=O/bar;b=B;a=A;r=R/baz;test");
-		assertThat(helper.getRequestUri(request)).isEqualTo("/foo/bar/baz");
-
 		// SPR-13455
-		request.setRequestURI("/foo/;test/1");
+
 		request.setServletPath("/foo/1");
+		request.setRequestURI("/foo/;test/1");
+
 		assertThat(helper.getRequestUri(request)).isEqualTo("/foo/1");
 	}
 
@@ -199,45 +200,46 @@ class UrlPathHelperTests {
 	//
 
 	@Test
-	void tomcatDefaultServletRoot() {
+	void tomcatDefaultServletRoot() throws Exception {
 		request.setContextPath("/test");
-		request.setServletPath("/");
 		request.setPathInfo(null);
+		request.setServletPath("/");
 		request.setRequestURI("/test/");
 		assertThat(helper.getLookupPathForRequest(request)).isEqualTo("/");
 	}
 
 	@Test
-	void tomcatDefaultServletFile() {
+	void tomcatDefaultServletFile() throws Exception {
 		request.setContextPath("/test");
-		request.setServletPath("/foo");
 		request.setPathInfo(null);
+		request.setServletPath("/foo");
 		request.setRequestURI("/test/foo");
 
 		assertThat(helper.getLookupPathForRequest(request)).isEqualTo("/foo");
 	}
 
 	@Test
-	void tomcatDefaultServletFolder() {
+	void tomcatDefaultServletFolder() throws Exception {
 		request.setContextPath("/test");
-		request.setServletPath("/foo/");
 		request.setPathInfo(null);
+		request.setServletPath("/foo/");
 		request.setRequestURI("/test/foo/");
 
 		assertThat(helper.getLookupPathForRequest(request)).isEqualTo("/foo/");
 	}
 
-	@Test //SPR-12372, SPR-13455
-	void removeDuplicateSlashesInPath() {
+	//SPR-12372 & SPR-13455
+	@Test
+	void removeDuplicateSlashesInPath() throws Exception {
 		request.setContextPath("/SPR-12372");
 		request.setPathInfo(null);
 		request.setServletPath("/foo/bar/");
-		request.setRequestURI("/SPR-12372/foo///bar/");
+		request.setRequestURI("/SPR-12372/foo//bar/");
 
 		assertThat(helper.getLookupPathForRequest(request)).isEqualTo("/foo/bar/");
 
 		request.setServletPath("/foo/bar/");
-		request.setRequestURI("////SPR-12372/foo/bar//");
+		request.setRequestURI("/SPR-12372/foo/bar//");
 
 		assertThat(helper.getLookupPathForRequest(request)).isEqualTo("/foo/bar/");
 
@@ -246,16 +248,10 @@ class UrlPathHelperTests {
 		request.setRequestURI("/SPR-12372/foo/bar//");
 
 		assertThat(helper.getLookupPathForRequest(request)).isEqualTo("/foo/bar//");
-
-		// "enhance" case
-		request.setServletPath("/foo/bar//");
-		request.setRequestURI("/SPR-12372////////////////////////foo//////////////////bar////////////////////");
-
-		assertThat(helper.getLookupPathForRequest(request)).isEqualTo("/foo/bar//");
 	}
 
 	@Test
-	void wasDefaultServletRoot() {
+	void wasDefaultServletRoot() throws Exception {
 		request.setContextPath("/test");
 		request.setPathInfo("/");
 		request.setServletPath("");
@@ -266,13 +262,13 @@ class UrlPathHelperTests {
 	}
 
 	@Test
-	void wasDefaultServletRootWithCompliantSetting() {
+	void wasDefaultServletRootWithCompliantSetting() throws Exception {
 		request.setAttribute(WEBSPHERE_URI_ATTRIBUTE, "/test/");
 		tomcatDefaultServletRoot();
 	}
 
 	@Test
-	void wasDefaultServletFile() {
+	void wasDefaultServletFile() throws Exception {
 		request.setContextPath("/test");
 		request.setPathInfo("/foo");
 		request.setServletPath("");
@@ -283,13 +279,13 @@ class UrlPathHelperTests {
 	}
 
 	@Test
-	void wasDefaultServletFileWithCompliantSetting() {
+	void wasDefaultServletFileWithCompliantSetting() throws Exception {
 		request.setAttribute(WEBSPHERE_URI_ATTRIBUTE, "/test/foo");
 		tomcatDefaultServletFile();
 	}
 
 	@Test
-	void wasDefaultServletFolder() {
+	void wasDefaultServletFolder() throws Exception {
 		request.setContextPath("/test");
 		request.setPathInfo("/foo/");
 		request.setServletPath("");
@@ -300,7 +296,7 @@ class UrlPathHelperTests {
 	}
 
 	@Test
-	void wasDefaultServletFolderWithCompliantSetting() {
+	void wasDefaultServletFolderWithCompliantSetting() throws Exception {
 		UrlPathHelper.websphereComplianceFlag = true;
 		try {
 			request.setAttribute(WEBSPHERE_URI_ATTRIBUTE, "/test/foo/");
@@ -317,7 +313,7 @@ class UrlPathHelperTests {
 	//
 
 	@Test
-	void tomcatCasualServletRoot() {
+	void tomcatCasualServletRoot() throws Exception {
 		request.setContextPath("/test");
 		request.setPathInfo("/");
 		request.setServletPath("/foo");
@@ -329,7 +325,7 @@ class UrlPathHelperTests {
 	@Disabled
 	@Test
 	// test the root mapping for /foo/* w/o a trailing slash - <host>/<context>/foo
-	void tomcatCasualServletRootWithMissingSlash() {
+	void tomcatCasualServletRootWithMissingSlash() throws Exception {
 		request.setContextPath("/test");
 		request.setPathInfo(null);
 		request.setServletPath("/foo");
@@ -339,7 +335,7 @@ class UrlPathHelperTests {
 	}
 
 	@Test
-	void tomcatCasualServletFile() {
+	void tomcatCasualServletFile() throws Exception {
 		request.setContextPath("/test");
 		request.setPathInfo("/foo");
 		request.setServletPath("/foo");
@@ -349,7 +345,7 @@ class UrlPathHelperTests {
 	}
 
 	@Test
-	void tomcatCasualServletFolder() {
+	void tomcatCasualServletFolder() throws Exception {
 		request.setContextPath("/test");
 		request.setPathInfo("/foo/");
 		request.setServletPath("/foo");
@@ -359,7 +355,7 @@ class UrlPathHelperTests {
 	}
 
 	@Test
-	void wasCasualServletRoot() {
+	void wasCasualServletRoot() throws Exception {
 		request.setContextPath("/test");
 		request.setPathInfo(null);
 		request.setServletPath("/foo/");
@@ -370,7 +366,7 @@ class UrlPathHelperTests {
 	}
 
 	@Test
-	void wasCasualServletRootWithCompliantSetting() {
+	void wasCasualServletRootWithCompliantSetting() throws Exception {
 		request.setAttribute(WEBSPHERE_URI_ATTRIBUTE, "/test/foo/");
 		tomcatCasualServletRoot();
 	}
@@ -378,7 +374,7 @@ class UrlPathHelperTests {
 	@Disabled
 	@Test
 	// test the root mapping for /foo/* w/o a trailing slash - <host>/<context>/foo
-	void wasCasualServletRootWithMissingSlash() {
+	void wasCasualServletRootWithMissingSlash() throws Exception {
 		request.setContextPath("/test");
 		request.setPathInfo(null);
 		request.setServletPath("/foo");
@@ -390,13 +386,13 @@ class UrlPathHelperTests {
 
 	@Disabled
 	@Test
-	void wasCasualServletRootWithMissingSlashWithCompliantSetting() {
+	void wasCasualServletRootWithMissingSlashWithCompliantSetting() throws Exception {
 		request.setAttribute(WEBSPHERE_URI_ATTRIBUTE, "/test/foo");
 		tomcatCasualServletRootWithMissingSlash();
 	}
 
 	@Test
-	void wasCasualServletFile() {
+	void wasCasualServletFile() throws Exception {
 		request.setContextPath("/test");
 		request.setPathInfo("/foo");
 		request.setServletPath("/foo");
@@ -407,13 +403,13 @@ class UrlPathHelperTests {
 	}
 
 	@Test
-	void wasCasualServletFileWithCompliantSetting() {
+	void wasCasualServletFileWithCompliantSetting() throws Exception {
 		request.setAttribute(WEBSPHERE_URI_ATTRIBUTE, "/test/foo/foo");
 		tomcatCasualServletFile();
 	}
 
 	@Test
-	void wasCasualServletFolder() {
+	void wasCasualServletFolder() throws Exception {
 		request.setContextPath("/test");
 		request.setPathInfo("/foo/");
 		request.setServletPath("/foo");
@@ -424,7 +420,7 @@ class UrlPathHelperTests {
 	}
 
 	@Test
-	void wasCasualServletFolderWithCompliantSetting() {
+	void wasCasualServletFolderWithCompliantSetting() throws Exception {
 		request.setAttribute(WEBSPHERE_URI_ATTRIBUTE, "/test/foo/foo/");
 		tomcatCasualServletFolder();
 	}

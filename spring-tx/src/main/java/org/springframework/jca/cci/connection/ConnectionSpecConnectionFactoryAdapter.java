@@ -43,7 +43,7 @@ import org.springframework.util.Assert;
  * <pre class="code">
  * &lt;bean id="myTargetConnectionFactory" class="org.springframework.jndi.JndiObjectFactoryBean"&gt;
  *   &lt;property name="jndiName" value="java:comp/env/cci/mycf"/&gt;
- * &lt;/bean&gt;
+ * &lt;/bean>
  *
  * &lt;bean id="myConnectionFactory" class="org.springframework.jca.cci.connection.ConnectionSpecConnectionFactoryAdapter"&gt;
  *   &lt;property name="targetConnectionFactory" ref="myTargetConnectionFactory"/&gt;
@@ -64,10 +64,7 @@ import org.springframework.util.Assert;
  * @author Juergen Hoeller
  * @since 1.2
  * @see #getConnection
- * @deprecated as of 5.3, in favor of specific data access APIs
- * (or native CCI usage if there is no alternative)
  */
-@Deprecated
 @SuppressWarnings("serial")
 public class ConnectionSpecConnectionFactoryAdapter extends DelegatingConnectionFactory {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package org.springframework.http.codec.xml;
 
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -190,39 +189,20 @@ public class Jaxb2XmlDecoder extends AbstractDecoder<Object> {
 			@Nullable MimeType mimeType, @Nullable Map<String, Object> hints) throws DecodingException {
 
 		try {
-			Iterator eventReader = inputFactory.createXMLEventReader(dataBuffer.asInputStream(), encoding(mimeType));
+			Iterator eventReader = inputFactory.createXMLEventReader(dataBuffer.asInputStream());
 			List<XMLEvent> events = new ArrayList<>();
 			eventReader.forEachRemaining(event -> events.add((XMLEvent) event));
 			return unmarshal(events, targetType.toClass());
 		}
 		catch (XMLStreamException ex) {
-			throw new DecodingException(ex.getMessage(), ex);
+			throw Exceptions.propagate(ex);
 		}
 		catch (Throwable ex) {
-			Throwable cause = ex.getCause();
-			if (cause instanceof XMLStreamException) {
-				throw new DecodingException(cause.getMessage(), cause);
-			}
-			else {
-				throw Exceptions.propagate(ex);
-			}
+			ex = (ex.getCause() instanceof XMLStreamException ? ex.getCause() : ex);
+			throw Exceptions.propagate(ex);
 		}
 		finally {
 			DataBufferUtils.release(dataBuffer);
-		}
-	}
-
-	@Nullable
-	private static String encoding(@Nullable MimeType mimeType) {
-		if (mimeType == null) {
-			return null;
-		}
-		Charset charset = mimeType.getCharset();
-		if (charset == null) {
-			return null;
-		}
-		else {
-			return charset.name();
 		}
 	}
 

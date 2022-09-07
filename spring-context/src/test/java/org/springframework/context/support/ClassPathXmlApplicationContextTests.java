@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,14 +74,14 @@ public class ClassPathXmlApplicationContextTests {
 
 
 	@Test
-	void singleConfigLocation() {
+	public void testSingleConfigLocation() {
 		ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext(FQ_SIMPLE_CONTEXT);
 		assertThat(ctx.containsBean("someMessageSource")).isTrue();
 		ctx.close();
 	}
 
 	@Test
-	void multipleConfigLocations() {
+	public void testMultipleConfigLocations() {
 		ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext(
 				FQ_CONTEXT_B, FQ_CONTEXT_C, FQ_CONTEXT_A);
 		assertThat(ctx.containsBean("service")).isTrue();
@@ -106,7 +106,7 @@ public class ClassPathXmlApplicationContextTests {
 	}
 
 	@Test
-	void configLocationPattern() {
+	public void testConfigLocationPattern() {
 		ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext(CONTEXT_WILDCARD);
 		assertThat(ctx.containsBean("service")).isTrue();
 		assertThat(ctx.containsBean("logicOne")).isTrue();
@@ -117,29 +117,28 @@ public class ClassPathXmlApplicationContextTests {
 	}
 
 	@Test
-	void singleConfigLocationWithClass() {
+	public void testSingleConfigLocationWithClass() {
 		ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext(SIMPLE_CONTEXT, getClass());
 		assertThat(ctx.containsBean("someMessageSource")).isTrue();
 		ctx.close();
 	}
 
 	@Test
-	void aliasWithPlaceholder() {
+	public void testAliasWithPlaceholder() {
 		ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext(
 				FQ_CONTEXT_B, FQ_ALIASED_CONTEXT_C, FQ_CONTEXT_A);
 		assertThat(ctx.containsBean("service")).isTrue();
 		assertThat(ctx.containsBean("logicOne")).isTrue();
 		assertThat(ctx.containsBean("logicTwo")).isTrue();
 		ctx.refresh();
-		ctx.close();
 	}
 
 	@Test
-	void contextWithInvalidValueType() throws IOException {
+	public void testContextWithInvalidValueType() throws IOException {
 		ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(
 				new String[] {INVALID_VALUE_TYPE_CONTEXT}, false);
-		assertThatExceptionOfType(BeanCreationException.class)
-			.isThrownBy(context::refresh)
+		assertThatExceptionOfType(BeanCreationException.class).isThrownBy(
+				context::refresh)
 			.satisfies(ex -> {
 				assertThat(ex.contains(TypeMismatchException.class)).isTrue();
 				assertThat(ex.toString()).contains("someMessageSource", "useCodeAsDefaultMessage");
@@ -147,7 +146,6 @@ public class ClassPathXmlApplicationContextTests {
 				checkExceptionFromInvalidValueType(new ExceptionInInitializerError(ex));
 				assertThat(context.isActive()).isFalse();
 			});
-		context.close();
 	}
 
 	private void checkExceptionFromInvalidValueType(Throwable ex) {
@@ -164,7 +162,7 @@ public class ClassPathXmlApplicationContextTests {
 	}
 
 	@Test
-	void contextWithInvalidLazyClass() {
+	public void testContextWithInvalidLazyClass() {
 		ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext(INVALID_CLASS_CONTEXT, getClass());
 		assertThat(ctx.containsBean("someMessageSource")).isTrue();
 		assertThatExceptionOfType(CannotLoadBeanClassException.class).isThrownBy(() ->
@@ -174,7 +172,7 @@ public class ClassPathXmlApplicationContextTests {
 	}
 
 	@Test
-	void contextWithClassNameThatContainsPlaceholder() {
+	public void testContextWithClassNameThatContainsPlaceholder() {
 		ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext(CLASS_WITH_PLACEHOLDER_CONTEXT, getClass());
 		assertThat(ctx.containsBean("someMessageSource")).isTrue();
 		boolean condition = ctx.getBean("someMessageSource") instanceof StaticMessageSource;
@@ -183,7 +181,7 @@ public class ClassPathXmlApplicationContextTests {
 	}
 
 	@Test
-	void multipleConfigLocationsWithClass() {
+	public void testMultipleConfigLocationsWithClass() {
 		ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext(
 				new String[] {CONTEXT_B, CONTEXT_C, CONTEXT_A}, getClass());
 		assertThat(ctx.containsBean("service")).isTrue();
@@ -193,7 +191,7 @@ public class ClassPathXmlApplicationContextTests {
 	}
 
 	@Test
-	void factoryBeanAndApplicationListener() {
+	public void testFactoryBeanAndApplicationListener() {
 		ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext(CONTEXT_WILDCARD);
 		ctx.getBeanFactory().registerSingleton("manualFBAAL", new FactoryBeanAndApplicationListener());
 		assertThat(ctx.getBeansOfType(ApplicationListener.class).size()).isEqualTo(2);
@@ -201,7 +199,7 @@ public class ClassPathXmlApplicationContextTests {
 	}
 
 	@Test
-	void messageSourceAware() {
+	public void testMessageSourceAware() {
 		ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext(CONTEXT_WILDCARD);
 		MessageSource messageSource = (MessageSource) ctx.getBean("messageSource");
 		Service service1 = (Service) ctx.getBean("service");
@@ -216,7 +214,7 @@ public class ClassPathXmlApplicationContextTests {
 	}
 
 	@Test
-	void resourceArrayPropertyEditor() throws IOException {
+	public void testResourceArrayPropertyEditor() throws IOException {
 		ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext(CONTEXT_WILDCARD);
 		Service service = (Service) ctx.getBean("service");
 		assertThat(service.getResources().length).isEqualTo(3);
@@ -228,18 +226,17 @@ public class ClassPathXmlApplicationContextTests {
 	}
 
 	@Test
-	void childWithProxy() throws Exception {
+	public void testChildWithProxy() throws Exception {
 		ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext(CONTEXT_WILDCARD);
 		ClassPathXmlApplicationContext child = new ClassPathXmlApplicationContext(
 				new String[] {CHILD_WITH_PROXY_CONTEXT}, ctx);
 		assertThat(AopUtils.isAopProxy(child.getBean("assemblerOne"))).isTrue();
 		assertThat(AopUtils.isAopProxy(child.getBean("assemblerTwo"))).isTrue();
-		child.close();
 		ctx.close();
 	}
 
 	@Test
-	void aliasForParentContext() {
+	public void testAliasForParentContext() {
 		ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext(FQ_SIMPLE_CONTEXT);
 		assertThat(ctx.containsBean("someMessageSource")).isTrue();
 
@@ -275,7 +272,7 @@ public class ClassPathXmlApplicationContextTests {
 	}
 
 	@Test
-	void aliasThatOverridesParent() {
+	public void testAliasThatOverridesParent() {
 		ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext(FQ_SIMPLE_CONTEXT);
 		Object someMs = ctx.getBean("someMessageSource");
 
@@ -289,7 +286,7 @@ public class ClassPathXmlApplicationContextTests {
 	}
 
 	@Test
-	void aliasThatOverridesEarlierBean() {
+	public void testAliasThatOverridesEarlierBean() {
 		ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext(
 				FQ_SIMPLE_CONTEXT, ALIAS_THAT_OVERRIDES_PARENT_CONTEXT);
 		Object myMs = ctx.getBean("myMessageSource");
@@ -327,7 +324,7 @@ public class ClassPathXmlApplicationContextTests {
 	}
 
 	@Test
-	void resourceAndInputStream() throws IOException {
+	public void testResourceAndInputStream() throws IOException {
 		ClassPathXmlApplicationContext ctx = new ClassPathXmlApplicationContext(RESOURCE_CONTEXT) {
 			@Override
 			public Resource getResource(String location) {
@@ -357,7 +354,7 @@ public class ClassPathXmlApplicationContextTests {
 	}
 
 	@Test
-	void genericApplicationContextWithXmlBeanDefinitions() {
+	public void testGenericApplicationContextWithXmlBeanDefinitions() {
 		GenericApplicationContext ctx = new GenericApplicationContext();
 		XmlBeanDefinitionReader reader = new XmlBeanDefinitionReader(ctx);
 		reader.loadBeanDefinitions(new ClassPathResource(CONTEXT_B, getClass()));
@@ -371,7 +368,7 @@ public class ClassPathXmlApplicationContextTests {
 	}
 
 	@Test
-	void genericApplicationContextWithXmlBeanDefinitionsAndClassLoaderNull() {
+	public void testGenericApplicationContextWithXmlBeanDefinitionsAndClassLoaderNull() {
 		GenericApplicationContext ctx = new GenericApplicationContext();
 		ctx.setClassLoader(null);
 		XmlBeanDefinitionReader reader = new XmlBeanDefinitionReader(ctx);
@@ -388,7 +385,7 @@ public class ClassPathXmlApplicationContextTests {
 	}
 
 	@Test
-	void genericApplicationContextWithXmlBeanDefinitionsAndSpecifiedId() {
+	public void testGenericApplicationContextWithXmlBeanDefinitionsAndSpecifiedId() {
 		GenericApplicationContext ctx = new GenericApplicationContext();
 		ctx.setId("testContext");
 		ctx.setDisplayName("Test Context");

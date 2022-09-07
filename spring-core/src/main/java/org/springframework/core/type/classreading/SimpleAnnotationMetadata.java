@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import org.springframework.lang.Nullable;
  * {@link SimpleAnnotationMetadataReadingVisitor}.
  *
  * @author Phillip Webb
- * @author Sam Brannen
  * @since 5.2
  */
 final class SimpleAnnotationMetadata implements AnnotationMetadata {
@@ -128,11 +127,6 @@ final class SimpleAnnotationMetadata implements AnnotationMetadata {
 	}
 
 	@Override
-	public MergedAnnotations getAnnotations() {
-		return this.annotations;
-	}
-
-	@Override
 	public Set<String> getAnnotationTypes() {
 		Set<String> annotationTypes = this.annotationTypes;
 		if (annotationTypes == null) {
@@ -154,24 +148,12 @@ final class SimpleAnnotationMetadata implements AnnotationMetadata {
 				annotatedMethods.add(annotatedMethod);
 			}
 		}
-		return (annotatedMethods != null ? annotatedMethods : Collections.emptySet());
-	}
-
-
-	@Override
-	public boolean equals(@Nullable Object obj) {
-		return ((this == obj) || ((obj instanceof SimpleAnnotationMetadata) &&
-				this.className.equals(((SimpleAnnotationMetadata) obj).className)));
+		return annotatedMethods != null ? annotatedMethods : Collections.emptySet();
 	}
 
 	@Override
-	public int hashCode() {
-		return this.className.hashCode();
-	}
-
-	@Override
-	public String toString() {
-		return this.className;
+	public MergedAnnotations getAnnotations() {
+		return this.annotations;
 	}
 
 }

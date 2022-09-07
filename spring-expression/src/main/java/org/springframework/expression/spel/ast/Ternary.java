@@ -74,7 +74,7 @@ public class Ternary extends SpelNodeImpl {
 				this.exitTypeDescriptor = leftDescriptor;
 			}
 			else {
-				// Use the easiest to compute common supertype
+				// Use the easiest to compute common super type
 				this.exitTypeDescriptor = "Ljava/lang/Object";
 			}
 		}

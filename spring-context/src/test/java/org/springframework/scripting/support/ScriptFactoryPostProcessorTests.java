@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,15 +33,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.mockito.Mockito.mock;
-import static org.springframework.core.testfixture.TestGroup.LONG_RUNNING;
+import static org.springframework.core.testfixture.TestGroup.PERFORMANCE;
 
 /**
  * @author Rick Evans
  * @author Juergen Hoeller
  * @author Chris Beams
  */
-@EnabledForTestGroups(LONG_RUNNING)
-class ScriptFactoryPostProcessorTests {
+@EnabledForTestGroups(PERFORMANCE)
+public class ScriptFactoryPostProcessorTests {
 
 	private static final String MESSAGE_TEXT = "Bingo";
 
@@ -79,18 +79,18 @@ class ScriptFactoryPostProcessorTests {
 
 
 	@Test
-	void testDoesNothingWhenPostProcessingNonScriptFactoryTypeBeforeInstantiation() {
+	public void testDoesNothingWhenPostProcessingNonScriptFactoryTypeBeforeInstantiation() throws Exception {
 		assertThat(new ScriptFactoryPostProcessor().postProcessBeforeInstantiation(getClass(), "a.bean")).isNull();
 	}
 
 	@Test
-	void testThrowsExceptionIfGivenNonAbstractBeanFactoryImplementation() {
+	public void testThrowsExceptionIfGivenNonAbstractBeanFactoryImplementation() throws Exception {
 		assertThatIllegalStateException().isThrownBy(() ->
 				new ScriptFactoryPostProcessor().setBeanFactory(mock(BeanFactory.class)));
 	}
 
 	@Test
-	void testChangeScriptWithRefreshableBeanFunctionality() throws Exception {
+	public void testChangeScriptWithRefreshableBeanFunctionality() throws Exception {
 		BeanDefinition processorBeanDefinition = createScriptFactoryPostProcessor(true);
 		BeanDefinition scriptedBeanDefinition = createScriptedGroovyBean();
 
@@ -111,7 +111,7 @@ class ScriptFactoryPostProcessorTests {
 	}
 
 	@Test
-	void testChangeScriptWithNoRefreshableBeanFunctionality() throws Exception {
+	public void testChangeScriptWithNoRefreshableBeanFunctionality() throws Exception {
 		BeanDefinition processorBeanDefinition = createScriptFactoryPostProcessor(false);
 		BeanDefinition scriptedBeanDefinition = createScriptedGroovyBean();
 
@@ -131,7 +131,7 @@ class ScriptFactoryPostProcessorTests {
 	}
 
 	@Test
-	void testRefreshedScriptReferencePropagatesToCollaborators() throws Exception {
+	public void testRefreshedScriptReferencePropagatesToCollaborators() throws Exception {
 		BeanDefinition processorBeanDefinition = createScriptFactoryPostProcessor(true);
 		BeanDefinition scriptedBeanDefinition = createScriptedGroovyBean();
 		BeanDefinitionBuilder collaboratorBuilder = BeanDefinitionBuilder.rootBeanDefinition(DefaultMessengerService.class);
@@ -159,8 +159,7 @@ class ScriptFactoryPostProcessorTests {
 	}
 
 	@Test
-	@SuppressWarnings("resource")
-	void testReferencesAcrossAContainerHierarchy() throws Exception {
+	public void testReferencesAcrossAContainerHierarchy() throws Exception {
 		GenericApplicationContext businessContext = new GenericApplicationContext();
 		businessContext.registerBeanDefinition("messenger", BeanDefinitionBuilder.rootBeanDefinition(StubMessenger.class).getBeanDefinition());
 		businessContext.refresh();
@@ -176,14 +175,13 @@ class ScriptFactoryPostProcessorTests {
 	}
 
 	@Test
-	@SuppressWarnings("resource")
-	void testScriptHavingAReferenceToAnotherBean() throws Exception {
+	public void testScriptHavingAReferenceToAnotherBean() throws Exception {
 		// just tests that the (singleton) script-backed bean is able to be instantiated with references to its collaborators
 		new ClassPathXmlApplicationContext("org/springframework/scripting/support/groovyReferences.xml");
 	}
 
 	@Test
-	void testForRefreshedScriptHavingErrorPickedUpOnFirstCall() throws Exception {
+	public void testForRefreshedScriptHavingErrorPickedUpOnFirstCall() throws Exception {
 		BeanDefinition processorBeanDefinition = createScriptFactoryPostProcessor(true);
 		BeanDefinition scriptedBeanDefinition = createScriptedGroovyBean();
 		BeanDefinitionBuilder collaboratorBuilder = BeanDefinitionBuilder.rootBeanDefinition(DefaultMessengerService.class);
@@ -204,13 +202,13 @@ class ScriptFactoryPostProcessorTests {
 		// needs The Sundays compiler; must NOT throw any exception here...
 		source.setScript("I keep hoping you are the same as me, and I'll send you letters and come to your house for tea");
 		Messenger refreshedMessenger = (Messenger) ctx.getBean(MESSENGER_BEAN_NAME);
-		assertThatExceptionOfType(FatalBeanException.class).isThrownBy(refreshedMessenger::getMessage)
+		assertThatExceptionOfType(FatalBeanException.class).isThrownBy(() ->
+				refreshedMessenger.getMessage())
 			.matches(ex -> ex.contains(ScriptCompilationException.class));
 	}
 
 	@Test
-	@SuppressWarnings("resource")
-	void testPrototypeScriptedBean() throws Exception {
+	public void testPrototypeScriptedBean() throws Exception {
 		GenericApplicationContext ctx = new GenericApplicationContext();
 		ctx.registerBeanDefinition("messenger", BeanDefinitionBuilder.rootBeanDefinition(StubMessenger.class).getBeanDefinition());
 
@@ -238,7 +236,7 @@ class ScriptFactoryPostProcessorTests {
 	private static BeanDefinition createScriptFactoryPostProcessor(boolean isRefreshable) {
 		BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(ScriptFactoryPostProcessor.class);
 		if (isRefreshable) {
-			builder.addPropertyValue("defaultRefreshCheckDelay", 1L);
+			builder.addPropertyValue("defaultRefreshCheckDelay", new Long(1));
 		}
 		return builder.getBeanDefinition();
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.util.concurrent.TimeUnit;
 
 import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 
@@ -38,7 +37,7 @@ import org.springframework.scheduling.config.ScheduledTaskRegistrar;
  * <p>Processing of {@code @Scheduled} annotations is performed by
  * registering a {@link ScheduledAnnotationBeanPostProcessor}. This can be
  * done manually or, more conveniently, through the {@code <task:annotation-driven/>}
- * XML element or {@link EnableScheduling @EnableScheduling} annotation.
+ * element or @{@link EnableScheduling} annotation.
  *
  * <p>This annotation may be used as a <em>meta-annotation</em> to create custom
  * <em>composed annotations</em> with attribute overrides.
@@ -47,8 +46,6 @@ import org.springframework.scheduling.config.ScheduledTaskRegistrar;
  * @author Juergen Hoeller
  * @author Dave Syer
  * @author Chris Beams
- * @author Victor Brown
- * @author Sam Brannen
  * @since 3.0
  * @see EnableScheduling
  * @see ScheduledAnnotationBeanPostProcessor
@@ -88,7 +85,7 @@ public @interface Scheduled {
 	 * trigger, primarily meant for externally specified values resolved by a
 	 * <code>${...}</code> placeholder.
 	 * @return an expression that can be parsed to a cron schedule
-	 * @see org.springframework.scheduling.support.CronExpression#parse(String)
+	 * @see org.springframework.scheduling.support.CronSequenceGenerator
 	 */
 	String cron() default "";
 
@@ -104,75 +101,52 @@ public @interface Scheduled {
 	String zone() default "";
 
 	/**
-	 * Execute the annotated method with a fixed period between the end of the
-	 * last invocation and the start of the next.
-	 * <p>The time unit is milliseconds by default but can be overridden via
-	 * {@link #timeUnit}.
-	 * @return the delay
+	 * Execute the annotated method with a fixed period in milliseconds between the
+	 * end of the last invocation and the start of the next.
+	 * @return the delay in milliseconds
 	 */
 	long fixedDelay() default -1;
 
 	/**
-	 * Execute the annotated method with a fixed period between the end of the
-	 * last invocation and the start of the next.
-	 * <p>The time unit is milliseconds by default but can be overridden via
-	 * {@link #timeUnit}.
-	 * @return the delay as a String value &mdash; for example, a placeholder
+	 * Execute the annotated method with a fixed period in milliseconds between the
+	 * end of the last invocation and the start of the next.
+	 * @return the delay in milliseconds as a String value, e.g. a placeholder
 	 * or a {@link java.time.Duration#parse java.time.Duration} compliant value
 	 * @since 3.2.2
 	 */
 	String fixedDelayString() default "";
 
 	/**
-	 * Execute the annotated method with a fixed period between invocations.
-	 * <p>The time unit is milliseconds by default but can be overridden via
-	 * {@link #timeUnit}.
-	 * @return the period
+	 * Execute the annotated method with a fixed period in milliseconds between
+	 * invocations.
+	 * @return the period in milliseconds
 	 */
 	long fixedRate() default -1;
 
 	/**
-	 * Execute the annotated method with a fixed period between invocations.
-	 * <p>The time unit is milliseconds by default but can be overridden via
-	 * {@link #timeUnit}.
-	 * @return the period as a String value &mdash; for example, a placeholder
+	 * Execute the annotated method with a fixed period in milliseconds between
+	 * invocations.
+	 * @return the period in milliseconds as a String value, e.g. a placeholder
 	 * or a {@link java.time.Duration#parse java.time.Duration} compliant value
 	 * @since 3.2.2
 	 */
 	String fixedRateString() default "";
 
 	/**
-	 * Number of units of time to delay before the first execution of a
+	 * Number of milliseconds to delay before the first execution of a
 	 * {@link #fixedRate} or {@link #fixedDelay} task.
-	 * <p>The time unit is milliseconds by default but can be overridden via
-	 * {@link #timeUnit}.
-	 * @return the initial
+	 * @return the initial delay in milliseconds
 	 * @since 3.2
 	 */
 	long initialDelay() default -1;
 
 	/**
-	 * Number of units of time to delay before the first execution of a
+	 * Number of milliseconds to delay before the first execution of a
 	 * {@link #fixedRate} or {@link #fixedDelay} task.
-	 * <p>The time unit is milliseconds by default but can be overridden via
-	 * {@link #timeUnit}.
-	 * @return the initial delay as a String value &mdash; for example, a placeholder
+	 * @return the initial delay in milliseconds as a String value, e.g. a placeholder
 	 * or a {@link java.time.Duration#parse java.time.Duration} compliant value
 	 * @since 3.2.2
 	 */
 	String initialDelayString() default "";
-
-	/**
-	 * The {@link TimeUnit} to use for {@link #fixedDelay}, {@link #fixedDelayString},
-	 * {@link #fixedRate}, {@link #fixedRateString}, {@link #initialDelay}, and
-	 * {@link #initialDelayString}.
-	 * <p>Defaults to {@link TimeUnit#MILLISECONDS}.
-	 * <p>This attribute is ignored for {@linkplain #cron() cron expressions}
-	 * and for {@link java.time.Duration} values supplied via {@link #fixedDelayString},
-	 * {@link #fixedRateString}, or {@link #initialDelayString}.
-	 * @return the {@code TimeUnit} to use
-	 * @since 5.3.10
-	 */
-	TimeUnit timeUnit() default TimeUnit.MILLISECONDS;
 
 }

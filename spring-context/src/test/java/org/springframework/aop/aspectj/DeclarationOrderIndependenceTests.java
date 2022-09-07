@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package org.springframework.aop.aspectj;
 import java.io.Serializable;
 
 import org.aspectj.lang.ProceedingJoinPoint;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -32,9 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Adrian Colyer
  * @author Chris Beams
  */
-class DeclarationOrderIndependenceTests {
-
-	private ClassPathXmlApplicationContext ctx;
+public class DeclarationOrderIndependenceTests {
 
 	private TopsyTurvyAspect aspect;
 
@@ -42,32 +39,28 @@ class DeclarationOrderIndependenceTests {
 
 
 	@BeforeEach
-	void setup() {
-		this.ctx = new ClassPathXmlApplicationContext(getClass().getSimpleName() + ".xml", getClass());
+	public void setup() {
+		ClassPathXmlApplicationContext ctx =
+				new ClassPathXmlApplicationContext(getClass().getSimpleName() + ".xml", getClass());
 		aspect = (TopsyTurvyAspect) ctx.getBean("topsyTurvyAspect");
 		target = (TopsyTurvyTarget) ctx.getBean("topsyTurvyTarget");
 	}
 
-	@AfterEach
-	void tearDown() {
-		this.ctx.close();
-	}
-
 
 	@Test
-	void testTargetIsSerializable() {
+	public void testTargetIsSerializable() {
 		boolean condition = this.target instanceof Serializable;
 		assertThat(condition).as("target bean is serializable").isTrue();
 	}
 
 	@Test
-	void testTargetIsBeanNameAware() {
+	public void testTargetIsBeanNameAware() {
 		boolean condition = this.target instanceof BeanNameAware;
 		assertThat(condition).as("target bean is bean name aware").isTrue();
 	}
 
 	@Test
-	void testBeforeAdviceFiringOk() {
+	public void testBeforeAdviceFiringOk() {
 		AspectCollaborator collab = new AspectCollaborator();
 		this.aspect.setCollaborator(collab);
 		this.target.doSomething();
@@ -75,7 +68,7 @@ class DeclarationOrderIndependenceTests {
 	}
 
 	@Test
-	void testAroundAdviceFiringOk() {
+	public void testAroundAdviceFiringOk() {
 		AspectCollaborator collab = new AspectCollaborator();
 		this.aspect.setCollaborator(collab);
 		this.target.getX();
@@ -83,7 +76,7 @@ class DeclarationOrderIndependenceTests {
 	}
 
 	@Test
-	void testAfterReturningFiringOk() {
+	public void testAfterReturningFiringOk() {
 		AspectCollaborator collab = new AspectCollaborator();
 		this.aspect.setCollaborator(collab);
 		this.target.getX();

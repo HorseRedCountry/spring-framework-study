@@ -105,7 +105,7 @@ public class SimpleTransactionScope implements Scope {
 	}
 
 
-	private class CleanupSynchronization implements TransactionSynchronization {
+	private class CleanupSynchronization extends TransactionSynchronizationAdapter {
 
 		private final ScopedObjectsHolder scopedObjects;
 

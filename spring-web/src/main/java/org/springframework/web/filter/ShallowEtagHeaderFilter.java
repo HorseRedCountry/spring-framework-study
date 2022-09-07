@@ -132,7 +132,7 @@ public class ShallowEtagHeaderFilter extends OncePerRequestFilter {
 
 	/**
 	 * Whether an ETag should be calculated for the given request and response
-	 * exchange. By default, this is {@code true} if all the following match:
+	 * exchange. By default this is {@code true} if all of the following match:
 	 * <ul>
 	 * <li>Response is not committed.</li>
 	 * <li>Response status codes is in the {@code 2xx} series.</li>
@@ -177,6 +177,16 @@ public class ShallowEtagHeaderFilter extends OncePerRequestFilter {
 		DigestUtils.appendMd5DigestAsHex(inputStream, builder);
 		builder.append('"');
 		return builder.toString();
+	}
+
+	private boolean compareETagHeaderValue(String requestETag, String responseETag) {
+		if (requestETag.startsWith("W/")) {
+			requestETag = requestETag.substring(2);
+		}
+		if (responseETag.startsWith("W/")) {
+			responseETag = responseETag.substring(2);
+		}
+		return requestETag.equals(responseETag);
 	}
 
 

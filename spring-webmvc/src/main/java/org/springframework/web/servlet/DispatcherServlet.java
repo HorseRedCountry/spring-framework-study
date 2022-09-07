@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -49,9 +50,6 @@ import org.springframework.core.annotation.AnnotationAwareOrderComparator;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.support.PropertiesLoaderUtils;
 import org.springframework.core.log.LogFormatUtils;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.server.RequestPath;
 import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.lang.Nullable;
 import org.springframework.ui.context.ThemeSource;
@@ -65,7 +63,6 @@ import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 import org.springframework.web.multipart.MultipartResolver;
 import org.springframework.web.util.NestedServletException;
-import org.springframework.web.util.ServletRequestPathUtils;
 import org.springframework.web.util.WebUtils;
 
 /**
@@ -158,7 +155,6 @@ import org.springframework.web.util.WebUtils;
  * @author Rob Harrop
  * @author Chris Beams
  * @author Rossen Stoyanchev
- * @author Sebastien Deleuze
  * @see org.springframework.web.HttpRequestHandler
  * @see org.springframework.web.servlet.mvc.Controller
  * @see org.springframework.web.context.ContextLoaderListener
@@ -282,9 +278,20 @@ public class DispatcherServlet extends FrameworkServlet {
 	/** Additional logger to use when no mapped handler is found for a request. */
 	protected static final Log pageNotFoundLogger = LogFactory.getLog(PAGE_NOT_FOUND_LOG_CATEGORY);
 
-	/** Store default strategy implementations. */
-	@Nullable
-	private static Properties defaultStrategies;
+	private static final Properties defaultStrategies;
+
+	static {
+		// Load default strategy implementations from properties file.
+		// This is currently strictly internal and not meant to be customized
+		// by application developers.
+		try {
+			ClassPathResource resource = new ClassPathResource(DEFAULT_STRATEGIES_PATH, DispatcherServlet.class);
+			defaultStrategies = PropertiesLoaderUtils.loadProperties(resource);
+		}
+		catch (IOException ex) {
+			throw new IllegalStateException("Could not load '" + DEFAULT_STRATEGIES_PATH + "': " + ex.getMessage());
+		}
+	}
 
 	/** Detect all HandlerMappings or just expect "handlerMapping" bean?. */
 	private boolean detectAllHandlerMappings = true;
@@ -339,8 +346,6 @@ public class DispatcherServlet extends FrameworkServlet {
 	/** List of ViewResolvers used by this servlet. */
 	@Nullable
 	private List<ViewResolver> viewResolvers;
-
-	private boolean parseRequestPath;
 
 
 	/**
@@ -617,13 +622,6 @@ public class DispatcherServlet extends FrameworkServlet {
 						"': using default strategies from DispatcherServlet.properties");
 			}
 		}
-
-		for (HandlerMapping mapping : this.handlerMappings) {
-			if (mapping.usesPathPatterns()) {
-				this.parseRequestPath = true;
-				break;
-			}
-		}
 	}
 
 	/**
@@ -860,19 +858,6 @@ public class DispatcherServlet extends FrameworkServlet {
 	 */
 	@SuppressWarnings("unchecked")
 	protected <T> List<T> getDefaultStrategies(ApplicationContext context, Class<T> strategyInterface) {
-		if (defaultStrategies == null) {
-			try {
-				// Load default strategy implementations from properties file.
-				// This is currently strictly internal and not meant to be customized
-				// by application developers.
-				ClassPathResource resource = new ClassPathResource(DEFAULT_STRATEGIES_PATH, DispatcherServlet.class);
-				defaultStrategies = PropertiesLoaderUtils.loadProperties(resource);
-			}
-			catch (IOException ex) {
-				throw new IllegalStateException("Could not load '" + DEFAULT_STRATEGIES_PATH + "': " + ex.getMessage());
-			}
-		}
-
 		String key = strategyInterface.getName();
 		String value = defaultStrategies.getProperty(key);
 		if (value != null) {
@@ -898,7 +883,7 @@ public class DispatcherServlet extends FrameworkServlet {
 			return strategies;
 		}
 		else {
-			return Collections.emptyList();
+			return new LinkedList<>();
 		}
 	}
 
@@ -954,12 +939,6 @@ public class DispatcherServlet extends FrameworkServlet {
 			request.setAttribute(FLASH_MAP_MANAGER_ATTRIBUTE, this.flashMapManager);
 		}
 
-		RequestPath previousRequestPath = null;
-		if (this.parseRequestPath) {
-			previousRequestPath = (RequestPath) request.getAttribute(ServletRequestPathUtils.PATH_ATTRIBUTE);
-			ServletRequestPathUtils.parseAndCache(request);
-		}
-
 		try {
 			doDispatch(request, response);
 		}
@@ -970,17 +949,13 @@ public class DispatcherServlet extends FrameworkServlet {
 					restoreAttributesAfterInclude(request, attributesSnapshot);
 				}
 			}
-			if (this.parseRequestPath) {
-				ServletRequestPathUtils.setParsedRequestPath(previousRequestPath, request);
-			}
 		}
 	}
 
 	private void logRequest(HttpServletRequest request) {
 		LogFormatUtils.traceDebug(logger, traceOn -> {
 			String params;
-			String contentType = request.getContentType();
-			if (StringUtils.startsWithIgnoreCase(contentType, "multipart/")) {
+			if (StringUtils.startsWithIgnoreCase(request.getContentType(), "multipart/")) {
 				params = "multipart";
 			}
 			else if (isEnableLoggingRequestDetails()) {
@@ -989,15 +964,13 @@ public class DispatcherServlet extends FrameworkServlet {
 						.collect(Collectors.joining(", "));
 			}
 			else {
-				// Avoid request body parsing for form data
-				params = (StringUtils.startsWithIgnoreCase(contentType, MediaType.APPLICATION_FORM_URLENCODED_VALUE) ||
-						!request.getParameterMap().isEmpty() ? "masked" : "");
+				params = (request.getParameterMap().isEmpty() ? "" : "masked");
 			}
 
 			String queryString = request.getQueryString();
 			String queryClause = (StringUtils.hasLength(queryString) ? "?" + queryString : "");
-			String dispatchType = (!DispatcherType.REQUEST.equals(request.getDispatcherType()) ?
-					"\"" + request.getDispatcherType() + "\" dispatch for " : "");
+			String dispatchType = (!request.getDispatcherType().equals(DispatcherType.REQUEST) ?
+					"\"" + request.getDispatcherType().name() + "\" dispatch for " : "");
 			String message = (dispatchType + request.getMethod() + " \"" + getRequestUri(request) +
 					queryClause + "\", parameters={" + params + "}");
 
@@ -1027,7 +1000,6 @@ public class DispatcherServlet extends FrameworkServlet {
 	 * @param response current HTTP response
 	 * @throws Exception in case of any kind of processing failure
 	 */
-	@SuppressWarnings("deprecation")
 	protected void doDispatch(HttpServletRequest request, HttpServletResponse response) throws Exception {
 		HttpServletRequest processedRequest = request;
 		HandlerExecutionChain mappedHandler = null;
@@ -1055,8 +1027,8 @@ public class DispatcherServlet extends FrameworkServlet {
 
 				// Process last-modified header, if supported by the handler.
 				String method = request.getMethod();
-				boolean isGet = HttpMethod.GET.matches(method);
-				if (isGet || HttpMethod.HEAD.matches(method)) {
+				boolean isGet = "GET".equals(method);
+				if (isGet || "HEAD".equals(method)) {
 					long lastModified = ha.getLastModified(request, mappedHandler.getHandler());
 					if (new ServletWebRequest(request, response).checkNotModified(lastModified) && isGet) {
 						return;
@@ -1196,7 +1168,7 @@ public class DispatcherServlet extends FrameworkServlet {
 	protected HttpServletRequest checkMultipart(HttpServletRequest request) throws MultipartException {
 		if (this.multipartResolver != null && this.multipartResolver.isMultipart(request)) {
 			if (WebUtils.getNativeRequest(request, MultipartHttpServletRequest.class) != null) {
-				if (DispatcherType.REQUEST.equals(request.getDispatcherType())) {
+				if (request.getDispatcherType().equals(DispatcherType.REQUEST)) {
 					logger.trace("Request already resolved to MultipartHttpServletRequest, e.g. by MultipartFilter");
 				}
 			}
@@ -1272,7 +1244,7 @@ public class DispatcherServlet extends FrameworkServlet {
 	}
 
 	/**
-	 * No handler found &rarr; set appropriate HTTP response status.
+	 * No handler found -> set appropriate HTTP response status.
 	 * @param request current HTTP request
 	 * @param response current HTTP response
 	 * @throws Exception if preparing the response failed
@@ -1399,7 +1371,6 @@ public class DispatcherServlet extends FrameworkServlet {
 		}
 		try {
 			if (mv.getStatus() != null) {
-				request.setAttribute(View.RESPONSE_STATUS_ATTRIBUTE, mv.getStatus());
 				response.setStatus(mv.getStatus().value());
 			}
 			view.render(mv.getModelInternal(), request, response);

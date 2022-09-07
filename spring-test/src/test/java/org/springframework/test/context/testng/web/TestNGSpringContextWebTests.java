@@ -89,7 +89,7 @@ public class TestNGSpringContextWebTests extends AbstractTestNGSpringContextTest
 	}
 
 	@Test
-	public void basicWacFeatures() throws Exception {
+	void basicWacFeatures() throws Exception {
 		assertThat(wac.getServletContext()).as("ServletContext should be set in the WAC.").isNotNull();
 
 		assertThat(servletContext).as("ServletContext should have been set via ServletContextAware.").isNotNull();
@@ -114,7 +114,7 @@ public class TestNGSpringContextWebTests extends AbstractTestNGSpringContextTest
 	}
 
 	@Test
-	public void fooEnigmaAutowired() {
+	void fooEnigmaAutowired() {
 		assertThat(foo).isEqualTo("enigma");
 	}
 

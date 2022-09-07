@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,8 @@
 package org.springframework.web.servlet;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Locale;
-import java.util.Map;
 
-import javax.servlet.DispatcherType;
 import javax.servlet.Servlet;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -30,7 +27,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 
-import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -39,18 +35,14 @@ import org.springframework.beans.PropertyValue;
 import org.springframework.beans.testfixture.beans.TestBean;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.server.RequestPath;
-import org.springframework.web.HttpRequestHandler;
 import org.springframework.web.context.ConfigurableWebApplicationContext;
 import org.springframework.web.context.ConfigurableWebEnvironment;
 import org.springframework.web.context.ContextLoader;
 import org.springframework.web.context.ServletConfigAwareBean;
 import org.springframework.web.context.ServletContextAwareBean;
 import org.springframework.web.context.WebApplicationContext;
-import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 import org.springframework.web.context.support.StandardServletEnvironment;
 import org.springframework.web.context.support.StaticWebApplicationContext;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
@@ -64,9 +56,7 @@ import org.springframework.web.testfixture.servlet.MockHttpServletRequest;
 import org.springframework.web.testfixture.servlet.MockHttpServletResponse;
 import org.springframework.web.testfixture.servlet.MockServletConfig;
 import org.springframework.web.testfixture.servlet.MockServletContext;
-import org.springframework.web.util.ServletRequestPathUtils;
 import org.springframework.web.util.WebUtils;
-import org.springframework.web.util.pattern.PathPatternParser;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -171,7 +161,7 @@ public class DispatcherServletTests {
 		request.addUserRole("role1");
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		complexDispatcherServlet.service(request, response);
-		assertThat(response.getForwardedUrl()).as("forwarded URL").isEqualTo("myform.jsp");
+		assertThat("myform.jsp".equals(response.getForwardedUrl())).as("forwarded to form").isTrue();
 	}
 
 	@Test
@@ -199,7 +189,7 @@ public class DispatcherServletTests {
 		MockHttpServletRequest request = new MockHttpServletRequest(getServletContext(), "GET", "/unknown.do");
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		complexDispatcherServlet.service(request, response);
-		assertThat(response.getForwardedUrl()).as("forwarded URL").isEqualTo("failed0.jsp");
+		assertThat(response.getForwardedUrl()).as("forwarded to failed").isEqualTo("failed0.jsp");
 		assertThat(request.getAttribute("exception").getClass().equals(ServletException.class)).as("Exception exposed").isTrue();
 	}
 
@@ -264,10 +254,10 @@ public class DispatcherServletTests {
 		request.setAttribute("fail", Boolean.TRUE);
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		complexDispatcherServlet.service(request, response);
-		assertThat(response.getForwardedUrl()).as("forwarded URL").isEqualTo("failed0.jsp");
+		assertThat("failed0.jsp".equals(response.getForwardedUrl())).as("forwarded to failed").isTrue();
 		assertThat(response.getStatus()).isEqualTo(200);
-		assertThat(request.getAttribute(SimpleMappingExceptionResolver.DEFAULT_EXCEPTION_ATTRIBUTE))
-			.isInstanceOf(MaxUploadSizeExceededException.class);
+		assertThat(request.getAttribute(
+		SimpleMappingExceptionResolver.DEFAULT_EXCEPTION_ATTRIBUTE) instanceof MaxUploadSizeExceededException).as("correct exception").isTrue();
 	}
 
 	@Test
@@ -296,7 +286,7 @@ public class DispatcherServletTests {
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		complexDispatcherServlet.service(request, response);
 		assertThat(response.getStatus()).isEqualTo(200);
-		assertThat(response.getForwardedUrl()).as("forwarded URL").isEqualTo("failed1.jsp");
+		assertThat("failed1.jsp".equals(response.getForwardedUrl())).as("forwarded to failed").isTrue();
 	}
 
 	@Test
@@ -308,7 +298,7 @@ public class DispatcherServletTests {
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		complexDispatcherServlet.service(request, response);
 		assertThat(response.getStatus()).isEqualTo(200);
-		assertThat(response.getForwardedUrl()).as("forwarded URL").isEqualTo("failed2.jsp");
+		assertThat(response.getForwardedUrl()).as("forwarded to failed").isEqualTo("failed2.jsp");
 		assertThat(request.getAttribute("exception") instanceof IllegalAccessException).as("Exception exposed").isTrue();
 	}
 
@@ -321,7 +311,7 @@ public class DispatcherServletTests {
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		complexDispatcherServlet.service(request, response);
 		assertThat(response.getStatus()).isEqualTo(200);
-		assertThat(response.getForwardedUrl()).as("forwarded URL").isEqualTo("failed3.jsp");
+		assertThat(response.getForwardedUrl()).as("forwarded to failed").isEqualTo("failed3.jsp");
 		assertThat(request.getAttribute("exception") instanceof ServletException).as("Exception exposed").isTrue();
 	}
 
@@ -334,7 +324,7 @@ public class DispatcherServletTests {
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		complexDispatcherServlet.service(request, response);
 		assertThat(response.getStatus()).isEqualTo(500);
-		assertThat(response.getForwardedUrl()).as("forwarded URL").isEqualTo("failed1.jsp");
+		assertThat(response.getForwardedUrl()).as("forwarded to failed").isEqualTo("failed1.jsp");
 		assertThat(request.getAttribute("exception") instanceof IllegalAccessException).as("Exception exposed").isTrue();
 	}
 
@@ -347,7 +337,7 @@ public class DispatcherServletTests {
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		complexDispatcherServlet.service(request, response);
 		assertThat(response.getStatus()).isEqualTo(500);
-		assertThat(response.getForwardedUrl()).as("forwarded URL").isEqualTo("failed1.jsp");
+		assertThat(response.getForwardedUrl()).as("forwarded to failed").isEqualTo("failed1.jsp");
 		assertThat(request.getAttribute("exception") instanceof ServletException).as("Exception exposed").isTrue();
 	}
 
@@ -360,7 +350,7 @@ public class DispatcherServletTests {
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		complexDispatcherServlet.service(request, response);
 		assertThat(response.getStatus()).isEqualTo(200);
-		assertThat(response.getForwardedUrl()).as("forwarded URL").isEqualTo("failed0.jsp");
+		assertThat(response.getForwardedUrl()).as("forwarded to failed").isEqualTo("failed0.jsp");
 		assertThat(request.getAttribute("exception").getClass().equals(RuntimeException.class)).as("Exception exposed").isTrue();
 	}
 
@@ -373,7 +363,7 @@ public class DispatcherServletTests {
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		complexDispatcherServlet.service(request, response);
 		assertThat(response.getStatus()).isEqualTo(200);
-		assertThat(response.getForwardedUrl()).as("forwarded URL").isEqualTo("failed0.jsp");
+		assertThat(response.getForwardedUrl()).as("forwarded to failed").isEqualTo("failed0.jsp");
 		assertThat(request.getAttribute("exception").getClass().equals(ServletException.class)).as("Exception exposed").isTrue();
 	}
 
@@ -398,7 +388,7 @@ public class DispatcherServletTests {
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		complexDispatcherServlet.service(request, response);
 		assertThat(response.getStatus()).isEqualTo(200);
-		assertThat(response.getForwardedUrl()).as("forwarded URL").isEqualTo("failed0.jsp");
+		assertThat(response.getForwardedUrl()).as("forwarded to failed").isEqualTo("failed0.jsp");
 		assertThat(request.getAttribute("exception").getClass().equals(ServletException.class)).as("Exception exposed").isTrue();
 	}
 
@@ -520,10 +510,7 @@ public class DispatcherServletTests {
 
 		request = new MockHttpServletRequest(getServletContext(), "GET", "/form.do");
 		response = new MockHttpServletResponse();
-		request.addParameter("fail", "yes");
 		complexDispatcherServlet.service(request, response);
-		assertThat(response.getForwardedUrl()).as("forwarded URL").isEqualTo("failed1.jsp");
-		assertThat(request.getAttribute("exception")).isNull();
 	}
 
 	@Test
@@ -540,15 +527,12 @@ public class DispatcherServletTests {
 		complexDispatcherServlet.service(request, response);
 		assertThat(response.getContentAsString()).isEqualTo("body");
 
-		// MyHandlerAdapter not detected
+		// SimpleControllerHandlerAdapter not detected
 		request = new MockHttpServletRequest(getServletContext(), "GET", "/form.do");
 		response = new MockHttpServletResponse();
-		request.addParameter("fail", "yes");
 		complexDispatcherServlet.service(request, response);
-		assertThat(response.getForwardedUrl()).as("forwarded URL").isEqualTo("failed0.jsp");
-		assertThat(request.getAttribute("exception"))
-			.asInstanceOf(InstanceOfAssertFactories.type(ServletException.class))
-			.extracting(Throwable::getMessage).asString().startsWith("No adapter for handler");
+		assertThat(response.getForwardedUrl()).as("forwarded to failed").isEqualTo("failed0.jsp");
+		assertThat(request.getAttribute("exception").getClass().equals(ServletException.class)).as("Exception exposed").isTrue();
 	}
 
 	@Test
@@ -716,27 +700,6 @@ public class DispatcherServletTests {
 				complexDispatcherServlet.service(request, response));
 	}
 
-	@Test // gh-26318
-	public void parsedRequestPathIsRestoredOnForward() throws Exception {
-		AnnotationConfigWebApplicationContext context = new AnnotationConfigWebApplicationContext();
-		context.register(PathPatternParserConfig.class);
-		DispatcherServlet servlet = new DispatcherServlet(context);
-		servlet.init(servletConfig);
-
-		RequestPath previousRequestPath = RequestPath.parse("/", null);
-
-		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/test");
-		request.setDispatcherType(DispatcherType.FORWARD);
-		request.setAttribute(ServletRequestPathUtils.PATH_ATTRIBUTE, previousRequestPath);
-
-		MockHttpServletResponse response = new MockHttpServletResponse();
-		servlet.service(request, response);
-
-		assertThat(response.getStatus()).isEqualTo(200);
-		assertThat(response.getContentAsString()).isEqualTo("test-body");
-		assertThat(request.getAttribute(ServletRequestPathUtils.PATH_ATTRIBUTE)).isSameAs(previousRequestPath);
-	}
-
 	@Test
 	public void dispatcherServletRefresh() throws ServletException {
 		MockServletContext servletContext = new MockServletContext("org/springframework/web/context");
@@ -901,24 +864,6 @@ public class DispatcherServletTests {
 		@Override
 		public void initialize(ConfigurableWebApplicationContext applicationContext) {
 			applicationContext.getServletContext().setAttribute("otherInitialized", "true");
-		}
-	}
-
-
-	private static class PathPatternParserConfig {
-
-		@Bean
-		public SimpleUrlHandlerMapping handlerMapping() {
-			Map<String, Object> urlMap = Collections.singletonMap("/test",
-					(HttpRequestHandler) (request, response) -> {
-						response.setStatus(200);
-						response.getWriter().print("test-body");
-					});
-
-			SimpleUrlHandlerMapping mapping = new SimpleUrlHandlerMapping();
-			mapping.setPatternParser(new PathPatternParser());
-			mapping.setUrlMap(urlMap);
-			return mapping;
 		}
 	}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.expression.spel;
 
 import java.math.BigDecimal;
@@ -32,10 +31,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Andy Clement
  * @author Giovanni Dall'Oglio Risso
  */
-class DefaultComparatorUnitTests {
+public class DefaultComparatorUnitTests {
 
 	@Test
-	void testPrimitives() throws EvaluationException {
+	public void testPrimitives() throws EvaluationException {
 		TypeComparator comparator = new StandardTypeComparator();
 		// primitive int
 		assertThat(comparator.compare(1, 2) < 0).isTrue();
@@ -64,7 +63,7 @@ class DefaultComparatorUnitTests {
 	}
 
 	@Test
-	void testNonPrimitiveNumbers() throws EvaluationException {
+	public void testNonPrimitiveNumbers() throws EvaluationException {
 		TypeComparator comparator = new StandardTypeComparator();
 
 		BigDecimal bdOne = new BigDecimal("1");
@@ -93,7 +92,7 @@ class DefaultComparatorUnitTests {
 	}
 
 	@Test
-	void testNulls() throws EvaluationException {
+	public void testNulls() throws EvaluationException {
 		TypeComparator comparator = new StandardTypeComparator();
 		assertThat(comparator.compare(null,"abc")<0).isTrue();
 		assertThat(comparator.compare(null,null)==0).isTrue();
@@ -101,7 +100,7 @@ class DefaultComparatorUnitTests {
 	}
 
 	@Test
-	void testObjects() throws EvaluationException {
+	public void testObjects() throws EvaluationException {
 		TypeComparator comparator = new StandardTypeComparator();
 		assertThat(comparator.compare("a","a")==0).isTrue();
 		assertThat(comparator.compare("a","b")<0).isTrue();
@@ -109,7 +108,7 @@ class DefaultComparatorUnitTests {
 	}
 
 	@Test
-	void testCanCompare() throws EvaluationException {
+	public void testCanCompare() throws EvaluationException {
 		TypeComparator comparator = new StandardTypeComparator();
 		assertThat(comparator.canCompare(null,1)).isTrue();
 		assertThat(comparator.canCompare(1,null)).isTrue();

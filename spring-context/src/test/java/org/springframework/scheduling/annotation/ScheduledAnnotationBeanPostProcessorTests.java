@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,16 +29,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TimeZone;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ParameterContext;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.converter.ArgumentConversionException;
-import org.junit.jupiter.params.converter.ArgumentConverter;
-import org.junit.jupiter.params.converter.ConvertWith;
-import org.junit.jupiter.params.provider.CsvSource;
 
 import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.aop.scope.ScopedProxyUtils;
@@ -67,37 +60,29 @@ import org.springframework.validation.beanvalidation.MethodValidationPostProcess
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
 /**
- * Tests for {@link ScheduledAnnotationBeanPostProcessor}.
- *
  * @author Mark Fisher
  * @author Juergen Hoeller
  * @author Chris Beams
  * @author Sam Brannen
  * @author Stevo Slavić
- * @author Victor Brown
  */
-class ScheduledAnnotationBeanPostProcessorTests {
+public class ScheduledAnnotationBeanPostProcessorTests {
 
 	private final StaticApplicationContext context = new StaticApplicationContext();
 
 
 	@AfterEach
-	void closeContextAfterTest() {
+	public void closeContextAfterTest() {
 		context.close();
 	}
 
-	@ParameterizedTest
-	@CsvSource({
-		"FixedDelay, 5000",
-		"FixedDelayInSeconds, 5000",
-		"FixedDelayInMinutes, 180000"
-	})
-	void fixedDelayTask(@NameToClass Class<?> beanClass, long expectedInterval) {
+
+	@Test
+	public void fixedDelayTask() {
 		BeanDefinition processorDefinition = new RootBeanDefinition(ScheduledAnnotationBeanPostProcessor.class);
-		BeanDefinition targetDefinition = new RootBeanDefinition(beanClass);
+		BeanDefinition targetDefinition = new RootBeanDefinition(FixedDelayTestBean.class);
 		context.registerBeanDefinition("postProcessor", processorDefinition);
 		context.registerBeanDefinition("target", targetDefinition);
 		context.refresh();
@@ -111,7 +96,7 @@ class ScheduledAnnotationBeanPostProcessorTests {
 		@SuppressWarnings("unchecked")
 		List<IntervalTask> fixedDelayTasks = (List<IntervalTask>)
 				new DirectFieldAccessor(registrar).getPropertyValue("fixedDelayTasks");
-		assertThat(fixedDelayTasks).hasSize(1);
+		assertThat(fixedDelayTasks.size()).isEqualTo(1);
 		IntervalTask task = fixedDelayTasks.get(0);
 		ScheduledMethodRunnable runnable = (ScheduledMethodRunnable) task.getRunnable();
 		Object targetObject = runnable.getTarget();
@@ -119,109 +104,95 @@ class ScheduledAnnotationBeanPostProcessorTests {
 		assertThat(targetObject).isEqualTo(target);
 		assertThat(targetMethod.getName()).isEqualTo("fixedDelay");
 		assertThat(task.getInitialDelay()).isEqualTo(0L);
-		assertThat(task.getInterval()).isEqualTo(expectedInterval);
-	}
-
-	@ParameterizedTest
-	@CsvSource({
-		"FixedRate, 3000",
-		"FixedRateInSeconds, 5000",
-		"FixedRateInMinutes, 180000"
-	})
-	void fixedRateTask(@NameToClass Class<?> beanClass, long expectedInterval) {
-		BeanDefinition processorDefinition = new RootBeanDefinition(ScheduledAnnotationBeanPostProcessor.class);
-		BeanDefinition targetDefinition = new RootBeanDefinition(beanClass);
-		context.registerBeanDefinition("postProcessor", processorDefinition);
-		context.registerBeanDefinition("target", targetDefinition);
-		context.refresh();
-
-		ScheduledTaskHolder postProcessor = context.getBean("postProcessor", ScheduledTaskHolder.class);
-		assertThat(postProcessor.getScheduledTasks().size()).isEqualTo(1);
-
-		Object target = context.getBean("target");
-		ScheduledTaskRegistrar registrar = (ScheduledTaskRegistrar)
-				new DirectFieldAccessor(postProcessor).getPropertyValue("registrar");
-		@SuppressWarnings("unchecked")
-		List<IntervalTask> fixedRateTasks = (List<IntervalTask>)
-				new DirectFieldAccessor(registrar).getPropertyValue("fixedRateTasks");
-		assertThat(fixedRateTasks.size()).isEqualTo(1);
-		IntervalTask task = fixedRateTasks.get(0);
-		ScheduledMethodRunnable runnable = (ScheduledMethodRunnable) task.getRunnable();
-		Object targetObject = runnable.getTarget();
-		Method targetMethod = runnable.getMethod();
-		assertThat(targetObject).isEqualTo(target);
-		assertThat(targetMethod.getName()).isEqualTo("fixedRate");
-		assertSoftly(softly -> {
-			softly.assertThat(task.getInitialDelay()).as("initial delay").isEqualTo(0);
-			softly.assertThat(task.getInterval()).as("interval").isEqualTo(expectedInterval);
-		});
-	}
-
-	@ParameterizedTest
-	@CsvSource({
-		"FixedRateWithInitialDelay, 1000, 3000",
-		"FixedRateWithInitialDelayInSeconds, 5000, 3000",
-		"FixedRateWithInitialDelayInMinutes, 60000, 180000"
-	})
-	void fixedRateTaskWithInitialDelay(@NameToClass Class<?> beanClass, long expectedInitialDelay, long expectedInterval) {
-		BeanDefinition processorDefinition = new RootBeanDefinition(ScheduledAnnotationBeanPostProcessor.class);
-		BeanDefinition targetDefinition = new RootBeanDefinition(beanClass);
-		context.registerBeanDefinition("postProcessor", processorDefinition);
-		context.registerBeanDefinition("target", targetDefinition);
-		context.refresh();
-
-		ScheduledTaskHolder postProcessor = context.getBean("postProcessor", ScheduledTaskHolder.class);
-		assertThat(postProcessor.getScheduledTasks().size()).isEqualTo(1);
-
-		Object target = context.getBean("target");
-		ScheduledTaskRegistrar registrar = (ScheduledTaskRegistrar)
-				new DirectFieldAccessor(postProcessor).getPropertyValue("registrar");
-		@SuppressWarnings("unchecked")
-		List<IntervalTask> fixedRateTasks = (List<IntervalTask>)
-				new DirectFieldAccessor(registrar).getPropertyValue("fixedRateTasks");
-		assertThat(fixedRateTasks.size()).isEqualTo(1);
-		IntervalTask task = fixedRateTasks.get(0);
-		ScheduledMethodRunnable runnable = (ScheduledMethodRunnable) task.getRunnable();
-		Object targetObject = runnable.getTarget();
-		Method targetMethod = runnable.getMethod();
-		assertThat(targetObject).isEqualTo(target);
-		assertThat(targetMethod.getName()).isEqualTo("fixedRate");
-		assertSoftly(softly -> {
-			softly.assertThat(task.getInitialDelay()).as("initial delay").isEqualTo(expectedInitialDelay);
-			softly.assertThat(task.getInterval()).as("interval").isEqualTo(expectedInterval);
-		});
+		assertThat(task.getInterval()).isEqualTo(5000L);
 	}
 
 	@Test
-	void severalFixedRatesWithRepeatedScheduledAnnotation() {
+	public void fixedRateTask() {
+		BeanDefinition processorDefinition = new RootBeanDefinition(ScheduledAnnotationBeanPostProcessor.class);
+		BeanDefinition targetDefinition = new RootBeanDefinition(FixedRateTestBean.class);
+		context.registerBeanDefinition("postProcessor", processorDefinition);
+		context.registerBeanDefinition("target", targetDefinition);
+		context.refresh();
+
+		ScheduledTaskHolder postProcessor = context.getBean("postProcessor", ScheduledTaskHolder.class);
+		assertThat(postProcessor.getScheduledTasks().size()).isEqualTo(1);
+
+		Object target = context.getBean("target");
+		ScheduledTaskRegistrar registrar = (ScheduledTaskRegistrar)
+				new DirectFieldAccessor(postProcessor).getPropertyValue("registrar");
+		@SuppressWarnings("unchecked")
+		List<IntervalTask> fixedRateTasks = (List<IntervalTask>)
+				new DirectFieldAccessor(registrar).getPropertyValue("fixedRateTasks");
+		assertThat(fixedRateTasks.size()).isEqualTo(1);
+		IntervalTask task = fixedRateTasks.get(0);
+		ScheduledMethodRunnable runnable = (ScheduledMethodRunnable) task.getRunnable();
+		Object targetObject = runnable.getTarget();
+		Method targetMethod = runnable.getMethod();
+		assertThat(targetObject).isEqualTo(target);
+		assertThat(targetMethod.getName()).isEqualTo("fixedRate");
+		assertThat(task.getInitialDelay()).isEqualTo(0L);
+		assertThat(task.getInterval()).isEqualTo(3000L);
+	}
+
+	@Test
+	public void fixedRateTaskWithInitialDelay() {
+		BeanDefinition processorDefinition = new RootBeanDefinition(ScheduledAnnotationBeanPostProcessor.class);
+		BeanDefinition targetDefinition = new RootBeanDefinition(FixedRateWithInitialDelayTestBean.class);
+		context.registerBeanDefinition("postProcessor", processorDefinition);
+		context.registerBeanDefinition("target", targetDefinition);
+		context.refresh();
+
+		ScheduledTaskHolder postProcessor = context.getBean("postProcessor", ScheduledTaskHolder.class);
+		assertThat(postProcessor.getScheduledTasks().size()).isEqualTo(1);
+
+		Object target = context.getBean("target");
+		ScheduledTaskRegistrar registrar = (ScheduledTaskRegistrar)
+				new DirectFieldAccessor(postProcessor).getPropertyValue("registrar");
+		@SuppressWarnings("unchecked")
+		List<IntervalTask> fixedRateTasks = (List<IntervalTask>)
+				new DirectFieldAccessor(registrar).getPropertyValue("fixedRateTasks");
+		assertThat(fixedRateTasks.size()).isEqualTo(1);
+		IntervalTask task = fixedRateTasks.get(0);
+		ScheduledMethodRunnable runnable = (ScheduledMethodRunnable) task.getRunnable();
+		Object targetObject = runnable.getTarget();
+		Method targetMethod = runnable.getMethod();
+		assertThat(targetObject).isEqualTo(target);
+		assertThat(targetMethod.getName()).isEqualTo("fixedRate");
+		assertThat(task.getInitialDelay()).isEqualTo(1000L);
+		assertThat(task.getInterval()).isEqualTo(3000L);
+	}
+
+	@Test
+	public void severalFixedRatesWithRepeatedScheduledAnnotation() {
 		BeanDefinition processorDefinition = new RootBeanDefinition(ScheduledAnnotationBeanPostProcessor.class);
 		BeanDefinition targetDefinition = new RootBeanDefinition(SeveralFixedRatesWithRepeatedScheduledAnnotationTestBean.class);
 		severalFixedRates(context, processorDefinition, targetDefinition);
 	}
 
 	@Test
-	void severalFixedRatesWithSchedulesContainerAnnotation() {
+	public void severalFixedRatesWithSchedulesContainerAnnotation() {
 		BeanDefinition processorDefinition = new RootBeanDefinition(ScheduledAnnotationBeanPostProcessor.class);
 		BeanDefinition targetDefinition = new RootBeanDefinition(SeveralFixedRatesWithSchedulesContainerAnnotationTestBean.class);
 		severalFixedRates(context, processorDefinition, targetDefinition);
 	}
 
 	@Test
-	void severalFixedRatesOnBaseClass() {
+	public void severalFixedRatesOnBaseClass() {
 		BeanDefinition processorDefinition = new RootBeanDefinition(ScheduledAnnotationBeanPostProcessor.class);
 		BeanDefinition targetDefinition = new RootBeanDefinition(FixedRatesSubBean.class);
 		severalFixedRates(context, processorDefinition, targetDefinition);
 	}
 
 	@Test
-	void severalFixedRatesOnDefaultMethod() {
+	public void severalFixedRatesOnDefaultMethod() {
 		BeanDefinition processorDefinition = new RootBeanDefinition(ScheduledAnnotationBeanPostProcessor.class);
 		BeanDefinition targetDefinition = new RootBeanDefinition(FixedRatesDefaultBean.class);
 		severalFixedRates(context, processorDefinition, targetDefinition);
 	}
 
 	@Test
-	void severalFixedRatesAgainstNestedCglibProxy() {
+	public void severalFixedRatesAgainstNestedCglibProxy() {
 		BeanDefinition processorDefinition = new RootBeanDefinition(ScheduledAnnotationBeanPostProcessor.class);
 		BeanDefinition targetDefinition = new RootBeanDefinition(SeveralFixedRatesWithRepeatedScheduledAnnotationTestBean.class);
 		targetDefinition.setFactoryMethodName("nestedProxy");
@@ -264,7 +235,7 @@ class ScheduledAnnotationBeanPostProcessorTests {
 	}
 
 	@Test
-	void cronTask() {
+	public void cronTask() {
 		BeanDefinition processorDefinition = new RootBeanDefinition(ScheduledAnnotationBeanPostProcessor.class);
 		BeanDefinition targetDefinition = new RootBeanDefinition(CronTestBean.class);
 		context.registerBeanDefinition("postProcessor", processorDefinition);
@@ -291,7 +262,7 @@ class ScheduledAnnotationBeanPostProcessorTests {
 	}
 
 	@Test
-	void cronTaskWithZone() {
+	public void cronTaskWithZone() {
 		BeanDefinition processorDefinition = new RootBeanDefinition(ScheduledAnnotationBeanPostProcessor.class);
 		BeanDefinition targetDefinition = new RootBeanDefinition(CronWithTimezoneTestBean.class);
 		context.registerBeanDefinition("postProcessor", processorDefinition);
@@ -337,7 +308,7 @@ class ScheduledAnnotationBeanPostProcessorTests {
 	}
 
 	@Test
-	void cronTaskWithInvalidZone() {
+	public void cronTaskWithInvalidZone() {
 		BeanDefinition processorDefinition = new RootBeanDefinition(ScheduledAnnotationBeanPostProcessor.class);
 		BeanDefinition targetDefinition = new RootBeanDefinition(CronWithInvalidTimezoneTestBean.class);
 		context.registerBeanDefinition("postProcessor", processorDefinition);
@@ -347,7 +318,7 @@ class ScheduledAnnotationBeanPostProcessorTests {
 	}
 
 	@Test
-	void cronTaskWithMethodValidation() {
+	public void cronTaskWithMethodValidation() {
 		BeanDefinition validationDefinition = new RootBeanDefinition(MethodValidationPostProcessor.class);
 		BeanDefinition processorDefinition = new RootBeanDefinition(ScheduledAnnotationBeanPostProcessor.class);
 		BeanDefinition targetDefinition = new RootBeanDefinition(CronTestBean.class);
@@ -359,7 +330,7 @@ class ScheduledAnnotationBeanPostProcessorTests {
 	}
 
 	@Test
-	void cronTaskWithScopedProxy() {
+	public void cronTaskWithScopedProxy() {
 		BeanDefinition processorDefinition = new RootBeanDefinition(ScheduledAnnotationBeanPostProcessor.class);
 		context.registerBeanDefinition("postProcessor", processorDefinition);
 		new AnnotatedBeanDefinitionReader(context).register(ProxiedCronTestBean.class, ProxiedCronTestBeanDependent.class);
@@ -384,7 +355,7 @@ class ScheduledAnnotationBeanPostProcessorTests {
 	}
 
 	@Test
-	void metaAnnotationWithFixedRate() {
+	public void metaAnnotationWithFixedRate() {
 		BeanDefinition processorDefinition = new RootBeanDefinition(ScheduledAnnotationBeanPostProcessor.class);
 		BeanDefinition targetDefinition = new RootBeanDefinition(MetaAnnotationFixedRateTestBean.class);
 		context.registerBeanDefinition("postProcessor", processorDefinition);
@@ -411,7 +382,7 @@ class ScheduledAnnotationBeanPostProcessorTests {
 	}
 
 	@Test
-	void composedAnnotationWithInitialDelayAndFixedRate() {
+	public void composedAnnotationWithInitialDelayAndFixedRate() {
 		BeanDefinition processorDefinition = new RootBeanDefinition(ScheduledAnnotationBeanPostProcessor.class);
 		BeanDefinition targetDefinition = new RootBeanDefinition(ComposedAnnotationFixedRateTestBean.class);
 		context.registerBeanDefinition("postProcessor", processorDefinition);
@@ -439,7 +410,7 @@ class ScheduledAnnotationBeanPostProcessorTests {
 	}
 
 	@Test
-	void metaAnnotationWithCronExpression() {
+	public void metaAnnotationWithCronExpression() {
 		BeanDefinition processorDefinition = new RootBeanDefinition(ScheduledAnnotationBeanPostProcessor.class);
 		BeanDefinition targetDefinition = new RootBeanDefinition(MetaAnnotationCronTestBean.class);
 		context.registerBeanDefinition("postProcessor", processorDefinition);
@@ -466,7 +437,7 @@ class ScheduledAnnotationBeanPostProcessorTests {
 	}
 
 	@Test
-	void propertyPlaceholderWithCron() {
+	public void propertyPlaceholderWithCron() {
 		String businessHoursCronExpression = "0 0 9-17 * * MON-FRI";
 		BeanDefinition processorDefinition = new RootBeanDefinition(ScheduledAnnotationBeanPostProcessor.class);
 		BeanDefinition placeholderDefinition = new RootBeanDefinition(PropertySourcesPlaceholderConfigurer.class);
@@ -499,7 +470,7 @@ class ScheduledAnnotationBeanPostProcessorTests {
 	}
 
 	@Test
-	void propertyPlaceholderWithInactiveCron() {
+	public void propertyPlaceholderWithInactiveCron() {
 		String businessHoursCronExpression = "-";
 		BeanDefinition processorDefinition = new RootBeanDefinition(ScheduledAnnotationBeanPostProcessor.class);
 		BeanDefinition placeholderDefinition = new RootBeanDefinition(PropertySourcesPlaceholderConfigurer.class);
@@ -516,23 +487,24 @@ class ScheduledAnnotationBeanPostProcessorTests {
 		assertThat(postProcessor.getScheduledTasks().isEmpty()).isTrue();
 	}
 
-	@ParameterizedTest
-	@CsvSource({
-		"PropertyPlaceholderWithFixedDelay, 5000, 1000, 5000, 1000",
-		"PropertyPlaceholderWithFixedDelay, PT5S, PT1S, 5000, 1000",
-		"PropertyPlaceholderWithFixedDelayInSeconds, 5000, 1000, 5000000, 1000000",
-		"PropertyPlaceholderWithFixedDelayInSeconds, PT5S, PT1S, 5000, 1000"
-	})
-	void propertyPlaceholderWithFixedDelay(@NameToClass Class<?> beanClass, String fixedDelay, String initialDelay,
-			long expectedInterval, long expectedInitialDelay) {
+	@Test
+	public void propertyPlaceholderWithFixedDelayInMillis() {
+		propertyPlaceholderWithFixedDelay(false);
+	}
 
+	@Test
+	public void propertyPlaceholderWithFixedDelayInDuration() {
+		propertyPlaceholderWithFixedDelay(true);
+	}
+
+	private void propertyPlaceholderWithFixedDelay(boolean durationFormat) {
 		BeanDefinition processorDefinition = new RootBeanDefinition(ScheduledAnnotationBeanPostProcessor.class);
 		BeanDefinition placeholderDefinition = new RootBeanDefinition(PropertySourcesPlaceholderConfigurer.class);
 		Properties properties = new Properties();
-		properties.setProperty("fixedDelay", fixedDelay);
-		properties.setProperty("initialDelay", initialDelay);
+		properties.setProperty("fixedDelay", (durationFormat ? "PT5S" : "5000"));
+		properties.setProperty("initialDelay", (durationFormat ? "PT1S" : "1000"));
 		placeholderDefinition.getPropertyValues().addPropertyValue("properties", properties);
-		BeanDefinition targetDefinition = new RootBeanDefinition(beanClass);
+		BeanDefinition targetDefinition = new RootBeanDefinition(PropertyPlaceholderWithFixedDelayTestBean.class);
 		context.registerBeanDefinition("postProcessor", processorDefinition);
 		context.registerBeanDefinition("placeholder", placeholderDefinition);
 		context.registerBeanDefinition("target", targetDefinition);
@@ -554,29 +526,28 @@ class ScheduledAnnotationBeanPostProcessorTests {
 		Method targetMethod = runnable.getMethod();
 		assertThat(targetObject).isEqualTo(target);
 		assertThat(targetMethod.getName()).isEqualTo("fixedDelay");
-		assertSoftly(softly -> {
-			softly.assertThat(task.getInitialDelay()).as("initial delay").isEqualTo(expectedInitialDelay);
-			softly.assertThat(task.getInterval()).as("interval").isEqualTo(expectedInterval);
-		});
+		assertThat(task.getInitialDelay()).isEqualTo(1000L);
+		assertThat(task.getInterval()).isEqualTo(5000L);
 	}
 
-	@ParameterizedTest
-	@CsvSource({
-		"PropertyPlaceholderWithFixedRate, 3000, 1000, 3000, 1000",
-		"PropertyPlaceholderWithFixedRate, PT3S, PT1S, 3000, 1000",
-		"PropertyPlaceholderWithFixedRateInSeconds, 3000, 1000, 3000000, 1000000",
-		"PropertyPlaceholderWithFixedRateInSeconds, PT3S, PT1S, 3000, 1000"
-	})
-	void propertyPlaceholderWithFixedRate(@NameToClass Class<?> beanClass, String fixedRate, String initialDelay,
-			long expectedInterval, long expectedInitialDelay) {
+	@Test
+	public void propertyPlaceholderWithFixedRateInMillis() {
+		propertyPlaceholderWithFixedRate(false);
+	}
 
+	@Test
+	public void propertyPlaceholderWithFixedRateInDuration() {
+		propertyPlaceholderWithFixedRate(true);
+	}
+
+	private void propertyPlaceholderWithFixedRate(boolean durationFormat) {
 		BeanDefinition processorDefinition = new RootBeanDefinition(ScheduledAnnotationBeanPostProcessor.class);
 		BeanDefinition placeholderDefinition = new RootBeanDefinition(PropertySourcesPlaceholderConfigurer.class);
 		Properties properties = new Properties();
-		properties.setProperty("fixedRate", fixedRate);
-		properties.setProperty("initialDelay", initialDelay);
+		properties.setProperty("fixedRate", (durationFormat ? "PT3S" : "3000"));
+		properties.setProperty("initialDelay", (durationFormat ? "PT1S" : "1000"));
 		placeholderDefinition.getPropertyValues().addPropertyValue("properties", properties);
-		BeanDefinition targetDefinition = new RootBeanDefinition(beanClass);
+		BeanDefinition targetDefinition = new RootBeanDefinition(PropertyPlaceholderWithFixedRateTestBean.class);
 		context.registerBeanDefinition("postProcessor", processorDefinition);
 		context.registerBeanDefinition("placeholder", placeholderDefinition);
 		context.registerBeanDefinition("target", targetDefinition);
@@ -598,14 +569,12 @@ class ScheduledAnnotationBeanPostProcessorTests {
 		Method targetMethod = runnable.getMethod();
 		assertThat(targetObject).isEqualTo(target);
 		assertThat(targetMethod.getName()).isEqualTo("fixedRate");
-		assertSoftly(softly -> {
-			softly.assertThat(task.getInitialDelay()).as("initial delay").isEqualTo(expectedInitialDelay);
-			softly.assertThat(task.getInterval()).as("interval").isEqualTo(expectedInterval);
-		});
+		assertThat(task.getInitialDelay()).isEqualTo(1000L);
+		assertThat(task.getInterval()).isEqualTo(3000L);
 	}
 
 	@Test
-	void expressionWithCron() {
+	public void expressionWithCron() {
 		String businessHoursCronExpression = "0 0 9-17 * * MON-FRI";
 		BeanDefinition processorDefinition = new RootBeanDefinition(ScheduledAnnotationBeanPostProcessor.class);
 		BeanDefinition targetDefinition = new RootBeanDefinition(ExpressionWithCronTestBean.class);
@@ -636,7 +605,7 @@ class ScheduledAnnotationBeanPostProcessorTests {
 	}
 
 	@Test
-	void propertyPlaceholderForMetaAnnotation() {
+	public void propertyPlaceholderForMetaAnnotation() {
 		String businessHoursCronExpression = "0 0 9-17 * * MON-FRI";
 		BeanDefinition processorDefinition = new RootBeanDefinition(ScheduledAnnotationBeanPostProcessor.class);
 		BeanDefinition placeholderDefinition = new RootBeanDefinition(PropertySourcesPlaceholderConfigurer.class);
@@ -669,7 +638,7 @@ class ScheduledAnnotationBeanPostProcessorTests {
 	}
 
 	@Test
-	void nonVoidReturnType() {
+	public void nonVoidReturnType() {
 		BeanDefinition processorDefinition = new RootBeanDefinition(ScheduledAnnotationBeanPostProcessor.class);
 		BeanDefinition targetDefinition = new RootBeanDefinition(NonVoidReturnTypeTestBean.class);
 		context.registerBeanDefinition("postProcessor", processorDefinition);
@@ -696,7 +665,7 @@ class ScheduledAnnotationBeanPostProcessorTests {
 	}
 
 	@Test
-	void emptyAnnotation() {
+	public void emptyAnnotation() {
 		BeanDefinition processorDefinition = new RootBeanDefinition(ScheduledAnnotationBeanPostProcessor.class);
 		BeanDefinition targetDefinition = new RootBeanDefinition(EmptyAnnotationTestBean.class);
 		context.registerBeanDefinition("postProcessor", processorDefinition);
@@ -706,7 +675,7 @@ class ScheduledAnnotationBeanPostProcessorTests {
 	}
 
 	@Test
-	void invalidCron() throws Throwable {
+	public void invalidCron() throws Throwable {
 		BeanDefinition processorDefinition = new RootBeanDefinition(ScheduledAnnotationBeanPostProcessor.class);
 		BeanDefinition targetDefinition = new RootBeanDefinition(InvalidCronTestBean.class);
 		context.registerBeanDefinition("postProcessor", processorDefinition);
@@ -716,7 +685,7 @@ class ScheduledAnnotationBeanPostProcessorTests {
 	}
 
 	@Test
-	void nonEmptyParamList() {
+	public void nonEmptyParamList() {
 		BeanDefinition processorDefinition = new RootBeanDefinition(ScheduledAnnotationBeanPostProcessor.class);
 		BeanDefinition targetDefinition = new RootBeanDefinition(NonEmptyParamListTestBean.class);
 		context.registerBeanDefinition("postProcessor", processorDefinition);
@@ -726,68 +695,26 @@ class ScheduledAnnotationBeanPostProcessorTests {
 	}
 
 
-	static class FixedDelay {
+	static class FixedDelayTestBean {
 
 		@Scheduled(fixedDelay = 5000)
-		void fixedDelay() {
-		}
-	}
-
-	static class FixedDelayInSeconds {
-
-		@Scheduled(fixedDelay = 5, timeUnit = TimeUnit.SECONDS)
-		void fixedDelay() {
-		}
-	}
-
-	static class FixedDelayInMinutes {
-
-		@Scheduled(fixedDelay = 3, timeUnit = TimeUnit.MINUTES)
-		void fixedDelay() {
+		public void fixedDelay() {
 		}
 	}
 
 
-	static class FixedRate {
+	static class FixedRateTestBean {
 
 		@Scheduled(fixedRate = 3000)
-		void fixedRate() {
-		}
-	}
-
-	static class FixedRateInSeconds {
-
-		@Scheduled(fixedRate = 5, timeUnit = TimeUnit.SECONDS)
-		void fixedRate() {
-		}
-	}
-
-	static class FixedRateInMinutes {
-
-		@Scheduled(fixedRate = 3, timeUnit = TimeUnit.MINUTES)
-		void fixedRate() {
+		public void fixedRate() {
 		}
 	}
 
 
-	static class FixedRateWithInitialDelay {
+	static class FixedRateWithInitialDelayTestBean {
 
 		@Scheduled(fixedRate = 3000, initialDelay = 1000)
-		void fixedRate() {
-		}
-	}
-
-	static class FixedRateWithInitialDelayInSeconds {
-
-		@Scheduled(fixedRate = 3, initialDelay = 5, timeUnit = TimeUnit.SECONDS)
-		void fixedRate() {
-		}
-	}
-
-	static class FixedRateWithInitialDelayInMinutes {
-
-		@Scheduled(fixedRate = 3, initialDelay = 1, timeUnit = TimeUnit.MINUTES)
-		void fixedRate() {
+		public void fixedRate() {
 		}
 	}
 
@@ -795,7 +722,7 @@ class ScheduledAnnotationBeanPostProcessorTests {
 	static class SeveralFixedRatesWithSchedulesContainerAnnotationTestBean {
 
 		@Schedules({@Scheduled(fixedRate = 4000), @Scheduled(fixedRate = 4000, initialDelay = 2000)})
-		void fixedRate() {
+		public void fixedRate() {
 		}
 	}
 
@@ -804,7 +731,7 @@ class ScheduledAnnotationBeanPostProcessorTests {
 
 		@Scheduled(fixedRate = 4000)
 		@Scheduled(fixedRate = 4000, initialDelay = 2000)
-		void fixedRate() {
+		public void fixedRate() {
 		}
 
 		static SeveralFixedRatesWithRepeatedScheduledAnnotationTestBean nestedProxy() {
@@ -821,7 +748,7 @@ class ScheduledAnnotationBeanPostProcessorTests {
 
 		@Scheduled(fixedRate = 4000)
 		@Scheduled(fixedRate = 4000, initialDelay = 2000)
-		void fixedRate() {
+		public void fixedRate() {
 		}
 	}
 
@@ -865,7 +792,7 @@ class ScheduledAnnotationBeanPostProcessorTests {
 	static class CronWithInvalidTimezoneTestBean {
 
 		@Scheduled(cron = "0 0 0-4,6-23 * * ?", zone = "FOO")
-		void cron() throws IOException {
+		public void cron() throws IOException {
 			throw new IOException("no no no");
 		}
 	}
@@ -876,7 +803,7 @@ class ScheduledAnnotationBeanPostProcessorTests {
 	static class ProxiedCronTestBean {
 
 		@Scheduled(cron = "*/7 * * * * ?")
-		void cron() throws IOException {
+		public void cron() throws IOException {
 			throw new IOException("no no no");
 		}
 	}
@@ -884,7 +811,7 @@ class ScheduledAnnotationBeanPostProcessorTests {
 
 	static class ProxiedCronTestBeanDependent {
 
-		ProxiedCronTestBeanDependent(ProxiedCronTestBean testBean) {
+		public ProxiedCronTestBeanDependent(ProxiedCronTestBean testBean) {
 		}
 	}
 
@@ -892,7 +819,7 @@ class ScheduledAnnotationBeanPostProcessorTests {
 	static class NonVoidReturnTypeTestBean {
 
 		@Scheduled(cron = "0 0 9-17 * * MON-FRI")
-		String cron() {
+		public String cron() {
 			return "oops";
 		}
 	}
@@ -901,7 +828,7 @@ class ScheduledAnnotationBeanPostProcessorTests {
 	static class EmptyAnnotationTestBean {
 
 		@Scheduled
-		void invalid() {
+		public void invalid() {
 		}
 	}
 
@@ -909,7 +836,7 @@ class ScheduledAnnotationBeanPostProcessorTests {
 	static class InvalidCronTestBean {
 
 		@Scheduled(cron = "abc")
-		void invalid() {
+		public void invalid() {
 		}
 	}
 
@@ -917,7 +844,7 @@ class ScheduledAnnotationBeanPostProcessorTests {
 	static class NonEmptyParamListTestBean {
 
 		@Scheduled(fixedRate = 3000)
-		void invalid(String oops) {
+		public void invalid(String oops) {
 		}
 	}
 
@@ -949,7 +876,7 @@ class ScheduledAnnotationBeanPostProcessorTests {
 	static class MetaAnnotationFixedRateTestBean {
 
 		@EveryFiveSeconds
-		void checkForUpdates() {
+		public void checkForUpdates() {
 		}
 	}
 
@@ -957,7 +884,7 @@ class ScheduledAnnotationBeanPostProcessorTests {
 	static class ComposedAnnotationFixedRateTestBean {
 
 		@WaitASec(fixedRate = 5000)
-		void checkForUpdates() {
+		public void checkForUpdates() {
 		}
 	}
 
@@ -965,7 +892,7 @@ class ScheduledAnnotationBeanPostProcessorTests {
 	static class MetaAnnotationCronTestBean {
 
 		@Hourly
-		void generateReport() {
+		public void generateReport() {
 		}
 	}
 
@@ -973,37 +900,23 @@ class ScheduledAnnotationBeanPostProcessorTests {
 	static class PropertyPlaceholderWithCronTestBean {
 
 		@Scheduled(cron = "${schedules.businessHours}")
-		void x() {
+		public void x() {
 		}
 	}
 
 
-	static class PropertyPlaceholderWithFixedDelay {
+	static class PropertyPlaceholderWithFixedDelayTestBean {
 
 		@Scheduled(fixedDelayString = "${fixedDelay}", initialDelayString = "${initialDelay}")
-		void fixedDelay() {
-		}
-	}
-
-	static class PropertyPlaceholderWithFixedDelayInSeconds {
-
-		@Scheduled(fixedDelayString = "${fixedDelay}", initialDelayString = "${initialDelay}", timeUnit = TimeUnit.SECONDS)
-		void fixedDelay() {
+		public void fixedDelay() {
 		}
 	}
 
 
-	static class PropertyPlaceholderWithFixedRate {
+	static class PropertyPlaceholderWithFixedRateTestBean {
 
 		@Scheduled(fixedRateString = "${fixedRate}", initialDelayString = "${initialDelay}")
-		void fixedRate() {
-		}
-	}
-
-	static class PropertyPlaceholderWithFixedRateInSeconds {
-
-		@Scheduled(fixedRateString = "${fixedRate}", initialDelayString = "${initialDelay}", timeUnit = TimeUnit.SECONDS)
-		void fixedRate() {
+		public void fixedRate() {
 		}
 	}
 
@@ -1011,7 +924,7 @@ class ScheduledAnnotationBeanPostProcessorTests {
 	static class ExpressionWithCronTestBean {
 
 		@Scheduled(cron = "#{schedules.businessHours}")
-		void x() {
+		public void x() {
 		}
 	}
 
@@ -1026,24 +939,7 @@ class ScheduledAnnotationBeanPostProcessorTests {
 	static class PropertyPlaceholderMetaAnnotationTestBean {
 
 		@BusinessHours
-		void y() {
-		}
-	}
-
-	@Retention(RetentionPolicy.RUNTIME)
-	@ConvertWith(NameToClass.Converter.class)
-	private @interface NameToClass {
-		class Converter implements ArgumentConverter {
-			@Override
-			public Class<?> convert(Object beanClassName, ParameterContext context) throws ArgumentConversionException {
-				try {
-					String name = getClass().getEnclosingClass().getEnclosingClass().getName() + "$" + beanClassName;
-					return getClass().getClassLoader().loadClass(name);
-				}
-				catch (Exception ex) {
-					throw new ArgumentConversionException("Failed to convert class name to Class", ex);
-				}
-			}
+		public void y() {
 		}
 	}
 

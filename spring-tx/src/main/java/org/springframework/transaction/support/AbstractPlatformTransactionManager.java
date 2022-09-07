@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -913,6 +913,9 @@ public abstract class AbstractPlatformTransactionManager implements PlatformTran
 	 */
 	protected final void triggerBeforeCommit(DefaultTransactionStatus status) {
 		if (status.isNewSynchronization()) {
+			if (status.isDebug()) {
+				logger.trace("Triggering beforeCommit synchronization");
+			}
 			TransactionSynchronizationUtils.triggerBeforeCommit(status.isReadOnly());
 		}
 	}
@@ -923,6 +926,9 @@ public abstract class AbstractPlatformTransactionManager implements PlatformTran
 	 */
 	protected final void triggerBeforeCompletion(DefaultTransactionStatus status) {
 		if (status.isNewSynchronization()) {
+			if (status.isDebug()) {
+				logger.trace("Triggering beforeCompletion synchronization");
+			}
 			TransactionSynchronizationUtils.triggerBeforeCompletion();
 		}
 	}
@@ -933,6 +939,9 @@ public abstract class AbstractPlatformTransactionManager implements PlatformTran
 	 */
 	private void triggerAfterCommit(DefaultTransactionStatus status) {
 		if (status.isNewSynchronization()) {
+			if (status.isDebug()) {
+				logger.trace("Triggering afterCommit synchronization");
+			}
 			TransactionSynchronizationUtils.triggerAfterCommit();
 		}
 	}
@@ -947,13 +956,16 @@ public abstract class AbstractPlatformTransactionManager implements PlatformTran
 			List<TransactionSynchronization> synchronizations = TransactionSynchronizationManager.getSynchronizations();
 			TransactionSynchronizationManager.clearSynchronization();
 			if (!status.hasTransaction() || status.isNewTransaction()) {
+				if (status.isDebug()) {
+					logger.trace("Triggering afterCompletion synchronization");
+				}
 				// No transaction or new transaction for the current scope ->
 				// invoke the afterCompletion callbacks immediately
 				invokeAfterCompletion(synchronizations, completionStatus);
 			}
 			else if (!synchronizations.isEmpty()) {
 				// Existing transaction that we participate in, controlled outside
-				// the scope of this Spring transaction manager -> try to register
+				// of the scope of this Spring transaction manager -> try to register
 				// an afterCompletion callback with the existing (JTA) transaction.
 				registerAfterCompletionWithExistingTransaction(status.getTransaction(), synchronizations);
 			}

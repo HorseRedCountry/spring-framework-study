@@ -362,7 +362,9 @@ class DefaultServerResponseBuilder implements ServerResponse.BodyBuilder {
 
 		private static <K,V> void copy(MultiValueMap<K,V> src, MultiValueMap<K,V> dst) {
 			if (!src.isEmpty()) {
-				dst.putAll(src);
+				src.entrySet().stream()
+						.filter(entry -> !dst.containsKey(entry.getKey()))
+						.forEach(entry -> dst.put(entry.getKey(), entry.getValue()));
 			}
 		}
 	}

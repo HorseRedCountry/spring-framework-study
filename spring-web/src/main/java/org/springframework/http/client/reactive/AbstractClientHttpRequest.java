@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,9 +60,6 @@ public abstract class AbstractClientHttpRequest implements ClientHttpRequest {
 
 	private final List<Supplier<? extends Publisher<Void>>> commitActions = new ArrayList<>(4);
 
-	@Nullable
-	private HttpHeaders readOnlyHeaders;
-
 
 	public AbstractClientHttpRequest() {
 		this(new HttpHeaders());
@@ -77,26 +74,10 @@ public abstract class AbstractClientHttpRequest implements ClientHttpRequest {
 
 	@Override
 	public HttpHeaders getHeaders() {
-		if (this.readOnlyHeaders != null) {
-			return this.readOnlyHeaders;
+		if (State.COMMITTED.equals(this.state.get())) {
+			return HttpHeaders.readOnlyHttpHeaders(this.headers);
 		}
-		else if (State.COMMITTED.equals(this.state.get())) {
-			this.readOnlyHeaders = initReadOnlyHeaders();
-			return this.readOnlyHeaders;
-		}
-		else {
-			return this.headers;
-		}
-	}
-
-	/**
-	 * Initialize the read-only headers after the request is committed.
-	 * <p>By default, this method simply applies a read-only wrapper.
-	 * Subclasses can do the same for headers from the native request.
-	 * @since 5.3.15
-	 */
-	protected HttpHeaders initReadOnlyHeaders() {
-		return HttpHeaders.readOnlyHttpHeaders(this.headers);
+		return this.headers;
 	}
 
 	@Override

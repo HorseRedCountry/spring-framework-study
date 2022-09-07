@@ -30,11 +30,6 @@ import org.springframework.core.annotation.AliasFor;
  * <p>The method parameter may be declared as type {@link javax.servlet.http.Cookie}
  * or as cookie value type (String, int, etc.).
  *
- * <p>Note that with spring-webmvc 5.3.x and earlier, the cookie value is URL
- * decoded. This will be changed in 6.0 but in the meantime, applications can
- * also declare parameters of type {@link javax.servlet.http.Cookie} to access
- * the raw value.
- *
  * @author Juergen Hoeller
  * @author Sam Brannen
  * @since 3.0

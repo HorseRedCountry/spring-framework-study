@@ -37,6 +37,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.PathMatcher;
 import org.springframework.util.StringUtils;
+import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.handler.SimpleUrlHandlerMapping;
 import org.springframework.web.util.UrlPathHelper;
 
@@ -191,11 +192,8 @@ public class ResourceUrlProvider implements ApplicationListener<ContextRefreshed
 
 	private int getLookupPathIndex(HttpServletRequest request) {
 		UrlPathHelper pathHelper = getUrlPathHelper();
-		if (request.getAttribute(UrlPathHelper.PATH_ATTRIBUTE) == null) {
-			pathHelper.resolveAndCacheLookupPath(request);
-		}
 		String requestUri = pathHelper.getRequestUri(request);
-		String lookupPath = UrlPathHelper.getResolvedLookupPath(request);
+		String lookupPath = this.urlPathHelper.getLookupPathForRequest(request, HandlerMapping.LOOKUP_PATH);
 		return requestUri.indexOf(lookupPath);
 	}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,20 +73,16 @@ public class ReactorClientHttpConnector implements ClientHttpConnector {
 	 * @since 5.1
 	 */
 	public ReactorClientHttpConnector(ReactorResourceFactory factory, Function<HttpClient, HttpClient> mapper) {
-		ConnectionProvider provider = factory.getConnectionProvider();
+		this.httpClient = defaultInitializer.andThen(mapper).apply(initHttpClient(factory));
+	}
+
+	private static HttpClient initHttpClient(ReactorResourceFactory resourceFactory) {
+		ConnectionProvider provider = resourceFactory.getConnectionProvider();
+		LoopResources resources = resourceFactory.getLoopResources();
 		Assert.notNull(provider, "No ConnectionProvider: is ReactorResourceFactory not initialized yet?");
-		this.httpClient = defaultInitializer.andThen(mapper).andThen(applyLoopResources(factory))
-				.apply(HttpClient.create(provider));
+		Assert.notNull(resources, "No LoopResources: is ReactorResourceFactory not initialized yet?");
+		return HttpClient.create(provider).tcpConfiguration(tcpClient -> tcpClient.runOn(resources));
 	}
-
-	private static Function<HttpClient, HttpClient> applyLoopResources(ReactorResourceFactory factory) {
-		return httpClient -> {
-			LoopResources resources = factory.getLoopResources();
-			Assert.notNull(resources, "No LoopResources: is ReactorResourceFactory not initialized yet?");
-			return httpClient.runOn(resources);
-		};
-	}
-
 
 	/**
 	 * Constructor with a pre-configured {@code HttpClient} instance.
@@ -102,6 +98,10 @@ public class ReactorClientHttpConnector implements ClientHttpConnector {
 	@Override
 	public Mono<ClientHttpResponse> connect(HttpMethod method, URI uri,
 			Function<? super ClientHttpRequest, Mono<Void>> requestCallback) {
+
+		if (!uri.isAbsolute()) {
+			return Mono.error(new IllegalArgumentException("URI is not absolute: " + uri));
+		}
 
 		AtomicReference<ReactorClientHttpResponse> responseRef = new AtomicReference<>();
 

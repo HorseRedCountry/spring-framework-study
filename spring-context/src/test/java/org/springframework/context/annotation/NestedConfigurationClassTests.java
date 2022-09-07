@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Juergen Hoeller
  * @since 3.1
  */
-class NestedConfigurationClassTests {
+public class NestedConfigurationClassTests {
 
 	@Test
-	void oneLevelDeep() {
+	public void oneLevelDeep() {
 		AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext();
 		ctx.register(L0Config.L1Config.class);
 		ctx.refresh();
@@ -49,11 +49,10 @@ class NestedConfigurationClassTests {
 
 		// ensure that override order is correct
 		assertThat(ctx.getBean("overrideBean", TestBean.class).getName()).isEqualTo("override-l1");
-		ctx.close();
 	}
 
 	@Test
-	void twoLevelsDeep() {
+	public void twoLevelsDeep() {
 		AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext();
 		ctx.register(L0Config.class);
 		ctx.refresh();
@@ -72,11 +71,10 @@ class NestedConfigurationClassTests {
 
 		// ensure that override order is correct
 		assertThat(ctx.getBean("overrideBean", TestBean.class).getName()).isEqualTo("override-l0");
-		ctx.close();
 	}
 
 	@Test
-	void twoLevelsInLiteMode() {
+	public void twoLevelsInLiteMode() {
 		AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext();
 		ctx.register(L0ConfigLight.class);
 		ctx.refresh();
@@ -95,11 +93,10 @@ class NestedConfigurationClassTests {
 
 		// ensure that override order is correct
 		assertThat(ctx.getBean("overrideBean", TestBean.class).getName()).isEqualTo("override-l0");
-		ctx.close();
 	}
 
 	@Test
-	void twoLevelsDeepWithInheritance() {
+	public void twoLevelsDeepWithInheritance() {
 		AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext();
 		ctx.register(S1Config.class);
 		ctx.refresh();
@@ -124,11 +121,10 @@ class NestedConfigurationClassTests {
 		TestBean pb2 = ctx.getBean("prototypeBean", TestBean.class);
 		assertThat(pb1 != pb2).isTrue();
 		assertThat(pb1.getFriends().iterator().next() != pb2.getFriends().iterator().next()).isTrue();
-		ctx.close();
 	}
 
 	@Test
-	void twoLevelsDeepWithInheritanceThroughImport() {
+	public void twoLevelsDeepWithInheritanceThroughImport() {
 		AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext();
 		ctx.register(S1Importer.class);
 		ctx.refresh();
@@ -153,11 +149,10 @@ class NestedConfigurationClassTests {
 		TestBean pb2 = ctx.getBean("prototypeBean", TestBean.class);
 		assertThat(pb1 != pb2).isTrue();
 		assertThat(pb1.getFriends().iterator().next() != pb2.getFriends().iterator().next()).isTrue();
-		ctx.close();
 	}
 
 	@Test
-	void twoLevelsDeepWithInheritanceAndScopedProxy() {
+	public void twoLevelsDeepWithInheritanceAndScopedProxy() {
 		AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext();
 		ctx.register(S1ImporterWithProxy.class);
 		ctx.refresh();
@@ -182,11 +177,10 @@ class NestedConfigurationClassTests {
 		TestBean pb2 = ctx.getBean("prototypeBean", TestBean.class);
 		assertThat(pb1 != pb2).isTrue();
 		assertThat(pb1.getFriends().iterator().next() != pb2.getFriends().iterator().next()).isTrue();
-		ctx.close();
 	}
 
 	@Test
-	void twoLevelsWithNoBeanMethods() {
+	public void twoLevelsWithNoBeanMethods() {
 		AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext();
 		ctx.register(L0ConfigEmpty.class);
 		ctx.refresh();
@@ -204,11 +198,10 @@ class NestedConfigurationClassTests {
 		Object l2i2 = ctx.getBean(L0ConfigEmpty.L1ConfigEmpty.L2ConfigEmpty.class);
 		assertThat(l2i1 == l2i2).isTrue();
 		assertThat(l2i2.toString()).isNotEqualTo(l2i1.toString());
-		ctx.close();
 	}
 
 	@Test
-	void twoLevelsOnNonAnnotatedBaseClass() {
+	public void twoLevelsOnNonAnnotatedBaseClass() {
 		AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext();
 		ctx.register(L0ConfigConcrete.class);
 		ctx.refresh();
@@ -226,7 +219,6 @@ class NestedConfigurationClassTests {
 		Object l2i2 = ctx.getBean(L0ConfigConcrete.L1ConfigEmpty.L2ConfigEmpty.class);
 		assertThat(l2i1 == l2i2).isTrue();
 		assertThat(l2i2.toString()).isNotEqualTo(l2i1.toString());
-		ctx.close();
 	}
 
 

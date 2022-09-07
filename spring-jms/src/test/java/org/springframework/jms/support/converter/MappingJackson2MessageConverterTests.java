@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import javax.jms.TextMessage;
 import com.fasterxml.jackson.annotation.JsonView;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import org.springframework.core.MethodParameter;
@@ -48,7 +49,7 @@ import static org.mockito.Mockito.verify;
  * @author Dave Syer
  * @author Stephane Nicoll
  */
-class MappingJackson2MessageConverterTests {
+public class MappingJackson2MessageConverterTests {
 
 	private MappingJackson2MessageConverter converter;
 
@@ -65,7 +66,7 @@ class MappingJackson2MessageConverterTests {
 
 
 	@Test
-	void toBytesMessage() throws Exception {
+	public void toBytesMessage() throws Exception {
 		BytesMessage bytesMessageMock = mock(BytesMessage.class);
 		Date toBeMarshalled = new Date();
 
@@ -79,7 +80,7 @@ class MappingJackson2MessageConverterTests {
 	}
 
 	@Test
-	void fromBytesMessage() throws Exception {
+	public void fromBytesMessage() throws Exception {
 		BytesMessage bytesMessageMock = mock(BytesMessage.class);
 		Map<String, String> unmarshalled = Collections.singletonMap("foo", "bar");
 
@@ -88,16 +89,21 @@ class MappingJackson2MessageConverterTests {
 
 		given(bytesMessageMock.getStringProperty("__typeid__")).willReturn(Object.class.getName());
 		given(bytesMessageMock.propertyExists("__encoding__")).willReturn(false);
-		given(bytesMessageMock.getBodyLength()).willReturn(Long.valueOf(bytes.length));
+		given(bytesMessageMock.getBodyLength()).willReturn(new Long(bytes.length));
 		given(bytesMessageMock.readBytes(any(byte[].class))).willAnswer(
-				(Answer<Integer>) invocation -> byteStream.read((byte[]) invocation.getArguments()[0]));
+				new Answer<Integer>() {
+					@Override
+					public Integer answer(InvocationOnMock invocation) throws Throwable {
+						return byteStream.read((byte[]) invocation.getArguments()[0]);
+					}
+				});
 
 		Object result = converter.fromMessage(bytesMessageMock);
 		assertThat(unmarshalled).as("Invalid result").isEqualTo(result);
 	}
 
 	@Test
-	void toTextMessageWithObject() throws Exception {
+	public void toTextMessageWithObject() throws Exception {
 		converter.setTargetType(MessageType.TEXT);
 		TextMessage textMessageMock = mock(TextMessage.class);
 		Date toBeMarshalled = new Date();
@@ -109,7 +115,7 @@ class MappingJackson2MessageConverterTests {
 	}
 
 	@Test
-	void toTextMessageWithMap() throws Exception {
+	public void toTextMessageWithMap() throws Exception {
 		converter.setTargetType(MessageType.TEXT);
 		TextMessage textMessageMock = mock(TextMessage.class);
 		Map<String, String> toBeMarshalled = new HashMap<>();
@@ -122,7 +128,7 @@ class MappingJackson2MessageConverterTests {
 	}
 
 	@Test
-	void fromTextMessage() throws Exception {
+	public void fromTextMessage() throws Exception {
 		TextMessage textMessageMock = mock(TextMessage.class);
 		MyBean unmarshalled = new MyBean("bar");
 
@@ -135,7 +141,7 @@ class MappingJackson2MessageConverterTests {
 	}
 
 	@Test
-	void fromTextMessageWithUnknownProperty() throws Exception {
+	public void fromTextMessageWithUnknownProperty() throws Exception {
 		TextMessage textMessageMock = mock(TextMessage.class);
 		MyBean unmarshalled = new MyBean("bar");
 
@@ -148,7 +154,7 @@ class MappingJackson2MessageConverterTests {
 	}
 
 	@Test
-	void fromTextMessageAsObject() throws Exception {
+	public void fromTextMessageAsObject() throws Exception {
 		TextMessage textMessageMock = mock(TextMessage.class);
 		Map<String, String> unmarshalled = Collections.singletonMap("foo", "bar");
 
@@ -161,7 +167,7 @@ class MappingJackson2MessageConverterTests {
 	}
 
 	@Test
-	void fromTextMessageAsMap() throws Exception {
+	public void fromTextMessageAsMap() throws Exception {
 		TextMessage textMessageMock = mock(TextMessage.class);
 		Map<String, String> unmarshalled = Collections.singletonMap("foo", "bar");
 
@@ -174,7 +180,7 @@ class MappingJackson2MessageConverterTests {
 	}
 
 	@Test
-	void toTextMessageWithReturnType() throws JMSException, NoSuchMethodException {
+	public void toTextMessageWithReturnType() throws JMSException, NoSuchMethodException {
 		Method method = this.getClass().getDeclaredMethod("summary");
 		MethodParameter returnType = new MethodParameter(method, -1);
 		testToTextMessageWithReturnType(returnType);
@@ -182,13 +188,13 @@ class MappingJackson2MessageConverterTests {
 	}
 
 	@Test
-	void toTextMessageWithNullReturnType() throws JMSException, NoSuchMethodException {
+	public void toTextMessageWithNullReturnType() throws JMSException, NoSuchMethodException {
 		testToTextMessageWithReturnType(null);
 		verify(sessionMock).createTextMessage("{\"name\":\"test\",\"description\":\"lengthy description\"}");
 	}
 
 	@Test
-	void toTextMessageWithReturnTypeAndNoJsonView() throws JMSException, NoSuchMethodException {
+	public void toTextMessageWithReturnTypeAndNoJsonView() throws JMSException, NoSuchMethodException {
 		Method method = this.getClass().getDeclaredMethod("none");
 		MethodParameter returnType = new MethodParameter(method, -1);
 
@@ -197,7 +203,7 @@ class MappingJackson2MessageConverterTests {
 	}
 
 	@Test
-	void toTextMessageWithReturnTypeAndMultipleJsonViews() throws JMSException, NoSuchMethodException {
+	public void toTextMessageWithReturnTypeAndMultipleJsonViews() throws JMSException, NoSuchMethodException {
 		Method method = this.getClass().getDeclaredMethod("invalid");
 		MethodParameter returnType = new MethodParameter(method, -1);
 
@@ -216,7 +222,7 @@ class MappingJackson2MessageConverterTests {
 	}
 
 	@Test
-	void toTextMessageWithJsonViewClass() throws JMSException {
+	public void toTextMessageWithJsonViewClass() throws JMSException {
 		converter.setTargetType(MessageType.TEXT);
 		TextMessage textMessageMock = mock(TextMessage.class);
 
@@ -230,7 +236,7 @@ class MappingJackson2MessageConverterTests {
 	}
 
 	@Test
-	void toTextMessageWithAnotherJsonViewClass() throws JMSException {
+	public void toTextMessageWithAnotherJsonViewClass() throws JMSException {
 		converter.setTargetType(MessageType.TEXT);
 		TextMessage textMessageMock = mock(TextMessage.class);
 
@@ -300,12 +306,11 @@ class MappingJackson2MessageConverterTests {
 	}
 
 
-	private interface Summary {}
+	private interface Summary {};
 
-	private interface Full extends Summary {}
+	private interface Full extends Summary {};
 
 
-	@SuppressWarnings("unused")
 	private static class MyAnotherBean {
 
 		@JsonView(Summary.class)

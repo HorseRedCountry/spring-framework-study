@@ -94,7 +94,7 @@ public final class ReactiveTypeDescriptor {
 
 	/**
 	 * Return an empty-value instance for the underlying reactive or async type.
-	 * Use of this type implies {@link #supportsEmpty()} is {@code true}.
+	 * Use of this type implies {@link #supportsEmpty()} is true.
 	 */
 	public Object getEmptyValue() {
 		Assert.state(this.emptyValueSupplier != null, "Empty values not supported");

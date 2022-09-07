@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -350,8 +350,17 @@ public abstract class AbstractAspectJAdvice implements Advice, AspectJPrecedence
 		return this.discoveredThrowingType;
 	}
 
-	private static boolean isVariableName(String name) {
-		return AspectJProxyUtils.isVariableName(name);
+	private boolean isVariableName(String name) {
+		char[] chars = name.toCharArray();
+		if (!Character.isJavaIdentifierStart(chars[0])) {
+			return false;
+		}
+		for (int i = 1; i < chars.length; i++) {
+			if (!Character.isJavaIdentifierPart(chars[i])) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 
@@ -368,7 +377,7 @@ public abstract class AbstractAspectJAdvice implements Advice, AspectJPrecedence
 	 * to which argument name. There are multiple strategies for determining
 	 * this binding, which are arranged in a ChainOfResponsibility.
 	 */
-	public final void calculateArgumentBindings() {
+	public final synchronized void calculateArgumentBindings() {
 		// The simple case... nothing to bind.
 		if (this.argumentsIntrospected || this.parameterTypes.length == 0) {
 			return;
@@ -631,6 +640,7 @@ public abstract class AbstractAspectJAdvice implements Advice, AspectJPrecedence
 		}
 		try {
 			ReflectionUtils.makeAccessible(this.aspectJAdviceMethod);
+			// TODO AopUtils.invokeJoinpointUsingReflection
 			return this.aspectJAdviceMethod.invoke(this.aspectInstanceFactory.getAspectInstance(), actualArgs);
 		}
 		catch (IllegalArgumentException ex) {

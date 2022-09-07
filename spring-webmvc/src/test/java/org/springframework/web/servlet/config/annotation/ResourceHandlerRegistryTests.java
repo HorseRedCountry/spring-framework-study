@@ -27,11 +27,13 @@ import org.mockito.Mockito;
 
 import org.springframework.cache.concurrent.ConcurrentMapCache;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.http.CacheControl;
 import org.springframework.web.accept.ContentNegotiationManager;
 import org.springframework.web.context.support.GenericWebApplicationContext;
 import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.handler.SimpleUrlHandlerMapping;
+import org.springframework.web.servlet.resource.AppCacheManifestTransformer;
 import org.springframework.web.servlet.resource.CachingResourceResolver;
 import org.springframework.web.servlet.resource.CachingResourceTransformer;
 import org.springframework.web.servlet.resource.CssLinkResourceTransformer;
@@ -167,14 +169,13 @@ public class ResourceHandlerRegistryTests {
 	}
 
 	@Test
-	@SuppressWarnings("deprecation")
 	public void resourceChainWithVersionResolver() {
 		VersionResourceResolver versionResolver = new VersionResourceResolver()
 				.addFixedVersionStrategy("fixed", "/**/*.js")
 				.addContentVersionStrategy("/**");
 
 		this.registration.resourceChain(true).addResolver(versionResolver)
-				.addTransformer(new org.springframework.web.servlet.resource.AppCacheManifestTransformer());
+				.addTransformer(new AppCacheManifestTransformer());
 
 		ResourceHttpRequestHandler handler = getHandler("/resources/**");
 		List<ResourceResolver> resolvers = handler.getResourceResolvers();
@@ -188,19 +189,17 @@ public class ResourceHandlerRegistryTests {
 		assertThat(transformers).hasSize(3);
 		assertThat(transformers.get(0)).isInstanceOf(CachingResourceTransformer.class);
 		assertThat(transformers.get(1)).isInstanceOf(CssLinkResourceTransformer.class);
-		assertThat(transformers.get(2)).isInstanceOf(org.springframework.web.servlet.resource.AppCacheManifestTransformer.class);
+		assertThat(transformers.get(2)).isInstanceOf(AppCacheManifestTransformer.class);
 	}
 
 	@Test
-	@SuppressWarnings("deprecation")
 	public void resourceChainWithOverrides() {
 		CachingResourceResolver cachingResolver = Mockito.mock(CachingResourceResolver.class);
 		VersionResourceResolver versionResolver = Mockito.mock(VersionResourceResolver.class);
 		WebJarsResourceResolver webjarsResolver = Mockito.mock(WebJarsResourceResolver.class);
 		PathResourceResolver pathResourceResolver = new PathResourceResolver();
 		CachingResourceTransformer cachingTransformer = Mockito.mock(CachingResourceTransformer.class);
-		org.springframework.web.servlet.resource.AppCacheManifestTransformer appCacheTransformer =
-				Mockito.mock(org.springframework.web.servlet.resource.AppCacheManifestTransformer.class);
+		AppCacheManifestTransformer appCacheTransformer = Mockito.mock(AppCacheManifestTransformer.class);
 		CssLinkResourceTransformer cssLinkTransformer = new CssLinkResourceTransformer();
 
 		this.registration.setCachePeriod(3600)
@@ -234,6 +233,8 @@ public class ResourceHandlerRegistryTests {
 		this.registration.resourceChain(true);
 
 		ResourceHttpRequestHandler handler = getHandler("/resources/**");
+		UrlResource resource = (UrlResource) handler.getLocations().get(1);
+		assertThat(resource.getURL().toString()).isEqualTo("file:/tmp");
 		assertThat(handler.getUrlPathHelper()).isNotNull();
 
 		List<ResourceResolver> resolvers = handler.getResourceResolvers();
@@ -241,13 +242,6 @@ public class ResourceHandlerRegistryTests {
 		Map<Resource, Charset> locationCharsets = resolver.getLocationCharsets();
 		assertThat(locationCharsets.size()).isEqualTo(1);
 		assertThat(locationCharsets.values().iterator().next()).isEqualTo(StandardCharsets.ISO_8859_1);
-	}
-
-	@Test
-	public void lastModifiedDisabled() {
-		this.registration.setUseLastModified(false);
-		ResourceHttpRequestHandler handler = getHandler("/resources/**");
-		assertThat(handler.isUseLastModified()).isFalse();
 	}
 
 }

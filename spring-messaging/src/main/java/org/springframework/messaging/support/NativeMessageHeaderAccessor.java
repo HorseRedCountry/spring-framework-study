@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 the original author or authors.
+ * Copyright 2002-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.springframework.messaging.support;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -30,15 +31,15 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.util.ObjectUtils;
 
 /**
- * {@link MessageHeaderAccessor} subclass that supports storage and access of
+ * {@link MessageHeaderAccessor} sub-class that supports storage and access of
  * headers from an external source such as a message broker. Headers from the
  * external source are kept separate from other headers, in a sub-map under the
  * key {@link #NATIVE_HEADERS}. This allows separating processing headers from
  * headers that need to be sent to or received from the external source.
  *
- * <p>This class is likely to be used indirectly through a protocol-specific
- * subclass that also provides factory methods to translate message headers
- * to and from an external messaging source.
+ * <p>This class is likely to be used through indirectly through a protocol
+ * specific sub-class that also provide factory methods to translate
+ * message headers to an from an external messaging source.
  *
  * @author Rossen Stoyanchev
  * @since 4.0
@@ -197,10 +198,10 @@ public class NativeMessageHeaderAccessor extends MessageHeaderAccessor {
 			return;
 		}
 		if (map == null) {
-			map = new LinkedMultiValueMap<>(3);
+			map = new LinkedMultiValueMap<>(4);
 			setHeader(NATIVE_HEADERS, map);
 		}
-		List<String> values = new ArrayList<>(1);
+		List<String> values = new LinkedList<>();
 		values.add(value);
 		if (!ObjectUtils.nullSafeEquals(values, getHeader(name))) {
 			setModified(true);
@@ -246,10 +247,10 @@ public class NativeMessageHeaderAccessor extends MessageHeaderAccessor {
 		}
 		Map<String, List<String>> nativeHeaders = getNativeHeaders();
 		if (nativeHeaders == null) {
-			nativeHeaders = new LinkedMultiValueMap<>(3);
+			nativeHeaders = new LinkedMultiValueMap<>(4);
 			setHeader(NATIVE_HEADERS, nativeHeaders);
 		}
-		List<String> values = nativeHeaders.computeIfAbsent(name, k -> new ArrayList<>(1));
+		List<String> values = nativeHeaders.computeIfAbsent(name, k -> new LinkedList<>());
 		values.add(value);
 		setModified(true);
 	}

@@ -21,7 +21,7 @@ import org.springframework.http.server.PathContainer.PathSegment;
 import org.springframework.web.util.pattern.PathPattern.MatchingContext;
 
 /**
- * A literal path element that includes the single character wildcard '?' one
+ * A literal path element that does includes the single character wildcard '?' one
  * or more times (to basically many any character at that position).
  *
  * @author Andy Clement
@@ -74,10 +74,11 @@ class SingleCharWildcardedPathElement extends PathElement {
 			return false;
 		}
 
+		char[] data = ((PathSegment) element).valueToMatchAsChars();
 		if (this.caseSensitive) {
 			for (int i = 0; i < this.len; i++) {
 				char ch = this.text[i];
-				if ((ch != '?') && (ch != value.charAt((i)))) {
+				if ((ch != '?') && (ch != data[i])) {
 					return false;
 				}
 			}
@@ -86,7 +87,7 @@ class SingleCharWildcardedPathElement extends PathElement {
 			for (int i = 0; i < this.len; i++) {
 				char ch = this.text[i];
 				// TODO revisit performance if doing a lot of case insensitive matching
-				if ((ch != '?') && (ch != Character.toLowerCase(value.charAt(i)))) {
+				if ((ch != '?') && (ch != Character.toLowerCase(data[i]))) {
 					return false;
 				}
 			}
