@@ -19,6 +19,6 @@ public class MyClassPathXmlApplicationContext extends ClassPathXmlApplicationCon
 	@Override
 	protected void initPropertySources() {
 		System.out.println("扩展测试......");
-		getEnvironment().setRequiredProperties("MajorTom's Test");
+		getEnvironment().setRequiredProperties("username");
 	}
 }

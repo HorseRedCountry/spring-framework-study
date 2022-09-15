@@ -499,13 +499,17 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			prepareRefresh();
 
 			// Tell the subclass to refresh the internal bean factory.
+			//创建容器对象：DefaultListableBeanFactory
+			//加载xml配置文件的属性值到当前工厂中，最重要的就是BeanDefinition
 			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
 
 			// Prepare the bean factory for use in this context.
+			//BeanFactory的准备工作，对各种值进行填充
 			prepareBeanFactory(beanFactory);
 
 			try {
 				// Allows post-processing of the bean factory in context subclasses.
+				//子类覆盖方法做额外的处理
 				postProcessBeanFactory(beanFactory);
 
 				// Invoke factory processors registered as beans in the context.
@@ -585,20 +589,24 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 		// Validate that all properties marked as required are resolvable:
 		// see ConfigurablePropertyResolver#setRequiredProperties
+		//创建并获取环境对象，验证需要的属性文件是否都已经放入到了环境中
 		getEnvironment().validateRequiredProperties();
 
 		// Store pre-refresh ApplicationListeners...
+		//判断刷新前的应用程序监听器集合是否为空，如果为空，则将监听器添加到此集合中
 		if (this.earlyApplicationListeners == null) {
 			this.earlyApplicationListeners = new LinkedHashSet<>(this.applicationListeners);
 		}
 		else {
 			// Reset local application listeners to pre-refresh state.
+			//如果不等于空，则清空集合元素对象
 			this.applicationListeners.clear();
 			this.applicationListeners.addAll(this.earlyApplicationListeners);
 		}
 
 		// Allow for the collection of early ApplicationEvents,
 		// to be published once the multicaster is available...
+		//创建刷新前的监听事件集合
 		this.earlyApplicationEvents = new LinkedHashSet<>();
 	}
 
