@@ -1,5 +1,8 @@
 package com.mytest;
 
+import com.mytest.service.TestService;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+
 /**
  * <p>
  *
@@ -10,11 +13,12 @@ package com.mytest;
  */
 public class MyTestMain {
 	public static void main(String[] args) {
-		//AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext("com.mytest.service");
-		//TestService testService = context.getBean(TestService.class);
-		//testService.printTest();
+		System.out.println("***********测试开始************");
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext("com.mytest.service");
+		TestService testService = context.getBean(TestService.class);
+		testService.printTest();
 
-		MyClassPathXmlApplicationContext mc = new MyClassPathXmlApplicationContext("applicationContext.xml");
+		//MyClassPathXmlApplicationContext mc = new MyClassPathXmlApplicationContext("applicationContext.xml");
 
 	}
 }
