@@ -41,6 +41,13 @@ import org.springframework.lang.Nullable;
 public interface BeanDefinition extends AttributeAccessor, BeanMetadataElement {
 
 	/**
+	 * 用来对Bean对象及关系定义
+	 * 1.BeanDefinition定义了各种Bean对象及其相互的关系；
+	 * 2.BeanDefinitionReader是BeanDefinition的解析器；
+	 * 3.BeanDefinitionHolder是BeanDefinition的包装类，用来存储BeanDefinition，name以及aliases等。
+	 */
+
+	/**
 	 * Scope identifier for the standard singleton scope: {@value}.
 	 * <p>Note that extended bean factories might support further scopes.
 	 * @see #setScope

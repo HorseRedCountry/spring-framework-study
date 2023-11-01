@@ -117,6 +117,20 @@ import org.springframework.lang.Nullable;
 public interface BeanFactory {
 
 	/**
+	 * 定义了IOC容器的基本功能规范，有三个子类：ListableBeanFactory,HierarchicalBeanFactory和AutowireCapableBeanFactory
+	 * ListableBeanFactory：定义了访问容器中Bean若干信息的若干方法，如查看bean的个数、获取某一类型bean的配置名、查看容器中是否包含某一bean等方法。
+	 * HierarchicalBeanFactory：父子级联IOC容器的接口，子容器可以通过接口方法访问父容器；通过HierarchicalBeanFactory接口，Spring的IOC容器可以
+	 * 	                        建立父子层级关联的容器体系，子容器可以访问父容器中的bean，但是父容器不能访问子容器中的bean。Spring使用父子容器实现
+	 * 	                        了许多功能，比如在SpringMVC中，展现层的bean位于一个子容器内，而业务层和持久层的bean位于父容器中。这样，展现层bean
+	 * 	                        就可以引用业务层和持久层的bean，而业务层和持久层的bean则看不到展现层的bean。
+	 * AutowireCapableBeanFactory：定义了将容器中的bean按某种规则（如按名字匹配、按类型匹配等）进行自动装配的方法
+	 * ConfigurableBeanFactory：一个重要的接口，增强了IOC容器的可定制性，它定义了设置类装载器、属性编辑器、容器初始化后置处理器等方法
+	 * ConfigurableListableBeanFactory：ListableBeanFactory和ConfigurableBeanFactory的融合
+	 */
+
+	/*用于取消引用实例并将其与FactoryBean创建的bean区分开。例如，如果命名的bean是FactoryBean，则获取将返回Factory，而不是Factory返回的实例*/
+
+	/**
 	 * Used to dereference a {@link FactoryBean} instance and distinguish it from
 	 * beans <i>created</i> by the FactoryBean. For example, if the bean named
 	 * {@code myJndiObject} is a FactoryBean, getting {@code &myJndiObject}
@@ -124,6 +138,9 @@ public interface BeanFactory {
 	 */
 	String FACTORY_BEAN_PREFIX = "&";
 
+
+
+	/*根据bean的名字和Class类型等获取bean的实例*/
 
 	/**
 	 * Return an instance, which may be shared or independent, of the specified bean.
@@ -208,6 +225,11 @@ public interface BeanFactory {
 	 */
 	<T> T getBean(Class<T> requiredType, Object... args) throws BeansException;
 
+
+
+
+	/*返回指定bean的provider*/
+
 	/**
 	 * Return a provider for the specified bean, allowing for lazy on-demand retrieval
 	 * of instances, including availability and uniqueness options.
@@ -234,6 +256,8 @@ public interface BeanFactory {
 	 */
 	<T> ObjectProvider<T> getBeanProvider(ResolvableType requiredType);
 
+	/*检查工厂中是否包含指定name的bean，或者外部注册的bean*/
+
 	/**
 	 * Does this bean factory contain a bean definition or externally registered singleton
 	 * instance with the given name?
@@ -250,6 +274,11 @@ public interface BeanFactory {
 	 * @return whether a bean with the given name is present
 	 */
 	boolean containsBean(String name);
+
+
+
+
+	/*检查所给定name的bean是否为单例/原型*/
 
 	/**
 	 * Is this bean a shared singleton? That is, will {@link #getBean} always
@@ -286,6 +315,11 @@ public interface BeanFactory {
 	 */
 	boolean isPrototype(String name) throws NoSuchBeanDefinitionException;
 
+
+
+
+	/*判断所给定name的类型与type是否匹配*/
+
 	/**
 	 * Check whether the bean with the given name matches the specified type.
 	 * More specifically, check whether a {@link #getBean} call for the given name
@@ -319,6 +353,11 @@ public interface BeanFactory {
 	 * @see #getType
 	 */
 	boolean isTypeMatch(String name, Class<?> typeToMatch) throws NoSuchBeanDefinitionException;
+
+
+
+
+	/*获取给定name的bean的类型*/
 
 	/**
 	 * Determine the type of the bean with the given name. More specifically,
@@ -358,6 +397,11 @@ public interface BeanFactory {
 	 */
 	@Nullable
 	Class<?> getType(String name, boolean allowFactoryBeanInit) throws NoSuchBeanDefinitionException;
+
+
+
+
+	/*返回给定name的bean的别名*/
 
 	/**
 	 * Return the aliases for the given bean name, if any.

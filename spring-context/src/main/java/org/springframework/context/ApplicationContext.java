@@ -59,6 +59,14 @@ public interface ApplicationContext extends EnvironmentCapable, ListableBeanFact
 		MessageSource, ApplicationEventPublisher, ResourcePatternResolver {
 
 	/**
+	 * IOC接口设计和实现。
+	 * 它继承了BeanFactory对Bean规范（最基本的IOC容器的实现）进行定义。而ApplicationContext表示的是应用的上下文，除了对Bean的管理外，还包括：
+	 * 1.访问资源：对不同方式的Bean配置（即资源）进行加载。（实现ResourcePatternResolver接口）
+	 * 2.国际化：支持信息源，可以实现国际化。（实现MessageSource接口）
+	 * 3.应用事件：支持应用事件。(实现ApplicationEventPublisher接口)
+	 */
+
+	/**
 	 * Return the unique id of this application context.
 	 * @return the unique id of the context, or {@code null} if none
 	 */
