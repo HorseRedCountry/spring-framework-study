@@ -206,7 +206,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * @param parent the parent context
 	 */
 	public AbstractApplicationContext(@Nullable ApplicationContext parent) {
+		//默认构造函数初始化容器id，name，状态以及 资源解析器
 		this();
+		//将父容器的Environment合并到当前容器
 		setParent(parent);
 	}
 
@@ -427,6 +429,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * @see org.springframework.core.io.support.PathMatchingResourcePatternResolver
 	 */
 	protected ResourcePatternResolver getResourcePatternResolver() {
+		//Spring资源加载器
 		return new PathMatchingResourcePatternResolver(this);
 	}
 
@@ -484,8 +487,24 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		return this.applicationListeners;
 	}
 
+	/**
+	 * SpringIOC容器对Bean定义资源的载入是从refresh()函数开始的，refresh()是一个模板方法，作用为：
+	 * 		在创建IOC容器前，如果已有容器存在，则需要把已有的容器销毁和关闭，以保证在refresh()之后使用的是新建立起来的IOC容器。
+	 * 	refresh()的作用类似于对IOC容器的重启，在新建立好的容器中对容器进行初始化，对Bean定义资源进行载入。
+	 * @throws BeansException Bean异常
+	 * @throws IllegalStateException 非法开始异常
+	 */
 	@Override
 	public void refresh() throws BeansException, IllegalStateException {
+
+		//--------------------------------------------------------------------------------------------------------------
+		//这里的设计是一个非常典型的资源类加载处理型的思路
+		//1.模板方法设计模式，模板方法中使用典型的钩子方法；
+		//2.将具体的初始化加载方法插入到钩子方法之间；
+		//3.将初始化的阶段进行封装，用来记录当前初始化到什么阶段；常见的设计是xxxPhase/xxxStage；
+		//4.资源加载初始化有失败等处理，必然是try/catch/finally
+		//--------------------------------------------------------------------------------------------------------------
+
 		synchronized (this.startupShutdownMonitor) {
 			// Prepare this context for refreshing.
 			/**
